@@ -34,8 +34,7 @@ bodobako/
 │   │       │   └── protocol.ts   # Socket.IO イベント型定義
 │   │       └── games/
 │   │           ├── index.ts      # ゲームレジストリ
-│   │           ├── othello/      # オセロのロジック
-│   │           └── aiuebattle/   # あいうえバトルのロジック
+│   │           └── <game-id>/    # 各ゲームのロジック
 │   │
 │   ├── server/          # バックエンド
 │   │   └── src/
@@ -57,10 +56,7 @@ bodobako/
 │           │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
 │           │   └── GameView.tsx      # ゲームコンポーネントの振り分け
 │           └── games/
-│               ├── othello/
-│               │   └── OthelloBoard.tsx
-│               └── aiuebattle/
-│                   └── AiueBattleBoard.tsx
+│               └── <game-id>/    # 各ゲームの UI コンポーネント
 │
 ├── package.json         # ワークスペース定義
 └── tsconfig.base.json   # 共通 TypeScript 設定
