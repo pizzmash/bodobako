@@ -1,6 +1,6 @@
 import { useRoom } from "../../context/RoomContext";
-import type { OthelloState, OthelloMove } from "@claude-demo/shared";
-import { getValidMoves, countDiscs, BOARD_SIZE } from "@claude-demo/shared";
+import type { OthelloState, OthelloMove } from "@bodobako/shared";
+import { getValidMoves, countDiscs, BOARD_SIZE } from "@bodobako/shared";
 
 export function OthelloBoard() {
   const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } = useRoom();

@@ -1,5 +1,5 @@
 import { useRoom } from "../context/RoomContext";
-import { getGameDefinition } from "@claude-demo/shared";
+import { getGameDefinition } from "@bodobako/shared";
 
 export function Room() {
   const { room, playerId, startGame } = useRoom();

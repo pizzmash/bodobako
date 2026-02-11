@@ -1,5 +1,5 @@
-import { getGameDefinition } from "@claude-demo/shared";
-import type { GameResult } from "@claude-demo/shared";
+import { getGameDefinition } from "@bodobako/shared";
+import type { GameResult } from "@bodobako/shared";
 
 export function startGame(
   gameId: string,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoom } from "../context/RoomContext";
-import { getAllGames } from "@claude-demo/shared";
+import { getAllGames } from "@bodobako/shared";
 
 const games = getAllGames();
 

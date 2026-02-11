@@ -1,5 +1,5 @@
-import type { Player, RoomInfo } from "@claude-demo/shared";
-import { getGameDefinition } from "@claude-demo/shared";
+import type { Player, RoomInfo } from "@bodobako/shared";
+import { getGameDefinition } from "@bodobako/shared";
 
 interface Room {
   code: string;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoom } from "../../context/RoomContext";
-import type { AiueBattleState, AiueBattleMove } from "@claude-demo/shared";
-import { BOARD_CHARS, TOPIC_LIST, WORD_LENGTH } from "@claude-demo/shared";
+import type { AiueBattleState, AiueBattleMove } from "@bodobako/shared";
+import { BOARD_CHARS, TOPIC_LIST, WORD_LENGTH } from "@bodobako/shared";
 
 const BOARD_LAYOUT: (string | null)[][] = [
   ["あ", "い", "う", "え", "お"],

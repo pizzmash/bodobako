@@ -1,5 +1,5 @@
 import type { Server, Socket } from "socket.io";
-import type { ClientToServerEvents, ServerToClientEvents } from "@claude-demo/shared";
+import type { ClientToServerEvents, ServerToClientEvents } from "@bodobako/shared";
 import {
   createRoom,
   joinRoom,

@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import type { ClientToServerEvents, ServerToClientEvents } from "@claude-demo/shared";
+import type { ClientToServerEvents, ServerToClientEvents } from "@bodobako/shared";
 import { registerRoomHandlers } from "./handlers/room-handlers.js";
 import { registerGameHandlers } from "./handlers/game-handlers.js";
 

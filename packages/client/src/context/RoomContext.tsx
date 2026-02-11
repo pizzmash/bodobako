@@ -6,7 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import type { RoomInfo, GameResult } from "@claude-demo/shared";
+import type { RoomInfo, GameResult } from "@bodobako/shared";
 import { socket } from "../lib/socket";
 
 interface RoomContextValue {
