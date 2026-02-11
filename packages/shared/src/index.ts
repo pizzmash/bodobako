@@ -11,3 +11,7 @@ export { othelloDefinition } from "./games/othello/index.js";
 export type { OthelloState, OthelloMove, CellState, OthelloBoard } from "./games/othello/types.js";
 export { getValidMoves, countDiscs } from "./games/othello/logic.js";
 export { BOARD_SIZE } from "./games/othello/types.js";
+export { aiuebattleDefinition } from "./games/aiuebattle/index.js";
+export type { AiueBattleState, AiueBattleMove } from "./games/aiuebattle/types.js";
+export { BOARD_CHARS, TOPIC_LIST, WORD_LENGTH } from "./games/aiuebattle/types.js";
+export { normalizeChar, isValidWord, padWord, getActivePlayers } from "./games/aiuebattle/logic.js";

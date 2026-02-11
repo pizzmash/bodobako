@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { useRoom } from "../context/RoomContext";
+import { getAllGames } from "@claude-demo/shared";
+
+const games = getAllGames();
 
 export function Lobby() {
   const { createRoom, joinRoom, errorMsg, clearError } = useRoom();
   const [playerName, setPlayerName] = useState("");
   const [roomCode, setRoomCode] = useState("");
+  const [selectedGameId, setSelectedGameId] = useState(games[0]?.id ?? "othello");
   const [mode, setMode] = useState<"menu" | "create" | "join">("menu");
 
   const handleCreate = () => {
     if (!playerName.trim()) return;
-    createRoom(playerName.trim(), "othello");
+    createRoom(playerName.trim(), selectedGameId);
   };
 
   const handleJoin = () => {
@@ -46,8 +50,22 @@ export function Lobby() {
 
       {mode === "create" && (
         <div style={styles.menu}>
-          <p>ゲーム: オセロ</p>
           <p>プレイヤー名: {playerName}</p>
+          <div style={styles.gameSelect}>
+            {games.map((g) => (
+              <button
+                key={g.id}
+                style={{
+                  ...styles.gameButton,
+                  background: selectedGameId === g.id ? "#4a90d9" : "#fff",
+                  color: selectedGameId === g.id ? "#fff" : "#333",
+                }}
+                onClick={() => setSelectedGameId(g.id)}
+              >
+                {g.name}（{g.minPlayers}-{g.maxPlayers}人）
+              </button>
+            ))}
+          </div>
           <button style={styles.button} onClick={handleCreate}>
             作成
           </button>
@@ -133,5 +151,19 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "8px",
     marginBottom: "1rem",
     cursor: "pointer",
+  },
+  gameSelect: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+    width: "100%",
+  },
+  gameButton: {
+    padding: "0.75rem 1rem",
+    fontSize: "1rem",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    cursor: "pointer",
+    textAlign: "left" as const,
   },
 };

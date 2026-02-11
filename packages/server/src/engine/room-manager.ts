@@ -1,4 +1,5 @@
 import type { Player, RoomInfo } from "@claude-demo/shared";
+import { getGameDefinition } from "@claude-demo/shared";
 
 interface Room {
   code: string;
@@ -48,7 +49,8 @@ export function joinRoom(
   const room = rooms.get(code);
   if (!room) return { error: "ルームが見つかりません" };
   if (room.status !== "waiting") return { error: "ゲームはすでに開始されています" };
-  if (room.players.length >= 2) return { error: "ルームが満員です" };
+  const maxPlayers = getGameDefinition(room.gameId)?.maxPlayers ?? 2;
+  if (room.players.length >= maxPlayers) return { error: "ルームが満員です" };
 
   const playerId = crypto.randomUUID();
   const player: Player = { id: playerId, name: playerName };

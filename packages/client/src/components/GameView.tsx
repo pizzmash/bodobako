@@ -1,5 +1,6 @@
 import { useRoom } from "../context/RoomContext";
 import { OthelloBoard } from "../games/othello/OthelloBoard";
+import { AiueBattleBoard } from "../games/aiuebattle/AiueBattleBoard";
 
 export function GameView() {
   const { room } = useRoom();
@@ -8,6 +9,8 @@ export function GameView() {
   switch (room.gameId) {
     case "othello":
       return <OthelloBoard />;
+    case "aiuebattle":
+      return <AiueBattleBoard />;
     default:
       return <div>未対応のゲーム: {room.gameId}</div>;
   }

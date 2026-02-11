@@ -1,11 +1,15 @@
 import { useRoom } from "../context/RoomContext";
+import { getGameDefinition } from "@claude-demo/shared";
 
 export function Room() {
   const { room, playerId, startGame } = useRoom();
   if (!room) return null;
 
+  const gameDef = getGameDefinition(room.gameId);
+  const minPlayers = gameDef?.minPlayers ?? 2;
+  const maxPlayers = gameDef?.maxPlayers ?? 2;
   const isHost = playerId === room.hostId;
-  const canStart = isHost && room.players.length >= 2;
+  const canStart = isHost && room.players.length >= minPlayers;
 
   return (
     <div style={styles.container}>
@@ -16,13 +20,13 @@ export function Room() {
       <p style={styles.hint}>このコードを相手に伝えてください</p>
 
       <div style={styles.players}>
-        <h3>プレイヤー ({room.players.length}/2)</h3>
+        <h3>プレイヤー ({room.players.length}/{maxPlayers})</h3>
         {room.players.map((p) => (
           <div key={p.id} style={styles.player}>
             {p.name} {p.id === room.hostId ? "(ホスト)" : ""}
           </div>
         ))}
-        {room.players.length < 2 && (
+        {room.players.length < minPlayers && (
           <div style={styles.waiting}>相手を待っています...</div>
         )}
       </div>
