@@ -6,6 +6,7 @@ import { isValidWord, padWord, processAttack } from "./logic.js";
 export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMove> = {
   id: "aiuebattle",
   name: "あいうえバトル",
+  description: "お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル",
   minPlayers: 2,
   maxPlayers: 5,
 

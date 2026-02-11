@@ -3,6 +3,7 @@ export type GameStatus = "playing" | "finished";
 export interface GameDefinition<TState = unknown, TMove = unknown> {
   id: string;
   name: string;
+  description: string;
   minPlayers: number;
   maxPlayers: number;
 

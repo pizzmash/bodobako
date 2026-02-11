@@ -11,6 +11,7 @@ import {
 export const othelloDefinition: GameDefinition<OthelloState, OthelloMove> = {
   id: "othello",
   name: "オセロ",
+  description: "8x8 盤面で石を挟んでひっくり返す定番ゲーム",
   minPlayers: 2,
   maxPlayers: 2,
 
