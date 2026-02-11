@@ -271,17 +271,27 @@ export function AiueBattleBoard() {
                 {player?.name ?? "?"} {elim ? "（脱落）" : ""}
               </div>
               <div style={styles.sheetCells}>
-                {word?.map((c, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      ...styles.sheetCell,
-                      background: rev?.[i] ? (c === "×" ? "#eee" : "#ffe") : "#f5f5f5",
-                    }}
-                  >
-                    {rev?.[i] ? c : "?"}
-                  </div>
-                ))}
+                {word?.map((c, i) => {
+                  const revealed = rev?.[i];
+                  let bg = "#f5f5f5";
+                  if (isMe) {
+                    bg = revealed ? "#fdd" : "#e8f0fe";
+                  } else if (revealed) {
+                    bg = c === "×" ? "#eee" : "#ffe";
+                  }
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        ...styles.sheetCell,
+                        background: bg,
+                        color: isMe && !revealed ? "#888" : "#333",
+                      }}
+                    >
+                      {isMe ? c : revealed ? c : "?"}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
