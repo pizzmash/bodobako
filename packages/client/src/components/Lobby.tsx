@@ -23,7 +23,7 @@ export function Lobby() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>ボードゲームオンライン</h1>
+      <h1 style={styles.title}>ボド箱</h1>
 
       {errorMsg && (
         <div style={styles.error} onClick={clearError}>
