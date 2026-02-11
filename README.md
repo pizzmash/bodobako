@@ -298,5 +298,6 @@ case "mygame":
 - [ ] クライアント側のボードコンポーネントを作成した
 - [ ] `GameView.tsx` に分岐を追加した
 - [ ] 必要に応じて `shared/src/index.ts` に型の export を追加した
+- [ ] `npm run update-readme` で README の収録ゲーム一覧を更新した
 
 サーバー側のコード修正は不要。`GameDefinition` インターフェースを通じて自動的にゲームが動作する。
