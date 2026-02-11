@@ -3,7 +3,7 @@ import type { OthelloState, OthelloMove } from "@claude-demo/shared";
 import { getValidMoves, countDiscs, BOARD_SIZE } from "@claude-demo/shared";
 
 export function OthelloBoard() {
-  const { gameState, playerId, sendMove, gameResult, room } = useRoom();
+  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } = useRoom();
   const state = gameState as OthelloState | null;
   if (!state || !playerId || !room) return null;
 
@@ -55,6 +55,16 @@ export function OthelloBoard() {
             : gameResult.winnerId
               ? "あなたの負けです..."
               : "引き分けです"}
+          <div style={styles.resultButtons}>
+            {playerId === room.hostId && (
+              <button style={styles.rematchButton} onClick={startGame}>
+                再戦
+              </button>
+            )}
+            <button style={styles.lobbyButton} onClick={leaveRoom}>
+              ロビーに戻る
+            </button>
+          </div>
         </div>
       )}
 
@@ -167,6 +177,30 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "8px",
     border: "none",
     background: "#d9904a",
+    color: "#fff",
+    cursor: "pointer",
+  },
+  resultButtons: {
+    display: "flex",
+    gap: "1rem",
+    justifyContent: "center",
+    marginTop: "1rem",
+  },
+  rematchButton: {
+    padding: "0.75rem 2rem",
+    fontSize: "1rem",
+    borderRadius: "8px",
+    border: "none",
+    background: "#2d8a2d",
+    color: "#fff",
+    cursor: "pointer",
+  },
+  lobbyButton: {
+    padding: "0.75rem 2rem",
+    fontSize: "1rem",
+    borderRadius: "8px",
+    border: "none",
+    background: "#666",
     color: "#fff",
     cursor: "pointer",
   },

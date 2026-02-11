@@ -88,6 +88,11 @@ export function removePlayer(socketId: string): Room | undefined {
   return room;
 }
 
+export function resetRoom(room: Room): void {
+  room.status = "waiting";
+  room.gameState = null;
+}
+
 export function toRoomInfo(room: Room): RoomInfo {
   return {
     code: room.code,

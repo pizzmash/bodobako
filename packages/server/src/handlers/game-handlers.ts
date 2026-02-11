@@ -3,6 +3,7 @@ import type { ClientToServerEvents, ServerToClientEvents } from "@claude-demo/sh
 import {
   getRoomBySocket,
   getPlayerIdBySocket,
+  resetRoom,
   toRoomInfo,
 } from "../engine/room-manager.js";
 import { startGame, processMove } from "../engine/game-engine.js";
@@ -18,6 +19,10 @@ export function registerGameHandlers(io: AppServer, socket: AppSocket) {
     const playerId = getPlayerIdBySocket(room, socket.id);
     if (playerId !== room.hostId) return socket.emit("error", "ホストのみ開始できます");
     if (room.players.length < 2) return socket.emit("error", "プレイヤーが足りません");
+
+    if (room.status === "finished") {
+      resetRoom(room);
+    }
 
     try {
       const playerIds = room.players.map((p) => p.id);

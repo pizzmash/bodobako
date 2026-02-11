@@ -25,6 +25,7 @@ export interface ClientToServerEvents {
   ) => void;
   "game:start": () => void;
   "game:move": (move: unknown) => void;
+  "room:leave": () => void;
 }
 
 export interface ServerToClientEvents {
@@ -32,5 +33,6 @@ export interface ServerToClientEvents {
   "game:started": (state: unknown) => void;
   "game:stateUpdated": (state: unknown) => void;
   "game:ended": (result: GameResult) => void;
+  "room:left": () => void;
   error: (message: string) => void;
 }

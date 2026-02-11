@@ -29,6 +29,15 @@ export function registerRoomHandlers(io: AppServer, socket: AppSocket) {
     io.to(roomCode).emit("room:updated", toRoomInfo(result.room));
   });
 
+  socket.on("room:leave", () => {
+    const room = removePlayer(socket.id);
+    socket.leave(room?.code ?? "");
+    socket.emit("room:left");
+    if (room) {
+      io.to(room.code).emit("room:updated", toRoomInfo(room));
+    }
+  });
+
   socket.on("disconnect", () => {
     const room = removePlayer(socket.id);
     if (room) {

@@ -19,6 +19,7 @@ interface RoomContextValue {
   joinRoom: (roomCode: string, playerName: string) => void;
   startGame: () => void;
   sendMove: (move: unknown) => void;
+  leaveRoom: () => void;
   clearError: () => void;
 }
 
@@ -45,6 +46,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     });
     socket.on("game:stateUpdated", (s) => setGameState(s));
     socket.on("game:ended", (result) => setGameResult(result));
+    socket.on("room:left", () => {
+      setRoom(null);
+      setPlayerId(null);
+      setGameState(null);
+      setGameResult(null);
+    });
     socket.on("error", (msg) => setErrorMsg(msg));
 
     return () => {
@@ -52,6 +59,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       socket.off("game:started");
       socket.off("game:stateUpdated");
       socket.off("game:ended");
+      socket.off("room:left");
       socket.off("error");
       socket.disconnect();
     };
@@ -90,6 +98,14 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("game:move", move);
   }, []);
 
+  const leaveRoom = useCallback(() => {
+    socket.emit("room:leave");
+    setRoom(null);
+    setPlayerId(null);
+    setGameState(null);
+    setGameResult(null);
+  }, []);
+
   const clearError = useCallback(() => setErrorMsg(null), []);
 
   return (
@@ -104,6 +120,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         joinRoom,
         startGame,
         sendMove,
+        leaveRoom,
         clearError,
       }}
     >
