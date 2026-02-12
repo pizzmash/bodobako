@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoom } from "../../context/RoomContext";
+import { GameResultCard } from "../../components/GameResultCard";
 import type { AiueBattleState, AiueBattleMove } from "@bodobako/shared";
 import { BOARD_CHARS, TOPIC_LIST, WORD_LENGTH } from "@bodobako/shared";
 
@@ -69,12 +70,6 @@ const INJECTED_STYLES = `
 @keyframes ab-charPop {
   0%{ transform:scale(0); opacity:0 }
   60%{ transform:scale(1.2) }
-  100%{ transform:scale(1); opacity:1 }
-}
-@keyframes ab-bounceIn {
-  0%{ transform:scale(.3); opacity:0 }
-  50%{ transform:scale(1.05) }
-  70%{ transform:scale(.95) }
   100%{ transform:scale(1); opacity:1 }
 }
 @keyframes ab-slideUp {
@@ -496,39 +491,13 @@ export function AiueBattleBoard() {
 
       {/* Result card */}
       {gameResult && (
-        <div
-          style={{
-            ...styles.resultCard,
-            animation: "ab-bounceIn .6s ease-out",
-          }}
-        >
-          <div style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>
-            {gameResult.winnerId === playerId ? "🏆" : ""}
-          </div>
-          <div>
-            {gameResult.winnerId === playerId
-              ? "あなたの勝ちです！"
-              : `${room.players.find((p) => p.id === gameResult.winnerId)?.name ?? "?"} の勝ちです`}
-          </div>
-          <div style={styles.resultButtons}>
-            {playerId === room.hostId && (
-              <button
-                className="ab-action-btn"
-                style={styles.rematchButton}
-                onClick={startGame}
-              >
-                再戦
-              </button>
-            )}
-            <button
-              className="ab-action-btn"
-              style={styles.lobbyButton}
-              onClick={leaveRoom}
-            >
-              ロビーに戻る
-            </button>
-          </div>
-        </div>
+        <GameResultCard
+          result={gameResult.winnerId === playerId ? "win" : "lose"}
+          winnerName={room.players.find((p) => p.id === gameResult.winnerId)?.name ?? "?"}
+          isHost={playerId === room.hostId}
+          onRematch={startGame}
+          onLeave={leaveRoom}
+        />
       )}
 
       {/* 五十音ボード */}
@@ -854,48 +823,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "10px",
     border: "2px solid",
     textAlign: "center",
-  },
-  resultCard: {
-    fontSize: "1.3rem",
-    fontWeight: 800,
-    margin: "0.5rem 0 1rem",
-    padding: "1.25rem 2rem",
-    borderRadius: "16px",
-    background: `linear-gradient(135deg, #fef3c7, #fde68a)`,
-    border: `2px solid #f59e0b`,
-    boxShadow: "0 4px 16px rgba(245,158,11,.2)",
-    textAlign: "center",
-    color: "#92400e",
-  },
-  resultButtons: {
-    display: "flex",
-    gap: "1rem",
-    justifyContent: "center",
-    marginTop: "1rem",
-  },
-  rematchButton: {
-    padding: "0.7rem 2rem",
-    fontSize: "1rem",
-    borderRadius: "10px",
-    border: "none",
-    background: C.success,
-    color: "#fff",
-    cursor: "pointer",
-    fontFamily: FONT,
-    fontWeight: 600,
-    boxShadow: `0 2px 6px rgba(45,138,78,.3)`,
-  },
-  lobbyButton: {
-    padding: "0.7rem 2rem",
-    fontSize: "1rem",
-    borderRadius: "10px",
-    border: "none",
-    background: "#64748b",
-    color: "#fff",
-    cursor: "pointer",
-    fontFamily: FONT,
-    fontWeight: 600,
-    boxShadow: "0 2px 6px rgba(100,116,139,.3)",
   },
   sheets: {
     display: "flex",
