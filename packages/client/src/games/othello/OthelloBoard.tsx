@@ -1,4 +1,5 @@
 import { useRoom } from "../../context/RoomContext";
+import { GameResultCard } from "../../components/GameResultCard";
 import type { OthelloState, OthelloMove } from "@bodobako/shared";
 import { getValidMoves, countDiscs, BOARD_SIZE } from "@bodobako/shared";
 
@@ -49,23 +50,19 @@ export function OthelloBoard() {
       )}
 
       {gameResult && (
-        <div style={styles.result}>
-          {gameResult.winnerId === playerId
-            ? "あなたの勝ちです！"
-            : gameResult.winnerId
-              ? "あなたの負けです..."
-              : "引き分けです"}
-          <div style={styles.resultButtons}>
-            {playerId === room.hostId && (
-              <button style={styles.rematchButton} onClick={startGame}>
-                再戦
-              </button>
-            )}
-            <button style={styles.lobbyButton} onClick={leaveRoom}>
-              ロビーに戻る
-            </button>
-          </div>
-        </div>
+        <GameResultCard
+          result={
+            gameResult.winnerId === playerId
+              ? "win"
+              : gameResult.winnerId
+                ? "lose"
+                : "draw"
+          }
+          winnerName={room.players.find((p) => p.id === gameResult.winnerId)?.name}
+          isHost={playerId === room.hostId}
+          onRematch={startGame}
+          onLeave={leaveRoom}
+        />
       )}
 
       <div style={styles.board}>
@@ -135,12 +132,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: "bold",
     margin: "0.5rem 0 1rem",
   },
-  result: {
-    fontSize: "1.4rem",
-    fontWeight: "bold",
-    margin: "0.5rem 0 1rem",
-    color: "#c90",
-  },
   board: {
     display: "flex",
     flexDirection: "column",
@@ -177,30 +168,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "8px",
     border: "none",
     background: "#d9904a",
-    color: "#fff",
-    cursor: "pointer",
-  },
-  resultButtons: {
-    display: "flex",
-    gap: "1rem",
-    justifyContent: "center",
-    marginTop: "1rem",
-  },
-  rematchButton: {
-    padding: "0.75rem 2rem",
-    fontSize: "1rem",
-    borderRadius: "8px",
-    border: "none",
-    background: "#2d8a2d",
-    color: "#fff",
-    cursor: "pointer",
-  },
-  lobbyButton: {
-    padding: "0.75rem 2rem",
-    fontSize: "1rem",
-    borderRadius: "8px",
-    border: "none",
-    background: "#666",
     color: "#fff",
     cursor: "pointer",
   },
