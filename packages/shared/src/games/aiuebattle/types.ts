@@ -45,6 +45,7 @@ export interface AiueBattleState {
   attackCount: number;
   lastAttackHit: boolean;
   lastAttackChar: string | null;
+  lastAttackPlayerId: string | null;
   revealed: Record<string, (boolean | "end")[]>;
   eliminatedPlayers: string[];
   eliminationOrder: string[];

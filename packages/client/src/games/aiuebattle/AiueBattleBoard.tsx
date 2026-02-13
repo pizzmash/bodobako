@@ -67,6 +67,10 @@ const INJECTED_STYLES = `
   0%,100%{ box-shadow:0 0 0 0 rgba(74,111,165,.4) }
   50%{ box-shadow:0 0 0 10px rgba(74,111,165,0) }
 }
+@keyframes ab-boardPulse {
+  0%,100%{ box-shadow:0 0 4px 0 rgba(74,111,165,.3) }
+  50%{ box-shadow:0 0 16px 4px rgba(74,111,165,.35) }
+}
 @keyframes ab-charPop {
   0%{ transform:scale(0); opacity:0 }
   60%{ transform:scale(1.2) }
@@ -125,6 +129,10 @@ const INJECTED_STYLES = `
 }
 .ab-battle-char:active:not(:disabled) {
   transform: scale(.96) !important;
+}
+.ab-board-pulse {
+  animation: ab-boardPulse 2s ease-in-out infinite !important;
+  border-color: ${C.primary} !important;
 }
 .ab-action-btn {
   transition: transform .12s, box-shadow .12s, filter .12s !important;
@@ -510,9 +518,9 @@ export function AiueBattleBoard() {
             ...styles.attackBanner,
             ...(state.lastAttackHit
               ? {
-                  background: C.hitBg,
-                  borderColor: C.hit,
-                  color: C.hit,
+                  background: "#f0faf0",
+                  borderColor: C.success,
+                  color: C.success,
                   animation: attackAnim === "hit" ? "ab-shake .5s ease-out" : undefined,
                 }
               : {
@@ -523,7 +531,10 @@ export function AiueBattleBoard() {
                 }),
           }}
         >
-          「{state.lastAttackChar}」→{" "}
+          <span style={{ fontWeight: 700 }}>
+            {room.players.find((p) => p.id === state.lastAttackPlayerId)?.name ?? "?"}
+          </span>
+          ：「{state.lastAttackChar}」→{" "}
           {state.lastAttackHit ? "ヒット！" : "ミス"}
         </div>
       )}
@@ -540,7 +551,17 @@ export function AiueBattleBoard() {
       )}
 
       {/* 五十音ボード */}
-      <div style={styles.kbCard}>
+      <div
+        className={isMyTurn ? "ab-board-pulse" : ""}
+        style={{
+          ...styles.kbCard,
+          ...(!isMyTurn ? {
+            opacity: 0.5,
+            filter: "grayscale(0.4)",
+            pointerEvents: "none" as const,
+          } : {}),
+        }}
+      >
         <div style={styles.boardGrid}>
           {BOARD_LAYOUT.map((row, ri) => (
             <div key={ri} style={styles.boardRow}>
@@ -551,14 +572,15 @@ export function AiueBattleBoard() {
                 return (
                   <button
                     key={ci}
-                    className={used ? "" : "ab-battle-char"}
+                    className={used || !isMyTurn ? "" : "ab-battle-char"}
                     style={{
                       ...styles.charButton,
                       ...(used
                         ? styles.charUsed
                         : {
                             cursor: isMyTurn ? "pointer" : "default",
-                            borderColor: isMyTurn ? C.primary : "#aaa",
+                            borderColor: isMyTurn ? C.primary : "#ccc",
+                            color: isMyTurn ? C.textMain : C.textSub,
                           }),
                     }}
                     disabled={!isMyTurn || used || state.finished}
