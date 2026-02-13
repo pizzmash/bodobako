@@ -223,3 +223,48 @@ export function toRoomInfo(room: Room): RoomInfo {
     gameState: room.gameState,
   };
 }
+
+// --- Admin functions ---
+
+export function getAllRooms(): Room[] {
+  return Array.from(rooms.values());
+}
+
+export function getAdminSnapshot() {
+  const connectedSocketIds = new Set<string>();
+  for (const room of rooms.values()) {
+    for (const socketId of room.socketToPlayer.keys()) {
+      connectedSocketIds.add(socketId);
+    }
+  }
+
+  const roomList = Array.from(rooms.values()).map((room) => {
+    const players = room.players.map((p) => {
+      const isConnected = Array.from(room.socketToPlayer.values()).includes(p.id);
+      return {
+        id: p.id,
+        name: p.name,
+        connected: isConnected,
+        isHost: p.id === room.hostId,
+      };
+    });
+
+    return {
+      code: room.code,
+      gameId: room.gameId,
+      status: room.status,
+      hostId: room.hostId,
+      playerCount: room.players.length,
+      players,
+      hasGameState: room.gameState != null,
+      hasGameResult: room.gameResult != null,
+    };
+  });
+
+  return {
+    roomCount: rooms.size,
+    sessionCount: sessionToPlayer.size,
+    disconnectTimerCount: disconnectTimers.size,
+    rooms: roomList,
+  };
+}
