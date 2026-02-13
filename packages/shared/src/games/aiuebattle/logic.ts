@@ -63,7 +63,7 @@ export function processAttack(
   const newUsedChars = [...state.usedChars];
   newUsedChars[charIndex] = true;
 
-  const newRevealed: Record<string, boolean[]> = {};
+  const newRevealed: Record<string, (boolean | "end")[]> = {};
   for (const id of state.playerIds) {
     newRevealed[id] = [...state.revealed[id]];
   }
@@ -119,6 +119,14 @@ export function processAttack(
   };
 
   if (finished) {
+    // ゲーム終了時は未オープンの文字を "end" としてオープンする
+    for (const id of state.playerIds) {
+      for (let i = 0; i < newRevealed[id].length; i++) {
+        if (!newRevealed[id][i]) {
+          newRevealed[id][i] = "end";
+        }
+      }
+    }
     return newState;
   }
 

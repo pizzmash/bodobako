@@ -186,9 +186,10 @@ export function AiueBattleBoard() {
   const state = gameState as AiueBattleState | null;
   const [wordChars, setWordChars] = useState<string[]>([]);
   const [customTopic, setCustomTopic] = useState("");
+  const [showWordConfirm, setShowWordConfirm] = useState(false);
   const [attackAnim, setAttackAnim] = useState<"hit" | "miss" | null>(null);
   const [newlyRevealed, setNewlyRevealed] = useState<Set<string>>(new Set());
-  const prevRevealedRef = useRef<Record<string, boolean[]>>({});
+  const prevRevealedRef = useRef<Record<string, (boolean | "end")[]>>({});
 
   useInjectStyles();
 
@@ -222,7 +223,7 @@ export function AiueBattleBoard() {
       setNewlyRevealed(fresh);
       const timer = setTimeout(() => setNewlyRevealed(new Set()), 500);
       // snapshot current revealed state
-      const snapshot: Record<string, boolean[]> = {};
+      const snapshot: Record<string, (boolean | "end")[]> = {};
       for (const pid of state.playerIds) {
         if (state.revealed[pid]) snapshot[pid] = [...state.revealed[pid]];
       }
@@ -230,7 +231,7 @@ export function AiueBattleBoard() {
       return () => clearTimeout(timer);
     }
     // snapshot even if no new reveals
-    const snapshot: Record<string, boolean[]> = {};
+    const snapshot: Record<string, (boolean | "end")[]> = {};
     for (const pid of state.playerIds) {
       if (state.revealed[pid]) snapshot[pid] = [...state.revealed[pid]];
     }
@@ -411,14 +412,52 @@ export function AiueBattleBoard() {
                   opacity: wordChars.length >= 2 ? 1 : 0.5,
                 }}
                 disabled={wordChars.length < 2}
-                onClick={() => {
-                  sendTypedMove({ type: "submit-word", word: wordChars });
-                  setWordChars([]);
-                }}
+                onClick={() => setShowWordConfirm(true)}
               >
                 送信
               </button>
             </div>
+
+            {/* 回答確認モーダル */}
+            {showWordConfirm && (
+              <div style={styles.confirmOverlay} onClick={() => setShowWordConfirm(false)}>
+                <div style={styles.confirmCard} onClick={(e) => e.stopPropagation()}>
+                  <div style={styles.confirmTitle}>この回答でよろしいですか？</div>
+                  <div style={styles.confirmWord}>
+                    {Array.from({ length: WORD_LENGTH }, (_, i) => {
+                      const c = wordChars[i] ?? "×";
+                      const isFiller = i >= wordChars.length;
+                      return (
+                        <span key={i} style={{
+                          ...styles.confirmChar,
+                          ...(isFiller ? { background: "#f5f5f5", borderColor: "#ccc", color: C.textSub } : {}),
+                        }}>{c}</span>
+                      );
+                    })}
+                  </div>
+                  <div style={styles.confirmButtons}>
+                    <button
+                      className="ab-action-btn"
+                      style={styles.confirmCancel}
+                      onClick={() => setShowWordConfirm(false)}
+                    >
+                      戻る
+                    </button>
+                    <button
+                      className="ab-action-btn"
+                      style={styles.confirmSubmit}
+                      onClick={() => {
+                        sendTypedMove({ type: "submit-word", word: wordChars });
+                        setWordChars([]);
+                        setShowWordConfirm(false);
+                      }}
+                    >
+                      決定
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -594,6 +633,9 @@ export function AiueBattleBoard() {
                   if (isMe) {
                     bg = revealed ? C.hitBg : "#e8f0fe";
                     borderClr = revealed ? C.hit : C.primary;
+                  } else if (revealed === "end") {
+                    bg = c === "×" ? "#f5f5f5" : "#e8e8e8";
+                    borderClr = c === "×" ? C.borderDark : "#bbb";
                   } else if (revealed) {
                     bg = c === "×" ? "#f5f5f5" : "#fffbe6";
                     borderClr = c === "×" ? C.borderDark : C.warning;
@@ -862,5 +904,80 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "1rem",
     fontWeight: "bold",
     transition: "background .3s, border-color .3s",
+  },
+  confirmOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,.4)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  confirmCard: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: "1.5rem 2rem",
+    textAlign: "center" as const,
+    boxShadow: "0 8px 32px rgba(0,0,0,.2)",
+    minWidth: 260,
+    fontFamily: FONT,
+  },
+  confirmTitle: {
+    fontSize: "1.1rem",
+    fontWeight: 700,
+    marginBottom: "1rem",
+    color: C.textMain,
+  },
+  confirmWord: {
+    display: "flex",
+    gap: 6,
+    justifyContent: "center",
+    marginBottom: "1.25rem",
+  },
+  confirmChar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    background: "#e8f0fe",
+    border: `2px solid ${C.primary}`,
+    fontSize: "1.1rem",
+    fontWeight: 700,
+    color: C.textMain,
+  },
+  confirmButtons: {
+    display: "flex",
+    gap: "0.75rem",
+    justifyContent: "center",
+  },
+  confirmCancel: {
+    padding: "0.6rem 1.5rem",
+    fontSize: "0.95rem",
+    borderRadius: 10,
+    border: "none",
+    background: "#e2e8f0",
+    color: C.textMain,
+    cursor: "pointer",
+    fontFamily: FONT,
+    fontWeight: 600,
+  },
+  confirmSubmit: {
+    padding: "0.6rem 1.5rem",
+    fontSize: "0.95rem",
+    borderRadius: 10,
+    border: "none",
+    background: C.primary,
+    color: "#fff",
+    cursor: "pointer",
+    fontFamily: FONT,
+    fontWeight: 600,
+    boxShadow: `0 2px 8px ${C.primary}44`,
   },
 };
