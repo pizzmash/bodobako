@@ -1,7 +1,7 @@
-import type { AiueBattleState, AiueBattleMove, RoomInfo } from "@bodobako/shared";
+import type { AiueBattleMove, AiueBattleState, RoomInfo } from "@bodobako/shared";
 import { WORD_LENGTH } from "@bodobako/shared";
-import { C, BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, useIsWideBoard, FONT, styles } from "./constants";
 import { ConfirmModal } from "./ConfirmModal";
+import { BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, C, FONT, styles, useIsWideBoard } from "./constants";
 
 interface WordInputProps {
   state: AiueBattleState;
@@ -152,7 +152,7 @@ export function WordInput({
           disabled={wordChars.length < 2}
           onClick={() => setShowWordConfirm(true)}
         >
-          送信
+          確認
         </button>
       </div>
 
