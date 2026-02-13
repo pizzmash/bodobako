@@ -1,6 +1,6 @@
 import type { AiueBattleState, AiueBattleMove, RoomInfo, GameResult } from "@bodobako/shared";
 import { GameResultCard } from "../../components/GameResultCard";
-import { C, BOARD_LAYOUT, charToIndex, styles } from "./constants";
+import { C, BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, charToIndex, useIsWideBoard, styles } from "./constants";
 import { PlayerSheet } from "./PlayerSheet";
 
 interface BattleBoardProps {
@@ -32,6 +32,8 @@ export function BattleBoard({
   const isMyTurn =
     state.playerIds[state.currentPlayerIndex] === playerId && !state.finished;
   const isEliminated = state.eliminatedPlayers.includes(playerId);
+  const isWide = useIsWideBoard();
+  const layout = isWide ? BOARD_LAYOUT_HORIZONTAL : BOARD_LAYOUT;
 
   return (
     <>
@@ -110,11 +112,11 @@ export function BattleBoard({
           } : {}),
         }}
       >
-        <div style={styles.boardGrid}>
-          {BOARD_LAYOUT.map((row, ri) => (
-            <div key={ri} style={styles.boardRow}>
+        <div style={isWide ? styles.boardGridH : styles.boardGrid}>
+          {layout.map((row, ri) => (
+            <div key={ri} style={isWide ? styles.boardRowH : styles.boardRow}>
               {row.map((char, ci) => {
-                if (!char) return <div key={ci} style={styles.charEmpty} />;
+                if (!char) return <div key={ci} style={isWide ? styles.charEmptyH : styles.charEmpty} />;
                 const idx = charToIndex(char);
                 const used = state.usedChars[idx];
                 return (
@@ -122,7 +124,7 @@ export function BattleBoard({
                     key={ci}
                     className={used || !isMyTurn ? "" : "ab-battle-char"}
                     style={{
-                      ...styles.charButton,
+                      ...(isWide ? styles.charButtonH : styles.charButton),
                       ...(used
                         ? styles.charUsed
                         : {

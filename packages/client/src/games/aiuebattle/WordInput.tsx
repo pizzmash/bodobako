@@ -1,11 +1,12 @@
-import type { AiueBattleState, AiueBattleMove } from "@bodobako/shared";
+import type { AiueBattleState, AiueBattleMove, RoomInfo } from "@bodobako/shared";
 import { WORD_LENGTH } from "@bodobako/shared";
-import { C, BOARD_LAYOUT, styles } from "./constants";
+import { C, BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, useIsWideBoard, FONT, styles } from "./constants";
 import { ConfirmModal } from "./ConfirmModal";
 
 interface WordInputProps {
   state: AiueBattleState;
   playerId: string;
+  room: RoomInfo;
   sendTypedMove: (move: AiueBattleMove) => void;
   wordChars: string[];
   setWordChars: (chars: string[]) => void;
@@ -16,6 +17,7 @@ interface WordInputProps {
 export function WordInput({
   state,
   playerId,
+  room,
   sendTypedMove,
   wordChars,
   setWordChars,
@@ -23,6 +25,8 @@ export function WordInput({
   setShowWordConfirm,
 }: WordInputProps) {
   const hasSubmitted = state.submittedPlayers.includes(playerId);
+  const isWide = useIsWideBoard();
+  const layout = isWide ? BOARD_LAYOUT_HORIZONTAL : BOARD_LAYOUT;
 
   if (hasSubmitted) {
     return (
@@ -33,6 +37,45 @@ export function WordInput({
             {state.playerIds.length})
           </span>
         </p>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.4rem",
+          margin: "1rem auto",
+          maxWidth: 280,
+        }}>
+          {state.playerIds.map((pid) => {
+            const name = room.players.find((p) => p.id === pid)?.name ?? "?";
+            const done = state.submittedPlayers.includes(pid);
+            return (
+              <div
+                key={pid}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "0.4rem 0.75rem",
+                  borderRadius: "8px",
+                  background: done ? "#f0faf0" : C.bgCard,
+                  border: `1px solid ${done ? C.success : C.border}`,
+                  fontFamily: FONT,
+                  fontSize: "0.9rem",
+                }}
+              >
+                <span style={{ color: C.textMain, fontWeight: pid === playerId ? 600 : 400 }}>
+                  {name}{pid === playerId ? "（あなた）" : ""}
+                </span>
+                <span style={{
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: done ? C.success : C.textSub,
+                }}>
+                  {done ? "決定済み" : "入力中..."}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -68,22 +111,22 @@ export function WordInput({
       <p style={styles.charCount}>{wordChars.length} / {WORD_LENGTH} 文字</p>
 
       <div style={styles.kbCard}>
-        <div style={styles.boardGrid}>
-          {BOARD_LAYOUT.map((row, ri) => (
-            <div key={ri} style={styles.boardRow}>
+        <div style={isWide ? styles.boardGridH : styles.boardGrid}>
+          {layout.map((row, ri) => (
+            <div key={ri} style={isWide ? styles.boardRowH : styles.boardRow}>
               {row.map((char, ci) =>
                 char ? (
                   <button
                     key={ci}
                     className="ab-char-btn"
-                    style={styles.charButton}
+                    style={isWide ? styles.charButtonH : styles.charButton}
                     disabled={wordChars.length >= WORD_LENGTH}
                     onClick={() => setWordChars([...wordChars, char])}
                   >
                     {char}
                   </button>
                 ) : (
-                  <div key={ci} style={styles.charEmpty} />
+                  <div key={ci} style={isWide ? styles.charEmptyH : styles.charEmpty} />
                 )
               )}
             </div>

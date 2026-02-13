@@ -73,9 +73,15 @@ export const PlayerSheet = memo(function PlayerSheet({
           const isNew = newlyRevealed.has(`${pid}-${i}`);
           let bg: string = "#f5f5f5";
           let borderClr: string = C.border;
-          if (isMe) {
-            bg = revealed ? C.hitBg : "#e8f0fe";
-            borderClr = revealed ? C.hit : C.primary;
+          if (isMe && revealed === "end") {
+            bg = "#e8f0fe";
+            borderClr = C.primary;
+          } else if (isMe && revealed) {
+            bg = C.hitBg;
+            borderClr = C.hit;
+          } else if (isMe) {
+            bg = "#e8f0fe";
+            borderClr = C.primary;
           } else if (revealed === "end") {
             bg = c === "×" ? "#f5f5f5" : "#e8e8e8";
             borderClr = c === "×" ? C.borderDark : "#bbb";
