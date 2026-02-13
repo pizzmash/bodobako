@@ -119,6 +119,12 @@ export function processAttack(
   };
 
   if (finished) {
+    // ゲーム終了時は全プレイヤーの回答をオープンにする
+    for (const id of state.playerIds) {
+      for (let i = 0; i < newRevealed[id].length; i++) {
+        newRevealed[id][i] = true;
+      }
+    }
     return newState;
   }
 
