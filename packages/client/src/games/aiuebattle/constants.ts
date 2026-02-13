@@ -1,4 +1,5 @@
 import type React from "react";
+import { useState, useEffect } from "react";
 import { BOARD_CHARS } from "@bodobako/shared";
 
 /* ── Colour palette ── */
@@ -34,6 +35,29 @@ export const BOARD_LAYOUT: (string | null)[][] = [
   ["わ", null, "を", null, "ん"],
   ["ー"],
 ];
+
+/* ── Horizontal (transposed) layout: 5 rows × 11 cols, あ行 on the right ── */
+export const BOARD_LAYOUT_HORIZONTAL: (string | null)[][] = [0, 1, 2, 3, 4].map(
+  (vowelIdx) =>
+    [...BOARD_LAYOUT].reverse().map((row) =>
+      vowelIdx < row.length ? (row[vowelIdx] ?? null) : null
+    )
+);
+
+const WIDE_BREAKPOINT = 600;
+
+export function useIsWideBoard(): boolean {
+  const [isWide, setIsWide] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= WIDE_BREAKPOINT
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(min-width: ${WIDE_BREAKPOINT}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsWide(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+  return isWide;
+}
 
 export function charToIndex(char: string): number {
   return (BOARD_CHARS as readonly string[]).indexOf(char);
@@ -161,6 +185,16 @@ export const styles: Record<string, React.CSSProperties> = {
     gap: "4px",
     justifyContent: "center",
   },
+  boardGridH: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "3px",
+  },
+  boardRowH: {
+    display: "flex",
+    gap: "3px",
+    justifyContent: "center",
+  },
   charButton: {
     width: "44px",
     height: "44px",
@@ -178,9 +212,30 @@ export const styles: Record<string, React.CSSProperties> = {
     boxShadow: "0 1px 2px rgba(0,0,0,.06)",
     position: "relative",
   },
+  charButtonH: {
+    width: "38px",
+    height: "38px",
+    fontSize: "1rem",
+    borderRadius: "7px",
+    border: `1.5px solid ${C.border}`,
+    background: C.bgCard,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: FONT,
+    fontWeight: 500,
+    color: C.textMain,
+    boxShadow: "0 1px 2px rgba(0,0,0,.06)",
+    position: "relative",
+  },
   charEmpty: {
     width: "44px",
     height: "44px",
+  },
+  charEmptyH: {
+    width: "38px",
+    height: "38px",
   },
   charUsed: {
     background: "#edf2f7",

@@ -68,6 +68,7 @@ export function AiueBattleBoard() {
         <WordInput
           state={state}
           playerId={playerId}
+          room={room}
           sendTypedMove={sendTypedMove}
           wordChars={wordChars}
           setWordChars={setWordChars}
