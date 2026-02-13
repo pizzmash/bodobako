@@ -26,6 +26,11 @@ export function registerGameHandlers(io: AppServer, socket: AppSocket) {
 
     try {
       const playerIds = room.players.map((p) => p.id);
+      // シャッフルして毎回順番をランダムにする
+      for (let i = playerIds.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [playerIds[i], playerIds[j]] = [playerIds[j], playerIds[i]];
+      }
       const state = startGame(room.gameId, playerIds);
       room.status = "playing";
       room.gameState = state;

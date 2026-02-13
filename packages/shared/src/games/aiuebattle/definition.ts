@@ -15,7 +15,7 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
       playerIds,
       phase: "topic-select",
       topic: null,
-      topicSelectorId: playerIds[Math.floor(Math.random() * playerIds.length)],
+      topicSelectorId: playerIds[0],
       words: {},
       submittedPlayers: [],
       usedChars: Array(BOARD_CHARS.length).fill(false),
