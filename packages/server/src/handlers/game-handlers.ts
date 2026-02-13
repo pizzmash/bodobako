@@ -55,6 +55,7 @@ export function registerGameHandlers(io: AppServer, socket: AppSocket) {
 
     if (result.result) {
       room.status = "finished";
+      room.gameResult = result.result;
       io.to(room.code).emit("room:updated", toRoomInfo(room));
       io.to(room.code).emit("game:ended", result.result);
     }

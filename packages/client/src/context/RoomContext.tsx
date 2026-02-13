@@ -4,10 +4,27 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import type { RoomInfo, GameResult } from "@bodobako/shared";
 import { socket } from "../lib/socket";
+
+const STORAGE_KEYS = {
+  sessionToken: "bodobako:sessionToken",
+  playerName: "bodobako:playerName",
+  roomCode: "bodobako:roomCode",
+  playerId: "bodobako:playerId",
+} as const;
+
+function getSessionToken(): string {
+  let token = localStorage.getItem(STORAGE_KEYS.sessionToken);
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem(STORAGE_KEYS.sessionToken, token);
+  }
+  return token;
+}
 
 interface RoomContextValue {
   room: RoomInfo | null;
@@ -34,10 +51,28 @@ export function useRoom() {
 export function RoomProvider({ children }: { children: ReactNode }) {
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
-  const [playerName, setPlayerName] = useState("");
+  const [playerName, setPlayerNameState] = useState(
+    () => localStorage.getItem(STORAGE_KEYS.playerName) ?? ""
+  );
   const [gameState, setGameState] = useState<unknown | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const reconnectAttempted = useRef(false);
+
+  const setPlayerName = useCallback((name: string) => {
+    setPlayerNameState(name);
+    localStorage.setItem(STORAGE_KEYS.playerName, name);
+  }, []);
+
+  const saveRoomSession = useCallback((roomCode: string, pid: string) => {
+    localStorage.setItem(STORAGE_KEYS.roomCode, roomCode);
+    localStorage.setItem(STORAGE_KEYS.playerId, pid);
+  }, []);
+
+  const clearRoomSession = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEYS.roomCode);
+    localStorage.removeItem(STORAGE_KEYS.playerId);
+  }, []);
 
   useEffect(() => {
     socket.connect();
@@ -54,6 +89,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       setPlayerId(null);
       setGameState(null);
       setGameResult(null);
+      clearRoomSession();
     });
     socket.on("error", (msg) => setErrorMsg(msg));
 
@@ -66,32 +102,66 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       socket.off("error");
       socket.disconnect();
     };
-  }, []);
+  }, [clearRoomSession]);
+
+  // Reconnect on mount
+  useEffect(() => {
+    if (reconnectAttempted.current) return;
+    reconnectAttempted.current = true;
+
+    const sessionToken = localStorage.getItem(STORAGE_KEYS.sessionToken);
+    const savedRoomCode = localStorage.getItem(STORAGE_KEYS.roomCode);
+    if (!sessionToken || !savedRoomCode) return;
+
+    const attemptReconnect = () => {
+      socket.emit("session:reconnect", sessionToken, (result) => {
+        if (result.success && result.room && result.playerId) {
+          setRoom(result.room);
+          setPlayerId(result.playerId);
+          setGameState(result.gameState ?? null);
+          setGameResult(result.gameResult ?? null);
+        } else {
+          clearRoomSession();
+        }
+      });
+    };
+
+    if (socket.connected) {
+      attemptReconnect();
+    } else {
+      socket.once("connect", attemptReconnect);
+    }
+  }, [clearRoomSession]);
 
   const createRoom = useCallback((playerName: string, gameId: string) => {
-    socket.emit("room:create", playerName, gameId, (roomCode) => {
+    const sessionToken = getSessionToken();
+    socket.emit("room:create", playerName, gameId, sessionToken, (roomCode) => {
       // Room will arrive via room:updated
-      // Store playerId — for creator, we need to get it from room:updated
+      // Save room session info once we get the room:updated
+      localStorage.setItem(STORAGE_KEYS.roomCode, roomCode);
     });
   }, []);
 
   const joinRoom = useCallback((roomCode: string, playerName: string) => {
-    socket.emit("room:join", roomCode, playerName, (result) => {
+    const sessionToken = getSessionToken();
+    socket.emit("room:join", roomCode, playerName, sessionToken, (result) => {
       if (!result.ok) {
         setErrorMsg(result.error ?? "参加に失敗しました");
       } else if (result.playerId) {
         setPlayerId(result.playerId);
+        saveRoomSession(roomCode, result.playerId);
       }
     });
-  }, []);
+  }, [saveRoomSession]);
 
   // For the room creator, we need to set their playerId from the room info
   useEffect(() => {
     if (room && !playerId && room.players.length > 0) {
       // The first player is the host/creator
       setPlayerId(room.hostId);
+      saveRoomSession(room.code, room.hostId);
     }
-  }, [room, playerId]);
+  }, [room, playerId, saveRoomSession]);
 
   const startGame = useCallback(() => {
     socket.emit("game:start");
@@ -107,7 +177,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setPlayerId(null);
     setGameState(null);
     setGameResult(null);
-  }, []);
+    clearRoomSession();
+  }, [clearRoomSession]);
 
   const clearError = useCallback(() => setErrorMsg(null), []);
 
