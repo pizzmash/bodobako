@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRoom } from "../context/RoomContext";
 import { getAllGames } from "@bodobako/shared";
 
@@ -91,14 +91,6 @@ const INJECTED_STYLES = `
   filter: brightness(1.08);
   transform: translateY(-1px);
 }
-.lobby-name-highlight {
-  animation: lobby-shake .4s ease;
-}
-@keyframes lobby-shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-4px); }
-  40%, 80% { transform: translateX(4px); }
-}
 `;
 
 function useInjectStyles() {
@@ -117,12 +109,9 @@ function useInjectStyles() {
 
 export function Lobby() {
   useInjectStyles();
-  const { createRoom, joinRoom, errorMsg, clearError } = useRoom();
-  const [playerName, setPlayerName] = useState("");
+  const { playerName, createRoom, joinRoom, errorMsg, clearError } = useRoom();
   const [roomCode, setRoomCode] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [nameError, setNameError] = useState(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const filteredGames = games.filter((g) => {
     if (!searchQuery.trim()) return true;
@@ -133,63 +122,17 @@ export function Lobby() {
     );
   });
 
-  const validateName = (): boolean => {
-    if (!playerName.trim()) {
-      setNameError(true);
-      nameInputRef.current?.focus();
-      // reset animation by re-triggering
-      const el = nameInputRef.current;
-      if (el) {
-        el.classList.remove("lobby-name-highlight");
-        void el.offsetWidth; // force reflow
-        el.classList.add("lobby-name-highlight");
-      }
-      return false;
-    }
-    return true;
-  };
-
   const handleCreate = (gameId: string) => {
-    if (!validateName()) return;
-    createRoom(playerName.trim(), gameId);
+    createRoom(playerName, gameId);
   };
 
   const handleJoin = () => {
-    if (!validateName()) return;
     if (!roomCode.trim()) return;
-    joinRoom(roomCode.trim().toUpperCase(), playerName.trim());
+    joinRoom(roomCode.trim().toUpperCase(), playerName);
   };
-
-  // Clear name error when user starts typing
-  useEffect(() => {
-    if (playerName.trim()) setNameError(false);
-  }, [playerName]);
 
   return (
     <div style={styles.container}>
-      {/* ── Header ── */}
-      <header style={styles.header}>
-        <div style={styles.headerTitle}>🎲 ボド箱</div>
-        <div style={styles.headerRight}>
-          <input
-            ref={nameInputRef}
-            style={{
-              ...styles.nameInput,
-              borderColor: nameError ? "#e05555" : "#e2e8f0",
-              boxShadow: nameError
-                ? "0 0 0 2px rgba(224,85,85,.25)"
-                : "none",
-            }}
-            placeholder="プレイヤー名"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-          />
-          {nameError && (
-            <span style={styles.nameErrorText}>名前を入力してください</span>
-          )}
-        </div>
-      </header>
-
       {/* ── Error banner ── */}
       {errorMsg && (
         <div style={styles.error} onClick={clearError}>
@@ -286,46 +229,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: FONT,
     background: "#f8fafc",
     color: "#2d3748",
-  },
-
-  /* Header */
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    maxWidth: 800,
-    padding: "20px 24px",
-    boxSizing: "border-box",
-  },
-  headerTitle: {
-    fontSize: "1.5rem",
-    fontWeight: 700,
-  },
-  headerRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    position: "relative",
-  },
-  nameInput: {
-    padding: "8px 12px",
-    fontSize: "0.9rem",
-    borderRadius: 8,
-    border: "1px solid #e2e8f0",
-    outline: "none",
-    width: 180,
-    boxSizing: "border-box",
-    transition: "border-color .15s, box-shadow .15s",
-  },
-  nameErrorText: {
-    position: "absolute",
-    top: "100%",
-    right: 0,
-    marginTop: 4,
-    fontSize: "0.75rem",
-    color: "#e05555",
-    whiteSpace: "nowrap",
+    paddingTop: 16,
   },
 
   /* Error */

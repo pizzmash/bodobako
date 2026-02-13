@@ -12,6 +12,8 @@ import { socket } from "../lib/socket";
 interface RoomContextValue {
   room: RoomInfo | null;
   playerId: string | null;
+  playerName: string;
+  setPlayerName: (name: string) => void;
   gameState: unknown | null;
   gameResult: GameResult | null;
   errorMsg: string | null;
@@ -32,6 +34,7 @@ export function useRoom() {
 export function RoomProvider({ children }: { children: ReactNode }) {
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
+  const [playerName, setPlayerName] = useState("");
   const [gameState, setGameState] = useState<unknown | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -113,6 +116,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       value={{
         room,
         playerId,
+        playerName,
+        setPlayerName,
         gameState,
         gameResult,
         errorMsg,

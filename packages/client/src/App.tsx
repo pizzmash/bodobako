@@ -1,14 +1,27 @@
 import { RoomProvider, useRoom } from "./context/RoomContext";
+import { AppHeader } from "./components/AppHeader";
+import { NameEntryModal } from "./components/NameEntryModal";
 import { Lobby } from "./components/Lobby";
 import { Room } from "./components/Room";
 import { GameView } from "./components/GameView";
 
 function AppContent() {
-  const { room } = useRoom();
+  const { room, playerName } = useRoom();
 
-  if (!room) return <Lobby />;
-  if (room.status === "waiting") return <Room />;
-  return <GameView />;
+  return (
+    <>
+      <AppHeader />
+      {room && room.status !== "waiting" ? (
+        <GameView />
+      ) : (
+        <>
+          <Lobby />
+          {room && room.status === "waiting" && <Room />}
+        </>
+      )}
+      {!playerName && !room && <NameEntryModal />}
+    </>
+  );
 }
 
 export default function App() {
