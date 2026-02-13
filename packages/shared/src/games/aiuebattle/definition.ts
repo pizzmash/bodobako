@@ -23,6 +23,7 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
       attackCount: 0,
       lastAttackHit: false,
       lastAttackChar: null,
+      lastAttackPlayerId: null,
       revealed: {},
       eliminatedPlayers: [],
       eliminationOrder: [],

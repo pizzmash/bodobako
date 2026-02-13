@@ -114,6 +114,7 @@ export function processAttack(
     eliminationOrder: newEliminationOrder,
     lastAttackHit: hit,
     lastAttackChar: char,
+    lastAttackPlayerId: attackerId,
     finished,
     winnerId,
   };
