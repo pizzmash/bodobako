@@ -37,6 +37,7 @@
       border: 1px solid #1f3460;
       border-radius: 6px;
       padding: 6px 10px;
+      height: 36px;
       font-size: 0.8rem;
       cursor: pointer;
       outline: none;
@@ -47,13 +48,38 @@
       color: #e0e0e0;
       border: 1px solid #1f3460;
       border-radius: 6px;
-      padding: 6px 14px;
+      padding: 6px 10px;
+      height: 36px;
+      box-sizing: border-box;
       font-size: 0.8rem;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
       outline: none;
     }
     .refresh-controls button:hover { border-color: #7c83ff; background: #1f3460; }
+    .refresh-controls .icon-btn {
+      background: #16213e;
+      color: #e0e0e0;
+      border: 1px solid #1f3460;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      padding: 6px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.08s;
+      outline: none;
+      vertical-align: middle;
+    }
+    .refresh-controls .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .refresh-controls .icon-btn:hover { border-color: #7c83ff; background: #1f3460; transform: translateY(-2px); }
     .refresh-controls button.paused { border-color: #ef4444; color: #fca5a5; }
     .refresh-status {
       font-size: 0.75rem;
@@ -255,6 +281,12 @@
         <option value="5000">5秒</option>
         <option value="10000">10秒</option>
       </select>
+      <button id="manualBtn" class="icon-btn" title="手動更新" aria-label="手動更新">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M23 4v6h-6"></path>
+          <path d="M20.49 15A9 9 0 1 1 11 2.51"></path>
+        </svg>
+      </button>
       <button id="toggleBtn" title="自動更新の切替">一時停止</button>
     </div>
   </div>
@@ -311,6 +343,7 @@
 
     var toggleBtn = document.getElementById('toggleBtn');
     var intervalSelect = document.getElementById('intervalSelect');
+    var manualBtn = document.getElementById('manualBtn');
     var liveDot = document.getElementById('liveDot');
     var refreshLabel = document.getElementById('refreshLabel');
 
@@ -338,6 +371,14 @@
         startPolling();
       }
     });
+
+    // Manual refresh
+    if (manualBtn) {
+      manualBtn.addEventListener('click', function() {
+        // One-time immediate poll
+        poll();
+      });
+    }
 
     function startPolling() {
       stopPolling();
