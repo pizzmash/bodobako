@@ -5,6 +5,7 @@ export type {
   ServerToClientEvents,
   GameResult,
   JoinResult,
+  ReconnectResult,
 } from "./types/protocol.js";
 export { getGameDefinition, getAllGames } from "./games/index.js";
 export { othelloDefinition } from "./games/othello/index.js";
