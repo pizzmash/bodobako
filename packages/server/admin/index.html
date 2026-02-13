@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bodobako Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: #fff;
+    }
+    h1 span { color: #7c83ff; }
+
+    /* Refresh controls */
+    .refresh-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .refresh-controls select {
+      background: #16213e;
+      color: #e0e0e0;
+      border: 1px solid #1f3460;
+      border-radius: 6px;
+      padding: 6px 10px;
+      height: 36px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      outline: none;
+    }
+    .refresh-controls select:hover { border-color: #7c83ff; }
+    .refresh-controls button {
+      background: #16213e;
+      color: #e0e0e0;
+      border: 1px solid #1f3460;
+      border-radius: 6px;
+      padding: 6px 10px;
+      height: 36px;
+      box-sizing: border-box;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      outline: none;
+    }
+    .refresh-controls button:hover { border-color: #7c83ff; background: #1f3460; }
+    .refresh-controls .icon-btn {
+      background: #16213e;
+      color: #e0e0e0;
+      border: 1px solid #1f3460;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      padding: 6px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.08s;
+      outline: none;
+      vertical-align: middle;
+    }
+    .refresh-controls .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .refresh-controls .icon-btn:hover { border-color: #7c83ff; background: #1f3460; transform: translateY(-2px); }
+    .refresh-controls button.paused { border-color: #ef4444; color: #fca5a5; }
+    .refresh-status {
+      font-size: 0.75rem;
+      color: #8892b0;
+    }
+    .refresh-status .live-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .refresh-status .live-dot.off { background: #ef4444; }
+
+    /* Stats cards */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #1f3460;
+    }
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: #8892b0;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stat-card .sub {
+      font-size: 0.75rem;
+      color: #8892b0;
+      margin-top: 4px;
+    }
+
+    /* Rooms table */
+    h2 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #ccd6f6;
+    }
+    .table-wrapper {
+      background: #16213e;
+      border-radius: 12px;
+      border: 1px solid #1f3460;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.75rem;
+      color: #8892b0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #1f3460;
+      background: #0f1a33;
+    }
+    td {
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #1f3460;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr.room-row { cursor: pointer; transition: background 0.15s; }
+    tr.room-row:hover { background: #1f3460; }
+    tr.room-row.selected { background: #233565; }
+
+    .empty-msg {
+      padding: 40px;
+      text-align: center;
+      color: #8892b0;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-waiting { background: #064e3b; color: #6ee7b7; }
+    .badge-playing { background: #1e3a5f; color: #60a5fa; }
+    .badge-finished { background: #374151; color: #9ca3af; }
+
+    /* Player dots */
+    .player-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .player-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-connected { background: #34d399; }
+    .dot-disconnected { background: #ef4444; }
+
+    /* Detail panel */
+    .detail-panel {
+      background: #0f1a33;
+      border: 1px solid #1f3460;
+      border-radius: 0 0 12px 12px;
+      margin-top: -1px;
+    }
+    .detail-inner {
+      padding: 20px;
+    }
+    .detail-section {
+      margin-bottom: 16px;
+    }
+    .detail-section:last-child { margin-bottom: 0; }
+    .detail-section h3 {
+      font-size: 0.8rem;
+      color: #8892b0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .detail-players {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 8px;
+    }
+    .detail-player-card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .detail-player-card .host-badge {
+      background: #7c83ff;
+      color: #fff;
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .detail-player-card .player-id {
+      color: #8892b0;
+      font-size: 0.7rem;
+      font-family: monospace;
+    }
+    pre.json-view {
+      background: #0a0f1e;
+      border: 1px solid #1f3460;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      color: #a5b4fc;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .no-data { color: #8892b0; font-style: italic; font-size: 0.85rem; }
+
+    /* Footer */
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      color: #4a5568;
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>Bodobako</span> Admin Dashboard</h1>
+    <div class="refresh-controls">
+      <span class="refresh-status"><span class="live-dot" id="liveDot"></span><span id="refreshLabel">自動更新中</span></span>
+      <select id="intervalSelect" title="更新間隔">
+        <option value="1000">1秒</option>
+        <option value="3000" selected>3秒</option>
+        <option value="5000">5秒</option>
+        <option value="10000">10秒</option>
+      </select>
+      <button id="manualBtn" class="icon-btn" title="手動更新" aria-label="手動更新">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M23 4v6h-6"></path>
+          <path d="M20.49 15A9 9 0 1 1 11 2.51"></path>
+        </svg>
+      </button>
+      <button id="toggleBtn" title="自動更新の切替">一時停止</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat-card">
+      <div class="label">稼働時間</div>
+      <div class="value" id="uptime">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">接続ソケット数</div>
+      <div class="value" id="socketCount">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">ルーム数</div>
+      <div class="value" id="roomCount">-</div>
+      <div class="sub" id="roomBreakdown"></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">セッション数</div>
+      <div class="value" id="sessionCount">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">切断猶予中</div>
+      <div class="value" id="disconnectCount">-</div>
+    </div>
+  </div>
+
+  <h2>ルーム一覧</h2>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>コード</th>
+          <th>ゲーム</th>
+          <th>ステータス</th>
+          <th>プレイヤー</th>
+          <th>ホスト</th>
+        </tr>
+      </thead>
+      <tbody id="roomsBody">
+        <tr><td colspan="5" class="empty-msg">ルームなし</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="detailContainer"></div>
+
+  <script>
+    let selectedRoom = null;
+    let autoRefresh = true;
+    let pollInterval = 3000;
+    let timerId = null;
+
+    var toggleBtn = document.getElementById('toggleBtn');
+    var intervalSelect = document.getElementById('intervalSelect');
+    var manualBtn = document.getElementById('manualBtn');
+    var liveDot = document.getElementById('liveDot');
+    var refreshLabel = document.getElementById('refreshLabel');
+
+    toggleBtn.addEventListener('click', function() {
+      autoRefresh = !autoRefresh;
+      if (autoRefresh) {
+        toggleBtn.textContent = '一時停止';
+        toggleBtn.classList.remove('paused');
+        liveDot.classList.remove('off');
+        refreshLabel.textContent = '自動更新中';
+        startPolling();
+      } else {
+        toggleBtn.textContent = '再開';
+        toggleBtn.classList.add('paused');
+        liveDot.classList.add('off');
+        refreshLabel.textContent = '停止中';
+        stopPolling();
+      }
+    });
+
+    intervalSelect.addEventListener('change', function() {
+      pollInterval = parseInt(this.value, 10);
+      if (autoRefresh) {
+        stopPolling();
+        startPolling();
+      }
+    });
+
+    // Manual refresh
+    if (manualBtn) {
+      manualBtn.addEventListener('click', function() {
+        // One-time immediate poll
+        poll();
+      });
+    }
+
+    function startPolling() {
+      stopPolling();
+      poll();
+      timerId = setInterval(poll, pollInterval);
+    }
+
+    function stopPolling() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    function poll() {
+      fetchStats();
+      fetchRooms();
+    }
+
+    function formatUptime(ms) {
+      var s = Math.floor(ms / 1000);
+      var h = Math.floor(s / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+      if (h > 0) return h + '時間' + m + '分';
+      if (m > 0) return m + '分' + sec + '秒';
+      return sec + '秒';
+    }
+
+    async function fetchStats() {
+      try {
+        var res = await fetch('/admin/api/stats');
+        var data = await res.json();
+        document.getElementById('uptime').textContent = formatUptime(data.uptime);
+        document.getElementById('socketCount').textContent = data.socketCount;
+        document.getElementById('roomCount').textContent = data.roomCount;
+        document.getElementById('sessionCount').textContent = data.sessionCount;
+        document.getElementById('disconnectCount').textContent = data.disconnectTimerCount;
+        var rb = data.roomsByStatus;
+        var parts = [];
+        if (rb.waiting > 0) parts.push('待機: ' + rb.waiting);
+        if (rb.playing > 0) parts.push('進行中: ' + rb.playing);
+        if (rb.finished > 0) parts.push('終了: ' + rb.finished);
+        document.getElementById('roomBreakdown').textContent = parts.join(' / ') || '';
+      } catch (e) {
+        console.error('Stats fetch error:', e);
+      }
+    }
+
+    async function fetchRooms() {
+      try {
+        var res = await fetch('/admin/api/rooms');
+        var rooms = await res.json();
+        var tbody = document.getElementById('roomsBody');
+
+        if (rooms.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">ルームなし</td></tr>';
+          if (selectedRoom) {
+            selectedRoom = null;
+            document.getElementById('detailContainer').innerHTML = '';
+          }
+          return;
+        }
+
+        tbody.innerHTML = rooms.map(function(room) {
+          var badgeClass = 'badge-' + room.status;
+          var statusLabel = { waiting: '待機', playing: '進行中', finished: '終了' }[room.status] || room.status;
+          var players = room.players.map(function(p) {
+            var dotClass = p.connected ? 'dot-connected' : 'dot-disconnected';
+            return '<span class="player-tag"><span class="dot ' + dotClass + '"></span>' + escapeHtml(p.name) + '</span>';
+          }).join('');
+          var host = room.players.find(function(p) { return p.isHost; });
+          var hostName = host ? escapeHtml(host.name) : '-';
+          var isSelected = selectedRoom === room.code ? ' selected' : '';
+
+          return '<tr class="room-row' + isSelected + '" data-code="' + room.code + '">'
+            + '<td><strong>' + room.code + '</strong></td>'
+            + '<td>' + escapeHtml(room.gameId) + '</td>'
+            + '<td><span class="badge ' + badgeClass + '">' + statusLabel + '</span></td>'
+            + '<td><div class="player-list">' + players + '</div></td>'
+            + '<td>' + hostName + '</td>'
+            + '</tr>';
+        }).join('');
+
+        // Re-attach click handlers
+        tbody.querySelectorAll('.room-row').forEach(function(row) {
+          row.addEventListener('click', function() {
+            var code = this.dataset.code;
+            if (selectedRoom === code) {
+              selectedRoom = null;
+              document.getElementById('detailContainer').innerHTML = '';
+              this.classList.remove('selected');
+            } else {
+              selectedRoom = code;
+              tbody.querySelectorAll('.room-row').forEach(function(r) { r.classList.remove('selected'); });
+              this.classList.add('selected');
+              fetchRoomDetail(code);
+            }
+          });
+        });
+
+        // If a room was selected, refresh its detail
+        if (selectedRoom) {
+          var stillExists = rooms.some(function(r) { return r.code === selectedRoom; });
+          if (stillExists) {
+            fetchRoomDetail(selectedRoom);
+          } else {
+            selectedRoom = null;
+            document.getElementById('detailContainer').innerHTML = '';
+          }
+        }
+      } catch (e) {
+        console.error('Rooms fetch error:', e);
+      }
+    }
+
+    async function fetchRoomDetail(code) {
+      try {
+        var res = await fetch('/admin/api/rooms/' + code);
+        if (!res.ok) {
+          selectedRoom = null;
+          document.getElementById('detailContainer').innerHTML = '';
+          return;
+        }
+        var room = await res.json();
+        renderDetail(room);
+      } catch (e) {
+        console.error('Room detail fetch error:', e);
+      }
+    }
+
+    function saveScrollPositions() {
+      var positions = {};
+      document.querySelectorAll('.json-view').forEach(function(el, i) {
+        if (el.scrollTop > 0 || el.scrollLeft > 0) {
+          positions[i] = { top: el.scrollTop, left: el.scrollLeft };
+        }
+      });
+      return positions;
+    }
+
+    function restoreScrollPositions(positions) {
+      document.querySelectorAll('.json-view').forEach(function(el, i) {
+        if (positions[i]) {
+          el.scrollTop = positions[i].top;
+          el.scrollLeft = positions[i].left;
+        }
+      });
+    }
+
+    function renderDetail(room) {
+      var container = document.getElementById('detailContainer');
+      var scrollPositions = saveScrollPositions();
+
+      var playersHtml = room.players.map(function(p) {
+        var dotClass = p.connected ? 'dot-connected' : 'dot-disconnected';
+        var hostBadge = p.isHost ? ' <span class="host-badge">HOST</span>' : '';
+        return '<div class="detail-player-card">'
+          + '<span class="dot ' + dotClass + '"></span>'
+          + '<span>' + escapeHtml(p.name) + hostBadge + '</span>'
+          + '<span class="player-id">' + p.id.substring(0, 8) + '...</span>'
+          + '</div>';
+      }).join('');
+
+      var gameStateHtml = room.gameState
+        ? '<pre class="json-view">' + escapeHtml(JSON.stringify(room.gameState, null, 2)) + '</pre>'
+        : '<div class="no-data">なし</div>';
+
+      var gameResultHtml = room.gameResult
+        ? '<pre class="json-view">' + escapeHtml(JSON.stringify(room.gameResult, null, 2)) + '</pre>'
+        : '<div class="no-data">なし</div>';
+
+      container.innerHTML = '<div class="detail-panel"><div class="detail-inner">'
+        + '<div class="detail-section"><h3>プレイヤー (' + room.players.length + ')</h3><div class="detail-players">' + playersHtml + '</div></div>'
+        + '<div class="detail-section"><h3>ゲーム状態</h3>' + gameStateHtml + '</div>'
+        + '<div class="detail-section"><h3>ゲーム結果</h3>' + gameResultHtml + '</div>'
+        + '</div></div>';
+
+      restoreScrollPositions(scrollPositions);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Start polling
+    startPolling();
+  </script>
+</body>
+</html>
