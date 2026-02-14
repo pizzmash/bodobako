@@ -1,26 +1,17 @@
 # Bodobako - ボド箱
 
-ブラウザで遊べるリアルタイムマルチプレイヤーボードゲームプラットフォーム。ルームコードを共有するだけで、友達とオンライン対戦できる。
-
-## 収録ゲーム
-
-<!-- GAMES:START -->
-| ゲーム | 人数 | 概要 |
-|--------|------|------|
-| オセロ | 2人 | 8x8 盤面で石を挟んでひっくり返す定番ゲーム |
-| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル |
-| シティチェイス | 2〜4人 | 犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム |
-<!-- GAMES:END -->
+ブラウザ用リアルタイムマルチプレイヤーボードゲームプラットフォーム。
+ルームコードを共有してオンライン対戦が可能。
 
 ## 技術スタック
 
-| レイヤー | 技術 |
-|----------|------|
-| 言語 | TypeScript 5.7 (strict mode) |
-| フロントエンド | React 19 + Vite 6 |
-| バックエンド | Express 4 + Socket.IO 4 |
-| モジュール | ES Modules |
-| パッケージ管理 | npm workspaces (monorepo) |
+| レイヤー       | 技術                         |
+| -------------- | ---------------------------- |
+| 言語           | TypeScript 5.7 (strict mode) |
+| フロントエンド | React 19 + Vite 6            |
+| バックエンド   | Express 4 + Socket.IO 4      |
+| モジュール     | ES Modules                   |
+| パッケージ管理 | npm workspaces (monorepo)    |
 
 ## プロジェクト構成
 
@@ -41,7 +32,7 @@ bodobako/
 │   │   └── src/
 │   │       ├── index.ts          # Express + Socket.IO サーバー起動
 │   │       ├── engine/
-│   │       │   ├── room-manager.ts   # ルーム管理
+│   │       │   ├── room-manager.ts   # ルーム管理・セッション復帰
 │   │       │   └── game-engine.ts    # ゲーム進行エンジン
 │   │       └── handlers/
 │   │           ├── room-handlers.ts  # ルーム系イベントハンドラ
@@ -82,6 +73,9 @@ bodobako/
 ### 画面遷移
 
 ```
+NameEntryModal（名前入力）
+  │
+  ▼
 Lobby（ロビー）
   │  ルーム作成 or 参加
   ▼
@@ -94,22 +88,25 @@ GameView（ゲーム画面）
 Lobby or GameView
 ```
 
-ルーターは使わず、`RoomContext` の状態（`room.status`）に応じたコンポーネントの出し分けで画面遷移を実現している。
+ルーターは使わず、`RoomContext` の状態（`playerName` の有無 → `room` の有無 → `room.status`）に応じたコンポーネントの出し分けで画面遷移を実現している。
 
-### Socket.IO イベント
+### Socket.IO プロトコル
 
-| 方向 | イベント | 説明 |
-|------|----------|------|
-| Client → Server | `room:create` | ルーム作成 |
-| Client → Server | `room:join` | ルーム参加 |
-| Client → Server | `room:leave` | ルーム退出 |
-| Client → Server | `game:start` | ゲーム開始（ホストのみ） |
-| Client → Server | `game:move` | 手を打つ |
-| Server → Client | `room:updated` | ルーム状態の同期 |
-| Server → Client | `game:started` | ゲーム開始通知 |
-| Server → Client | `game:stateUpdated` | ゲーム状態更新 |
-| Server → Client | `game:ended` | ゲーム終了・結果通知 |
-| Server → Client | `error` | エラー通知 |
+| 方向            | イベント              | 説明                       |
+| --------------- | --------------------- | -------------------------- |
+| Client → Server | `room:create`         | ルーム作成                 |
+| Client → Server | `room:join`           | ルーム参加                 |
+| Client → Server | `room:leave`          | ルーム退出                 |
+| Client → Server | `game:start`          | ゲーム開始（ホストのみ）   |
+| Client → Server | `game:move`           | 手を打つ                   |
+| Client → Server | `session:reconnect`   | セッショントークンで再接続 |
+| Server → Client | `room:updated`        | ルーム状態の同期           |
+| Server → Client | `game:started`        | ゲーム開始通知             |
+| Server → Client | `game:stateUpdated`   | ゲーム状態更新             |
+| Server → Client | `game:ended`          | ゲーム終了・結果通知       |
+| Server → Client | `room:left`           | ルーム退出完了             |
+| Server → Client | `player:disconnected` | 他プレイヤーの切断通知     |
+| Server → Client | `error`               | エラー通知                 |
 
 ### GameDefinition インターフェース
 
@@ -117,21 +114,27 @@ Lobby or GameView
 
 ```typescript
 interface GameDefinition<TState, TMove> {
-  id: string;                    // 一意なゲームID（例: "othello"）
-  name: string;                  // 表示名（例: "オセロ"）
+  id: string; // 一意なゲームID（例: "othello"）
+  name: string; // 表示名（例: "オセロ"）
+  description: string; // ゲーム概要
   minPlayers: number;
   maxPlayers: number;
 
-  createInitialState(playerIds: string[]): TState;                      // 初期状態の生成
-  validateMove(state: TState, move: TMove, playerId: string): boolean;  // 手の検証
-  applyMove(state: TState, move: TMove, playerId: string): TState;     // 手の適用
-  getStatus(state: TState): GameStatus;                                 // "playing" | "finished"
-  getCurrentPlayerId(state: TState): string;                            // 現在の手番プレイヤー
-  getWinner(state: TState): string | null;                             // 勝者の判定
+  createInitialState(playerIds: string[], hostId?: string): TState;
+  validateMove(state: TState, move: TMove, playerId: string): boolean;
+  applyMove(state: TState, move: TMove, playerId: string): TState;
+  getStatus(state: TState): "playing" | "finished";
+  getCurrentPlayerId(state: TState): string;
+  getWinner(state: TState): string | null;
+  getPlayerView?(state: TState, playerId: string): unknown; // プレイヤーごとの視界制御
 }
 ```
 
-サーバーの `game-engine` がこのインターフェースを通じてゲームを動かすため、ゲーム固有のロジックはサーバー本体に一切入らない。
+サーバーの `game-engine` がこのインターフェースを通じてゲームを動かすため、ゲーム固有のロジックはサーバー本体に一切入らない。`getPlayerView` を実装すれば、非対称情報ゲームにも対応可能。
+
+### セッション管理
+
+クライアントは `crypto.randomUUID()` で生成したセッショントークンを `localStorage` に保持する。WebSocket 切断時、サーバーは猶予期間中プレイヤーのセッションを保持し、同じトークンでの `session:reconnect` により進行中のゲームに復帰できる。
 
 ## 開発
 
@@ -148,6 +151,7 @@ npm run dev
 ```
 
 以下が並行して起動する:
+
 - **Vite dev server** (クライアント): `http://localhost:5173`
 - **Express + Socket.IO** (サーバー): `http://localhost:3001`
 
@@ -161,11 +165,15 @@ npm run build
 
 shared → server → client の順にビルドされる。
 
+### 管理ダッシュボード
+
+サーバー起動後、`http://localhost:3001/admin` で稼働中のルーム一覧やソケット接続数をリアルタイムに確認できる。
+
 ### 環境変数
 
-| 変数 | デフォルト | 説明 |
-|------|-----------|------|
-| `PORT` | `3001` | サーバーのポート番号 |
+| 変数   | デフォルト | 説明                 |
+| ------ | ---------- | -------------------- |
+| `PORT` | `3001`     | サーバーのポート番号 |
 
 ## 新しいゲームの追加方法
 
@@ -199,9 +207,23 @@ export interface MyGameMove {
 ```typescript
 import type { MyGameState, MyGameMove } from "./types.js";
 
-export function createInitialState(playerIds: string[]): MyGameState { /* ... */ }
-export function validateMove(state: MyGameState, move: MyGameMove, playerId: string): boolean { /* ... */ }
-export function applyMove(state: MyGameState, move: MyGameMove, playerId: string): MyGameState { /* ... */ }
+export function createInitialState(playerIds: string[]): MyGameState {
+  /* ... */
+}
+export function validateMove(
+  state: MyGameState,
+  move: MyGameMove,
+  playerId: string,
+): boolean {
+  /* ... */
+}
+export function applyMove(
+  state: MyGameState,
+  move: MyGameMove,
+  playerId: string,
+): MyGameState {
+  /* ... */
+}
 // ...
 ```
 
@@ -215,6 +237,7 @@ import * as logic from "./logic.js";
 export const myGameDefinition: GameDefinition<MyGameState, MyGameMove> = {
   id: "mygame",
   name: "マイゲーム",
+  description: "ゲームの概要説明",
   minPlayers: 2,
   maxPlayers: 4,
   createInitialState: logic.createInitialState,
@@ -268,6 +291,7 @@ export function MyGameBoard() {
 ```
 
 `useRoom()` から取得できる主な値:
+
 - `gameState` - 現在のゲーム状態（`as MyGameState` でキャスト）
 - `playerId` - 自分のプレイヤーID
 - `sendMove(move)` - 手を送信する関数
@@ -298,3 +322,15 @@ case "mygame":
 - [ ] `npm run update-readme` で README の収録ゲーム一覧を更新した
 
 サーバー側のコード修正は不要。`GameDefinition` インターフェースを通じて自動的にゲームが動作する。
+
+## 収録
+
+<!-- GAMES:START -->
+
+| ゲーム         | 人数   | 概要                                                                        |
+| -------------- | ------ | --------------------------------------------------------------------------- |
+| オセロ         | 2人    | 8x8 盤面で石を挟んでひっくり返す定番ゲーム                                  |
+| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル              |
+| シティチェイス | 2〜4人 | 犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム |
+
+<!-- GAMES:END -->
