@@ -6,10 +6,26 @@ import {
   resetRoom,
   toRoomInfo,
 } from "../engine/room-manager.js";
-import { startGame, processMove } from "../engine/game-engine.js";
+import { startGame, processMove, getPlayerView, hasPlayerView } from "../engine/game-engine.js";
 
 type AppSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type AppServer = Server<ClientToServerEvents, ServerToClientEvents>;
+
+function emitStateToRoom(
+  io: AppServer,
+  room: { code: string; gameId: string; gameState: unknown; socketToPlayer: Map<string, string> },
+  event: "game:started" | "game:stateUpdated",
+  state: unknown
+) {
+  if (!hasPlayerView(room.gameId)) {
+    io.to(room.code).emit(event, state);
+    return;
+  }
+  for (const [socketId, playerId] of room.socketToPlayer) {
+    const view = getPlayerView(room.gameId, state, playerId);
+    io.to(socketId).emit(event, view);
+  }
+}
 
 export function registerGameHandlers(io: AppServer, socket: AppSocket) {
   socket.on("game:start", () => {
@@ -31,11 +47,11 @@ export function registerGameHandlers(io: AppServer, socket: AppSocket) {
         const j = Math.floor(Math.random() * (i + 1));
         [playerIds[i], playerIds[j]] = [playerIds[j], playerIds[i]];
       }
-      const state = startGame(room.gameId, playerIds);
+      const state = startGame(room.gameId, playerIds, room.hostId);
       room.status = "playing";
       room.gameState = state;
       io.to(room.code).emit("room:updated", toRoomInfo(room));
-      io.to(room.code).emit("game:started", state);
+      emitStateToRoom(io, room, "game:started", state);
     } catch (e: unknown) {
       socket.emit("error", (e as Error).message);
     }
@@ -56,7 +72,7 @@ export function registerGameHandlers(io: AppServer, socket: AppSocket) {
     }
 
     room.gameState = result.newState;
-    io.to(room.code).emit("game:stateUpdated", result.newState);
+    emitStateToRoom(io, room, "game:stateUpdated", result.newState);
 
     if (result.result) {
       room.status = "finished";

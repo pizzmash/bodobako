@@ -8,6 +8,7 @@ import {
   scheduleRemoval,
   toRoomInfo,
 } from "../engine/room-manager.js";
+import { getPlayerView } from "../engine/game-engine.js";
 
 type AppSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type AppServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -54,7 +55,9 @@ export function registerRoomHandlers(io: AppServer, socket: AppSocket) {
       success: true,
       room: toRoomInfo(room),
       playerId,
-      gameState: room.gameState,
+      gameState: room.gameState
+        ? getPlayerView(room.gameId, room.gameState, playerId)
+        : null,
       gameResult: room.gameResult,
     });
     io.to(room.code).emit("room:updated", toRoomInfo(room));
