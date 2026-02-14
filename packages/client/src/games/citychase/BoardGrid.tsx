@@ -197,7 +197,7 @@ export function BoardGrid({
           } else if (criminalTrace) {
             bg = "linear-gradient(135deg, #fca5a5, #f87171)";
             borderColor = "#ef4444";
-            label = "👣";
+            label = criminalRound === 1 || criminalRound === 6 ? `R${criminalRound}` : "👣";
             labelColor = "#7f1d1d";
           } else {
             // 通常ビル（捜索済みでも同じ見た目）
