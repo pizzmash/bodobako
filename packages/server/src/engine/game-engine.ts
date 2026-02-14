@@ -3,7 +3,8 @@ import type { GameResult } from "@bodobako/shared";
 
 export function startGame(
   gameId: string,
-  playerIds: string[]
+  playerIds: string[],
+  hostId?: string
 ): unknown {
   const def = getGameDefinition(gameId);
   if (!def) throw new Error(`Unknown game: ${gameId}`);
@@ -12,7 +13,22 @@ export function startGame(
       `${def.name} requires ${def.minPlayers}-${def.maxPlayers} players`
     );
   }
-  return def.createInitialState(playerIds);
+  return def.createInitialState(playerIds, hostId);
+}
+
+export function getPlayerView(
+  gameId: string,
+  state: unknown,
+  playerId: string
+): unknown {
+  const def = getGameDefinition(gameId);
+  if (!def || !def.getPlayerView) return state;
+  return def.getPlayerView(state, playerId);
+}
+
+export function hasPlayerView(gameId: string): boolean {
+  const def = getGameDefinition(gameId);
+  return !!def?.getPlayerView;
 }
 
 export function processMove(

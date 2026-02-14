@@ -7,10 +7,11 @@ export interface GameDefinition<TState = unknown, TMove = unknown> {
   minPlayers: number;
   maxPlayers: number;
 
-  createInitialState(playerIds: string[]): TState;
+  createInitialState(playerIds: string[], hostId?: string): TState;
   validateMove(state: TState, move: TMove, playerId: string): boolean;
   applyMove(state: TState, move: TMove, playerId: string): TState;
   getStatus(state: TState): GameStatus;
   getWinner(state: TState): string | null;
   getCurrentPlayerId(state: TState): string;
+  getPlayerView?(state: TState, playerId: string): unknown;
 }
