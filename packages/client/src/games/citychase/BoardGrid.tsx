@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type {
   CitychasePlayerView,
   BuildingPos,
@@ -69,6 +69,21 @@ export function BoardGrid({
   activeHelicopterIndex,
   searchableBuildings = [],
 }: Props) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  const updateScale = useCallback(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    setScale(Math.min(1, el.clientWidth / GRID_SIZE));
+  }, []);
+
+  useEffect(() => {
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, [updateScale]);
+
   useEffect(() => {
     if (document.getElementById(CSS_ID)) return;
     const tag = document.createElement("style");
@@ -77,8 +92,6 @@ export function BoardGrid({
     document.head.appendChild(tag);
     return () => { document.getElementById(CSS_ID)?.remove(); };
   }, []);
-
-  const isCriminal = state.isCriminal;
 
   const getTraceInfo = (pos: BuildingPos) =>
     state.revealedTraces.find((t) => isSamePos(t.pos, pos));
@@ -107,15 +120,25 @@ export function BoardGrid({
     hasTraces ? state.traces[posKey(pos)] ?? null : null;
 
   return (
+    <div ref={wrapperRef} style={{ width: "100%" }}>
+    <div
+      style={{
+        width: GRID_SIZE * scale,
+        height: GRID_SIZE * scale,
+        margin: "0 auto",
+        overflow: "hidden",
+      }}
+    >
     <div
       style={{
         position: "relative",
         width: GRID_SIZE,
         height: GRID_SIZE,
-        margin: "0 auto",
         background: "linear-gradient(145deg, #e2e8f0, #cbd5e0)",
         borderRadius: 12,
         boxShadow: "inset 0 2px 6px rgba(0,0,0,.1)",
+        transform: scale < 1 ? `scale(${scale})` : undefined,
+        transformOrigin: "top left",
       }}
     >
       {/*
@@ -337,6 +360,8 @@ export function BoardGrid({
           );
         })
       )}
+    </div>
+    </div>
     </div>
   );
 }
