@@ -19,6 +19,17 @@ const INJECTED_STYLES = `
 .app-header-name:hover {
   background: #e8edf4 !important;
 }
+@media (max-width: 480px) {
+  .app-header-inner {
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 8px 16px !important;
+  }
+  .app-header-right {
+    justify-content: center;
+  }
+}
 `;
 
 function useInjectStyles() {
@@ -69,7 +80,7 @@ export function AppHeader() {
 
   return (
     <header style={styles.header}>
-      <div style={styles.inner}>
+      <div className="app-header-inner" style={styles.inner}>
         {/* Brand */}
         <div className="app-header-brand" style={styles.brand}>
           <span style={styles.brandIcon}>🎲</span>
@@ -77,7 +88,7 @@ export function AppHeader() {
         </div>
 
         {/* Right side */}
-        <div style={styles.right}>
+        <div className="app-header-right" style={styles.right}>
           {/* Room context pills */}
           {room && (
             <div style={styles.context}>
