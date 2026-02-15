@@ -9,7 +9,7 @@
 | -------------- | ---------------------------- |
 | 言語           | TypeScript 5.7 (strict mode) |
 | フロントエンド | React 19 + Vite 6            |
-| バックエンド   | Express 4 + Socket.IO 4      |
+| バックエンド   | Hono 4 + Socket.IO 4         |
 | モジュール     | ES Modules                   |
 | パッケージ管理 | npm workspaces (monorepo)    |
 
@@ -30,7 +30,7 @@ bodobako/
 │   │
 │   ├── server/          # バックエンド
 │   │   └── src/
-│   │       ├── index.ts          # Express + Socket.IO サーバー起動
+│   │       ├── index.ts          # Hono + Socket.IO サーバー起動
 │   │       ├── engine/
 │   │       │   ├── room-manager.ts   # ルーム管理・セッション復帰
 │   │       │   └── game-engine.ts    # ゲーム進行エンジン
@@ -61,7 +61,7 @@ bodobako/
 ```
 ┌──────────┐    Socket.IO     ┌──────────┐    import     ┌──────────┐
 │  Client  │ ◄──────────────► │  Server  │ ◄───────────► │  Shared  │
-│ (React)  │    WebSocket     │(Express) │               │ (Types/  │
+│ (React)  │    WebSocket     │  (Hono)  │               │ (Types/  │
 │          │                  │          │               │  Logic)  │
 └──────────┘                  └──────────┘               └──────────┘
 ```
@@ -153,7 +153,7 @@ npm run dev
 以下が並行して起動する:
 
 - **Vite dev server** (クライアント): `http://localhost:5173`
-- **Express + Socket.IO** (サーバー): `http://localhost:3001`
+- **Hono + Socket.IO** (サーバー): `http://localhost:3001`
 
 Vite の proxy 設定により、クライアントからの `/socket.io` リクエストはサーバーに転送される。
 
