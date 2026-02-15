@@ -6,7 +6,7 @@
 
 - **言語:** TypeScript 5.7（strict mode）
 - **フロントエンド:** React 19 + Vite 6
-- **バックエンド:** Express 4 + Socket.IO 4
+- **バックエンド:** Hono 4 + Socket.IO 4
 - **パッケージ管理:** npm workspaces（モノレポ）
 - **スタイリング:** インライン CSS-in-JS（CSSフレームワークなし）
 - **ルーティング:** React Router不使用。`RoomContext` の状態に基づく条件レンダリング
@@ -19,7 +19,7 @@ packages/
 │   └── src/
 │       ├── types/     # game.ts, room.ts, protocol.ts
 │       └── games/     # ゲームごとのディレクトリ（othello/, aiuebattle/）
-├── server/        # Express + Socket.IO バックエンド
+├── server/        # Hono + Socket.IO バックエンド
 │   └── src/
 │       ├── index.ts
 │       ├── engine/    # game-engine.ts, room-manager.ts
@@ -41,6 +41,12 @@ npm run update-readme  # README のゲーム一覧を更新
 ```
 
 ## アーキテクチャ
+
+### バックエンド（Hono + Socket.IO）
+
+- **Hono**: 軽量高速なWebフレームワーク。管理用APIエンドポイント（`/admin/api/*`）を提供
+- **Socket.IO**: リアルタイム双方向通信。ゲームの状態更新とルーム管理に使用
+- **統合**: `@hono/node-server` を使用して Hono アプリを Node.js HTTP サーバーに変換し、Socket.IO を同じサーバーインスタンスに接続
 
 ### GameDefinition インターフェース
 
