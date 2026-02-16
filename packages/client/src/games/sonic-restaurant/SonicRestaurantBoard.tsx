@@ -15,6 +15,7 @@ import { CenterTable } from "./CenterTable";
 import { CompletedDishBanner } from "./CompletedDishBanner";
 import { HandCards } from "./HandCards";
 import { MenuSidebar } from "./MenuSidebar";
+import { OrderStartCountdown } from "./OrderStartCountdown";
 import { PlayersSidebar } from "./PlayersSidebar";
 import { SonicRestaurantResult } from "./SonicRestaurantResult";
 import "./sonic-restaurant.css";
@@ -56,6 +57,12 @@ export function SonicRestaurantBoard() {
     [sendMove]
   );
 
+  // カウントダウン完了ハンドラ
+  const handleCountdownComplete = useCallback(() => {
+    // サーバーにカウントダウン完了を通知
+    sendTypedMove({ type: "countdown-complete" });
+  }, [sendTypedMove]);
+
   // カードプレイハンドラ
   const handleCardPlay = useCallback(
     (card: Card, handIndex: number) => {
@@ -95,6 +102,9 @@ export function SonicRestaurantBoard() {
 
   return (
     <>
+      {/* カウントダウン */}
+      {state.phase === "countdown" && <OrderStartCountdown onComplete={handleCountdownComplete} />}
+
       {/* リザルト画面 */}
       {gameResult && gameResult.ranking && (
         <SonicRestaurantResult
@@ -116,6 +126,9 @@ export function SonicRestaurantBoard() {
           right: 0,
           bottom: "176px", // 手札エリアの高さ分を除く
           display: "flex",
+          pointerEvents: state.phase === "countdown" ? "none" : "auto",
+          opacity: state.phase === "countdown" ? 0.6 : 1,
+          transition: "opacity 0.3s",
         }}
       >
         {/* 左サイドバー: お品書き */}
@@ -134,7 +147,15 @@ export function SonicRestaurantBoard() {
       </main>
 
       {/* 下部: 自分の手札 */}
-      <HandCards state={state} playerId={playerId} onCardPlay={handleCardPlay} />
+      <div
+        style={{
+          pointerEvents: state.phase === "countdown" ? "none" : "auto",
+          opacity: state.phase === "countdown" ? 0.6 : 1,
+          transition: "opacity 0.3s",
+        }}
+      >
+        <HandCards state={state} playerId={playerId} onCardPlay={handleCardPlay} />
+      </div>
     </>
   );
 }

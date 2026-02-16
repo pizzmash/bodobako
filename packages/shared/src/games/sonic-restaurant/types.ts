@@ -53,6 +53,9 @@ export interface CompletedMenu {
  * 音速飯点のゲーム状態
  */
 export interface SonicRestaurantState {
+  /** ゲームフェーズ（countdown: カウントダウン中、playing: プレイ中） */
+  phase: "countdown" | "playing";
+
   /** プレイヤーIDの配列 */
   playerIds: string[];
 
@@ -84,12 +87,16 @@ export interface SonicRestaurantState {
 /**
  * 音速飯点のプレイヤーの手
  */
-export type SonicRestaurantMove = {
-  type: "play-card";
-  card: Card;
-  /** 手札内でのカードのインデックス（0始まり） */
-  handIndex: number;
-};
+export type SonicRestaurantMove =
+  | {
+      type: "play-card";
+      card: Card;
+      /** 手札内でのカードのインデックス（0始まり） */
+      handIndex: number;
+    }
+  | {
+      type: "countdown-complete";
+    };
 
 /**
  * 12種類の完成メニュー定義

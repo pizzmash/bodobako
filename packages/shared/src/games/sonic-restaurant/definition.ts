@@ -54,6 +54,7 @@ export const sonicRestaurantGame: GameDefinition<
     const menuTree = buildMenuTree();
 
     return {
+      phase: "countdown",
       playerIds,
       hands,
       currentPath: [],
@@ -71,6 +72,17 @@ export const sonicRestaurantGame: GameDefinition<
     move: SonicRestaurantMove,
     playerId: string
   ): boolean {
+    // カウントダウン完了の処理
+    if (move.type === "countdown-complete") {
+      // カウントダウンフェーズの間のみ有効
+      return state.phase === "countdown";
+    }
+
+    // カウントダウン中は通常の手は出せない
+    if (state.phase === "countdown") {
+      return false;
+    }
+
     // プレイヤーの手札を取得
     const hand = state.hands[playerId];
     if (!hand) {
@@ -112,6 +124,22 @@ export const sonicRestaurantGame: GameDefinition<
     move: SonicRestaurantMove,
     playerId: string
   ): SonicRestaurantState {
+    // カウントダウン完了の処理
+    if (move.type === "countdown-complete") {
+      if (state.phase === "countdown") {
+        return {
+          ...state,
+          phase: "playing",
+        };
+      }
+      return state;
+    }
+
+    // カウントダウン中は通常の手は処理しない
+    if (state.phase === "countdown") {
+      return state;
+    }
+
     // 【防御的チェック】非ターン制ゲームでは、validateMove通過後に
     // 状態が変わる可能性があるため、applyMove内でも再検証
     const hand = state.hands[playerId];
