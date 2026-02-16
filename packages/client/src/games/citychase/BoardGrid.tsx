@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState, useCallback } from "react";
 import type {
-  CitychasePlayerView,
-  BuildingPos,
-  IntersectionPos,
+    BuildingPos,
+    CitychasePlayerView,
+    IntersectionPos,
 } from "@bodobako/shared";
 import {
-  CITYCHASE_BOARD_SIZE as BOARD_SIZE,
-  INTERSECTION_SIZE,
-  isSamePos,
-  posKey,
+    CITYCHASE_BOARD_SIZE as BOARD_SIZE,
+    INTERSECTION_SIZE,
+    isSamePos,
+    posKey,
 } from "@bodobako/shared";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
   state: CitychasePlayerView;
