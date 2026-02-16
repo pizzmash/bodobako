@@ -37,12 +37,12 @@
   100%{ transform:rotateX(0) }
 }
 @keyframes ab-turnPulse {
-  0%,100%{ box-shadow:0 0 0 0 rgba(74,111,165,.4) }
-  50%{ box-shadow:0 0 0 10px rgba(74,111,165,0) }
+  0%,100%{ transform:scale(1); box-shadow:0 12px 35px rgba(255,188,66,0.35), 0 4px 12px rgba(0,0,0,0.1) }
+  50%{ transform:scale(1.02); box-shadow:0 16px 45px rgba(255,188,66,0.45), 0 6px 16px rgba(0,0,0,0.12) }
 }
 @keyframes ab-boardPulse {
-  0%,100%{ box-shadow:0 0 4px 0 rgba(74,111,165,.3) }
-  50%{ box-shadow:0 0 16px 4px rgba(74,111,165,.35) }
+  0%,100%{ box-shadow:0 10px 30px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.05) }
+  50%{ box-shadow:0 14px 40px rgba(244,209,37,.2), 0 4px 12px rgba(0,0,0,.08) }
 }
 @keyframes ab-charPop {
   0%{ transform:scale(0); opacity:0 }
@@ -54,8 +54,8 @@
   to{ opacity:1; transform:translateY(0) }
 }
 @keyframes ab-glowPulse {
-  0%,100%{ box-shadow:0 0 8px rgba(74,111,165,.3) }
-  50%{ box-shadow:0 0 20px rgba(74,111,165,.5) }
+  0%,100%{ box-shadow:0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04) }
+  50%{ box-shadow:0 12px 32px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06) }
 }
 @keyframes ab-hitFlash {
   0%{ background:rgba(224,85,85,.3) }
@@ -68,58 +68,58 @@
 
 /* hover / active classes */
 .ab-topic-btn {
-  transition: transform .15s, box-shadow .15s, border-color .15s !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .ab-topic-btn:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(74,111,165,.2) !important;
-  border-color: #4a6fa5 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
 }
 .ab-topic-btn:active {
-  transform: translateY(0) !important;
-  box-shadow: 0 1px 4px rgba(74,111,165,.15) !important;
+  transform: translateY(0px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
 }
 .ab-char-btn {
-  transition: transform .12s, box-shadow .12s, background .12s !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .ab-char-btn:hover:not(:disabled) {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 3px 8px rgba(0,0,0,.12) !important;
-  background: #f8fafc !important;
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+  background: linear-gradient(145deg, #ffffff, #fafafa) !important;
 }
 .ab-char-btn:active:not(:disabled) {
-  transform: scale(.95) !important;
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5) !important;
 }
 .ab-battle-char {
-  transition: transform .12s, box-shadow .12s, background .12s !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .ab-battle-char:hover:not(:disabled) {
-  transform: scale(1.12) !important;
-  box-shadow: 0 4px 12px rgba(74,111,165,.25) !important;
-  background: #6b8fc5 !important;
-  color: #fff !important;
-  z-index: 2;
+  transform: translateY(-3px) scale(1.08) !important;
+  box-shadow: 0 8px 24px rgba(244,209,37,0.35), 0 4px 8px rgba(0,0,0,0.1) !important;
+  background: linear-gradient(135deg, #f4d125, #ffec6e) !important;
 }
 .ab-battle-char:active:not(:disabled) {
-  transform: scale(.96) !important;
+  transform: translateY(-1px) scale(1.04) !important;
+  box-shadow: 0 4px 12px rgba(244,209,37,0.3), 0 2px 4px rgba(0,0,0,0.08) !important;
 }
 .ab-board-pulse {
   animation: ab-boardPulse 2s ease-in-out infinite !important;
-  border-color: #4a6fa5 !important;
 }
 .ab-action-btn {
-  transition: transform .12s, box-shadow .12s, filter .12s !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .ab-action-btn:hover:not(:disabled) {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,.15) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px currentColor, 0 3px 8px rgba(0,0,0,0.15) !important;
   filter: brightness(1.08) !important;
 }
 .ab-action-btn:active:not(:disabled) {
-  transform: translateY(0) !important;
+  transform: translateY(0px) scale(1) !important;
+  box-shadow: 0 2px 8px currentColor, 0 1px 3px rgba(0,0,0,0.1) !important;
 }
 .ab-input:focus {
   outline: none !important;
-  border-color: #4a6fa5 !important;
-  box-shadow: 0 0 0 3px rgba(74,111,165,.2) !important;
+  border-color: #f4d125 !important;
+  box-shadow: 0 0 0 3px rgba(244,209,37,.2), 0 2px 8px rgba(0,0,0,0.08) !important;
 }
+

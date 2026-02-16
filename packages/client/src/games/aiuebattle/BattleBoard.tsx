@@ -37,27 +37,105 @@ export function BattleBoard({
 
   return (
     <>
-      {/* Turn banner */}
+      {/* Topic & Turn banner (横一列) */}
       {!gameResult && (
         <div
           style={{
-            ...styles.turnBanner,
-            ...(isMyTurn
-              ? {
-                  background: `linear-gradient(135deg, ${C.primary}, ${C.primaryLight})`,
-                  color: "#fff",
-                  animation: "ab-turnPulse 2s ease-in-out infinite",
-                }
-              : isEliminated
-                ? { background: "#e2e8f0", color: C.textSub }
-                : {}),
+            display: "grid",
+            gridTemplateColumns: "minmax(150px, 1fr) minmax(0, 2fr)",
+            gap: "0.5rem",
+            margin: "0 0 1rem",
           }}
         >
-          {isEliminated
-            ? "あなたは脱落しました"
-            : isMyTurn
-              ? `あなたの番です${state.attackCount > 0 ? "（連続攻撃！）" : ""}`
-              : `${currentPlayer?.name ?? "..."} の番です`}
+          {/* お題カード */}
+          <div
+            style={{
+              background: "linear-gradient(145deg, #ffffff, #fafafa)",
+              padding: "clamp(0.75rem, 3vw, 1.5rem)",
+              borderRadius: "clamp(12px, 3vw, 20px)",
+              border: "none",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+              transform: "rotate(-1deg)",
+              textAlign: "center",
+              overflow: "visible",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "clamp(0.5rem, 1.5vw, 0.65rem)",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                color: "#fff",
+                background: "linear-gradient(135deg, #f4d125, #ffbc42)",
+                padding: "clamp(0.25rem, 1vw, 0.4rem) clamp(0.5rem, 2vw, 1rem)",
+                borderRadius: "clamp(12px, 3vw, 20px)",
+                display: "inline-block",
+                marginBottom: "clamp(0.35rem, 1.5vw, 0.75rem)",
+                boxShadow: "0 2px 8px rgba(244,209,37,0.3)",
+              }}
+            >
+              Topic
+            </div>
+            <p style={{ 
+              fontSize: state.topic.length > 20 
+                ? "clamp(0.9rem, 3vw, 1.3rem)" 
+                : state.topic.length > 12 
+                  ? "clamp(1rem, 3.5vw, 1.6rem)" 
+                  : "clamp(1.2rem, 4vw, 2rem)", 
+              fontWeight: 900, 
+              color: C.textMain, 
+              margin: 0, 
+              letterSpacing: "0.02em", 
+              wordBreak: "break-word", 
+              lineHeight: "1.2" 
+            }}>
+              {state.topic}
+            </p>
+          </div>
+
+          {/* ステータスメッセージボックス */}
+          <div
+            style={{
+              ...(isMyTurn
+                ? {
+                    background: "linear-gradient(135deg, #ffbc42, #ffd96a)",
+                    color: C.textMain,
+                    animation: "ab-turnPulse 2s ease-in-out infinite",
+                    boxShadow: "0 12px 35px rgba(255,188,66,0.35), 0 4px 12px rgba(0,0,0,0.1)",
+                  }
+                : isEliminated
+                  ? { 
+                      background: "linear-gradient(145deg, #e2e8f0, #cbd5e0)",
+                      color: C.textSub,
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                    }
+                  : { 
+                      background: "linear-gradient(145deg, #ffffff, #fafafa)",
+                      color: C.textMain,
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                    }),
+              padding: "clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem)",
+              borderRadius: "clamp(16px, 4vw, 24px)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "clamp(1rem, 3vw, 1.5rem)",
+              fontWeight: 900,
+              position: "relative",
+              overflow: "hidden",
+              letterSpacing: "0.02em",
+              minWidth: 0,
+              textAlign: "center",
+            }}
+          >
+            {isEliminated
+              ? "あなたは脱落しました"
+              : isMyTurn
+                ? `🎯 あなたの番です！${state.attackCount > 0 ? " （連続攻撃！）" : ""}`
+                : `${currentPlayer?.name ?? "..."} の番です`}
+          </div>
         </div>
       )}
 
@@ -65,23 +143,29 @@ export function BattleBoard({
       {state.lastAttackChar && !gameResult && (
         <div
           style={{
-            ...styles.attackBanner,
+            fontSize: "1.1rem",
+            fontWeight: 700,
+            margin: "0 0 1rem",
+            padding: "1rem 1.5rem",
+            borderRadius: "16px",
+            textAlign: "center",
+            letterSpacing: "0.02em",
             ...(state.lastAttackHit
               ? {
-                  background: "#f0faf0",
-                  borderColor: C.success,
-                  color: C.success,
+                  background: "linear-gradient(135deg, #06d6a0, #4ade80)",
+                  color: "#fff",
+                  boxShadow: "0 8px 24px rgba(6,214,160,0.35), 0 2px 8px rgba(0,0,0,0.1)",
                   animation: attackAnim === "hit" ? "ab-shake .5s ease-out" : undefined,
                 }
               : {
-                  background: "#f7f7f7",
-                  borderColor: "#ccc",
+                  background: "linear-gradient(145deg, #f5f5f5, #e5e5e5)",
                   color: C.textSub,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   animation: attackAnim === "miss" ? "ab-missFade .5s ease-out" : undefined,
                 }),
           }}
         >
-          <span style={{ fontWeight: 700 }}>
+          <span style={{ fontWeight: 800 }}>
             {room.players.find((p) => p.id === state.lastAttackPlayerId)?.name ?? "?"}
           </span>
           ：「{state.lastAttackChar}」→{" "}
@@ -119,6 +203,7 @@ export function BattleBoard({
                 if (!char) return <div key={ci} style={isWide ? styles.charEmptyH : styles.charEmpty} />;
                 const idx = charToIndex(char);
                 const used = state.usedChars[idx];
+                
                 return (
                   <button
                     key={ci}
@@ -129,8 +214,8 @@ export function BattleBoard({
                         ? styles.charUsed
                         : {
                             cursor: isMyTurn ? "pointer" : "default",
-                            borderColor: isMyTurn ? C.primary : "#ccc",
-                            color: isMyTurn ? C.textMain : C.textSub,
+                            background: isMyTurn ? "#fff" : "#f5f5f5",
+                            color: C.textMain,
                           }),
                     }}
                     disabled={!isMyTurn || used || state.finished}
