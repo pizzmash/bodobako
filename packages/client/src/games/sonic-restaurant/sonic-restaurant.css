@@ -1,0 +1,76 @@
+/**
+ * 音速飯点 - CSSアニメーション定義
+ */
+
+/* カードホバーアニメーション */
+@keyframes sr-card-hover {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-15px);
+  }
+}
+
+/* 完成メニューバナーの登場アニメーション */
+@keyframes sr-dish-complete {
+  0% {
+    transform: scale(0.8) rotate(-5deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+/* 新しく出されたカードのフラッシュアニメーション */
+@keyframes sr-new-card-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 204, 0, 0);
+  }
+}
+
+/* パルスアニメーション（製作可能バッジ用） */
+@keyframes sr-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* 手札カードのホバー効果 */
+.sr-hand-card:hover:not(:disabled) {
+  transform: translateY(-15px) !important;
+  border-color: #ffd700 !important;
+  border-width: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  z-index: 10 !important;
+}
+
+.sr-hand-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 手札スクロールバー非表示 */
+.sr-hand-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* 中華風パターン背景 */
+.sr-chinese-pattern {
+  background-color: #d74242;
+  background-image: radial-gradient(#b53333 1px, transparent 1px);
+  background-size: 20px 20px;
+}
