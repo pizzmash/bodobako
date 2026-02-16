@@ -1,6 +1,6 @@
-import type { AiueBattleState, AiueBattleMove, RoomInfo, GameResult } from "@bodobako/shared";
+import type { AiueBattleMove, AiueBattleState, GameResult, RoomInfo } from "@bodobako/shared";
 import { GameResultCard } from "../../components/GameResultCard";
-import { C, BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, charToIndex, useIsWideBoard, styles } from "./constants";
+import { BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, C, charToIndex, styles, useIsWideBoard } from "./constants";
 import { PlayerSheet } from "./PlayerSheet";
 
 interface BattleBoardProps {

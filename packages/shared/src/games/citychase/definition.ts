@@ -1,27 +1,26 @@
 import type { GameDefinition } from "../../types/game.js";
-import type {
-  CitychaseState,
-  CitychaseMove,
-  CitychasePlayerView,
-} from "./types.js";
 import {
-  HELICOPTER_COUNT,
-  MAX_ROUNDS,
-  posKey,
-  isValidBuildingPos,
-  isValidIntersectionPos,
-  isOccupiedIntersection,
-  isAdjacentIntersection,
-  isAdjacentBuilding,
-  isBuildingSurroundingIntersection,
-  getValidCriminalMoves,
-  canCriminalMove,
-  assignHelicopters,
-  getHelicoptersForPlayer,
-  advancePolice,
-  createRevealedTrace,
-  isSamePos,
+    advancePolice,
+    assignHelicopters,
+    canCriminalMove,
+    createRevealedTrace,
+    getHelicoptersForPlayer,
+    HELICOPTER_COUNT,
+    isAdjacentBuilding,
+    isAdjacentIntersection,
+    isBuildingSurroundingIntersection,
+    isOccupiedIntersection,
+    isSamePos,
+    isValidBuildingPos,
+    isValidIntersectionPos,
+    MAX_ROUNDS,
+    posKey
 } from "./logic.js";
+import type {
+    CitychaseMove,
+    CitychasePlayerView,
+    CitychaseState,
+} from "./types.js";
 
 /** criminal-turnに遷移する際、終了条件を満たしていればfinished/winningSideを設定 */
 function finalizeCriminalTurn(s: CitychaseState): CitychaseState {

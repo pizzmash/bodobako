@@ -79,31 +79,27 @@ function PlayerCard({
   const player = room.players.find((p) => p.id === pid);
   const isMe = pid === playerId;
   const isCriminal = role === "criminal";
-  const accentColor = isCriminal ? "#dc2626" : "#2563eb";
+  const accentColor = isCriminal ? "#dc2626" : "#258cf4";
 
   return (
     <div
+      className={isCriminal ? "cc-glass-panel-danger" : "cc-glass-panel"}
       style={{
         ...styles.card,
         borderLeft: `4px solid ${accentColor}`,
-        background: isCurrentTurn
-          ? isCriminal
-            ? "#fef2f2"
-            : "#eff6ff"
-          : isMe
-            ? "#f8fafc"
-            : "#ffffff",
         boxShadow: isCurrentTurn
-          ? `0 0 0 1px ${accentColor}33, 0 2px 8px ${accentColor}22`
-          : "0 1px 3px rgba(0,0,0,.08)",
+          ? `0 0 0 1px ${accentColor}, 0 4px 16px ${accentColor}44`
+          : "0 2px 8px rgba(0,0,0,.3)",
       }}
     >
       <div style={styles.cardHeader}>
         <div style={styles.nameRow}>
           <span
+            className={isCurrentTurn ? (isCriminal ? "cc-dot-danger cc-pulse-danger" : "cc-dot-primary cc-pulse") : ""}
             style={{
               ...styles.dot,
-              background: isCurrentTurn ? accentColor : "#cbd5e0",
+              background: isCurrentTurn ? accentColor : "rgba(100, 116, 139, 0.4)",
+              boxShadow: isCurrentTurn ? `0 0 8px ${accentColor}` : "none",
             }}
           />
           <span style={styles.name}>
@@ -114,23 +110,20 @@ function PlayerCard({
           </span>
           {isCurrentTurn && (
             <span
+              className="cc-text-tactical"
               style={{
                 ...styles.turnLabel,
                 color: accentColor,
               }}
             >
-              ◀ ラウンド
+              ◀ TURN
             </span>
           )}
         </div>
         <span
-          style={{
-            ...styles.roleBadge,
-            background: isCriminal ? "#fee2e2" : "#dbeafe",
-            color: isCriminal ? "#dc2626" : "#2563eb",
-          }}
+          className={`cc-status-badge ${isCriminal ? "cc-status-badge-danger" : "cc-status-badge-primary"}`}
         >
-          {isCriminal ? "犯人" : "警察"}
+          {isCriminal ? "FUGITIVE" : "POLICE"}
         </span>
       </div>
 
@@ -145,16 +138,17 @@ function PlayerCard({
                 background:
                   activeHelicopterIndex === hi
                     ? HELI_COLORS[hi % HELI_COLORS.length]
-                    : `${HELI_COLORS[hi % HELI_COLORS.length]}22`,
+                    : `${HELI_COLORS[hi % HELI_COLORS.length]}33`,
                 color:
                   activeHelicopterIndex === hi
                     ? "white"
                     : HELI_COLORS[hi % HELI_COLORS.length],
-                border: `1px solid ${HELI_COLORS[hi % HELI_COLORS.length]}66`,
+                border: `1px solid ${HELI_COLORS[hi % HELI_COLORS.length]}99`,
                 fontWeight: activeHelicopterIndex === hi ? 800 : 600,
+                boxShadow: activeHelicopterIndex === hi ? `0 0 12px ${HELI_COLORS[hi % HELI_COLORS.length]}66` : "none",
               }}
             >
-              🚁 {hi + 1}
+              H{hi + 1}
             </span>
           ))}
         </div>
@@ -167,14 +161,14 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.4rem",
+    gap: "0.5rem",
     width: "100%",
-    marginBottom: "0.75rem",
+    marginBottom: "1rem",
   },
   card: {
     borderRadius: 10,
-    padding: "0.5rem 0.75rem",
-    transition: "all 0.2s",
+    padding: "0.6rem 0.9rem",
+    transition: "all 0.3s",
   },
   cardHeader: {
     display: "flex",
@@ -184,7 +178,7 @@ const styles: Record<string, React.CSSProperties> = {
   nameRow: {
     display: "flex",
     alignItems: "center",
-    gap: "0.4rem",
+    gap: "0.5rem",
   },
   dot: {
     width: 8,
@@ -195,36 +189,45 @@ const styles: Record<string, React.CSSProperties> = {
   name: {
     fontSize: "0.9rem",
     fontWeight: 700,
-    color: "#1e293b",
+    color: "#ffffff",
+    letterSpacing: "0.02em",
   },
   youLabel: {
-    fontSize: "0.6rem",
+    fontSize: "0.55rem",
     fontWeight: 800,
-    color: "#6366f1",
-    background: "#eef2ff",
-    padding: "0.1rem 0.3rem",
+    color: "#258cf4",
+    background: "rgba(37, 140, 244, 0.15)",
+    padding: "0.15rem 0.4rem",
     borderRadius: 4,
     marginLeft: "0.3rem",
     verticalAlign: "middle",
+    border: "1px solid rgba(37, 140, 244, 0.3)",
+    letterSpacing: "0.05em",
   },
   turnLabel: {
-    fontSize: "0.7rem",
+    fontSize: "0.65rem",
     fontWeight: 700,
   },
   roleBadge: {
-    fontSize: "0.7rem",
+    fontSize: "0.65rem",
     fontWeight: 700,
-    padding: "0.15rem 0.5rem",
-    borderRadius: 8,
+    padding: "0.2rem 0.6rem",
+    borderRadius: 6,
+    letterSpacing: "0.05em",
+    textTransform: "uppercase",
   },
   heliRow: {
     display: "flex",
-    gap: "0.3rem",
-    marginTop: "0.3rem",
+    gap: "0.4rem",
+    marginTop: "0.4rem",
   },
   heliBadge: {
-    fontSize: "0.7rem",
-    padding: "0.1rem 0.4rem",
+    fontSize: "0.65rem",
+    padding: "0.15rem 0.5rem",
     borderRadius: 6,
+    transition: "all 0.2s",
+    fontFamily: "'Orbitron', monospace",
+    letterSpacing: "0.05em",
+    fontWeight: 700,
   },
 };

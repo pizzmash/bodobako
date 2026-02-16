@@ -1,12 +1,12 @@
 import type { GameDefinition, GameStatus } from "../../types/game.js";
-import type { OthelloState, OthelloMove } from "./types.js";
 import {
-  createBoard,
-  isValidMove,
-  applyMoveToBoard,
-  getValidMoves,
-  countDiscs,
+    applyMoveToBoard,
+    countDiscs,
+    createBoard,
+    getValidMoves,
+    isValidMove,
 } from "./logic.js";
+import type { OthelloMove, OthelloState } from "./types.js";
 
 export const othelloDefinition: GameDefinition<OthelloState, OthelloMove> = {
   id: "othello",

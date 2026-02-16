@@ -32,24 +32,32 @@ export function SetupPhase({ state, playerId, room, sendMove }: Props) {
 
       {/* ターン案内 */}
       <div
+        className={isMyTurn ? "cc-glass-panel cc-pulse" : "cc-glass-panel"}
         style={{
           ...styles.turnGuide,
-          background:
-            isMyTurn
-              ? state.phase === "criminal-setup"
-                ? "linear-gradient(135deg, #dc2626, #b91c1c)"
-                : "linear-gradient(135deg, #2563eb, #1d4ed8)"
-              : "#f1f5f9",
-          color: isMyTurn ? "white" : "#64748b",
-          border: isMyTurn ? "none" : "1px solid #e2e8f0",
+          borderColor: isMyTurn
+            ? state.phase === "criminal-setup"
+              ? "rgba(220, 38, 38, 0.5)"
+              : "rgba(37, 140, 244, 0.5)"
+            : "rgba(100, 116, 139, 0.3)",
+          color: isMyTurn ? "#ffffff" : "#94a3b8",
+          boxShadow: isMyTurn
+            ? state.phase === "criminal-setup"
+              ? "0 0 20px rgba(220, 38, 38, 0.3)"
+              : "0 0 20px rgba(37, 140, 244, 0.3)"
+            : "0 2px 8px rgba(0,0,0,.3)",
         }}
       >
         {state.phase === "police-setup"
           ? isMyTurn
-            ? `🚁 ヘリ #${state.currentHelicopterIndex + 1} を配置する交差点をクリック`
+            ? (<span className="cc-text-tactical" style={{ fontSize: "0.8rem" }}>
+                [H{state.currentHelicopterIndex + 1}] ヘリ #{state.currentHelicopterIndex + 1} を配置する交差点をクリック
+              </span>)
             : `${currentPlayer?.name ?? "他のプレイヤー"}がヘリコプターを配置中...`
           : isMyTurn
-            ? "🚗 潜伏するビルをクリックしてください"
+            ? (<span className="cc-text-tactical" style={{ fontSize: "0.8rem" }}>
+                [TARGET] 潜伏するビルをクリックしてください
+              </span>)
             : "犯人が潜伏先を選んでいます..."}
       </div>
 
@@ -76,12 +84,14 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: "center",
     padding: "0.5rem",
     width: "100%",
+    maxWidth: 900,
   },
   turnGuide: {
-    padding: "0.5rem 1rem",
+    padding: "0.7rem 1.2rem",
     borderRadius: 10,
     fontSize: "0.85rem",
     fontWeight: 600,
-    marginBottom: "0.75rem",
+    marginBottom: "1rem",
+    border: "1px solid",
   },
 };

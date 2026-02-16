@@ -1,7 +1,7 @@
 import type { GameDefinition, GameStatus } from "../../types/game.js";
-import type { AiueBattleState, AiueBattleMove } from "./types.js";
-import { BOARD_CHARS, WORD_LENGTH } from "./types.js";
 import { isValidWord, padWord, processAttack } from "./logic.js";
+import type { AiueBattleMove, AiueBattleState } from "./types.js";
+import { BOARD_CHARS, WORD_LENGTH } from "./types.js";
 
 export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMove> = {
   id: "aiuebattle",
