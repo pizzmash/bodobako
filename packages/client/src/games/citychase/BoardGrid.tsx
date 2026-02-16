@@ -134,9 +134,10 @@ export function BoardGrid({
         position: "relative",
         width: GRID_SIZE,
         height: GRID_SIZE,
-        background: "linear-gradient(145deg, #e2e8f0, #cbd5e0)",
+        background: "radial-gradient(circle at center, rgba(37, 140, 244, 0.08), rgba(16, 25, 34, 0.95))",
         borderRadius: 12,
-        boxShadow: "inset 0 2px 6px rgba(0,0,0,.1)",
+        boxShadow: "inset 0 2px 12px rgba(0,0,0,.5), 0 4px 24px rgba(0,0,0,.3)",
+        border: "1px solid rgba(37, 140, 244, 0.2)",
         transform: scale < 1 ? `scale(${scale})` : undefined,
         transformOrigin: "top left",
       }}
@@ -161,8 +162,9 @@ export function BoardGrid({
               top: PAD + row * TOTAL,
               width: 4,
               height: CELL,
-              background: "#94a3b8",
+              background: "rgba(37, 140, 244, 0.15)",
               borderRadius: 2,
+              boxShadow: "0 0 4px rgba(37, 140, 244, 0.2)",
             }}
           />
         ))
@@ -179,8 +181,9 @@ export function BoardGrid({
               top: PAD + rowGap * TOTAL + CELL + GAP / 2 - 2,
               width: CELL,
               height: 4,
-              background: "#94a3b8",
+              background: "rgba(37, 140, 244, 0.15)",
               borderRadius: 2,
+              boxShadow: "0 0 4px rgba(37, 140, 244, 0.2)",
             }}
           />
         ))
@@ -207,25 +210,31 @@ export function BoardGrid({
           let borderColor: string;
           let label = "";
           let labelColor = "white";
+          let glowColor = "";
 
           if (isCriminalHere) {
-            bg = "linear-gradient(135deg, #dc2626, #b91c1c)";
+            bg = "linear-gradient(135deg, #dc2626, #991b1b)";
             borderColor = "#7f1d1d";
-            label = "🚗";
+            label = "T";
+            labelColor = "#ffffff";
+            glowColor = "rgba(220, 38, 38, 0.4)";
           } else if (trace) {
-            bg = "linear-gradient(135deg, #fbbf24, #f59e0b)";
+            bg = "linear-gradient(135deg, rgba(217, 119, 6, 0.5), rgba(161, 98, 7, 0.6))";
             borderColor = "#d97706";
-            label = trace.round !== null ? `R${trace.round}` : "⚠";
-            labelColor = "#78350f";
+            label = trace.round !== null ? `R${trace.round}` : "!";
+            labelColor = "#fbbf24";
+            glowColor = "rgba(217, 119, 6, 0.4)";
           } else if (criminalTrace) {
-            bg = "linear-gradient(135deg, #fca5a5, #f87171)";
-            borderColor = "#ef4444";
-            label = criminalRound === 1 || criminalRound === 6 ? `R${criminalRound}` : "👣";
-            labelColor = "#7f1d1d";
+            bg = "linear-gradient(135deg, rgba(185, 28, 28, 0.4), rgba(127, 29, 29, 0.5))";
+            borderColor = "#991b1b";
+            label = criminalRound === 1 || criminalRound === 6 ? `R${criminalRound}` : "···";
+            labelColor = "#fca5a5";
+            glowColor = "rgba(185, 28, 28, 0.3)";
           } else {
-            // 通常ビル（捜索済みでも同じ見た目）
-            bg = "linear-gradient(135deg, #64748b, #475569)";
-            borderColor = "#334155";
+            // 通常ビル（ダークテーマ）
+            bg = "linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(30, 41, 59, 0.5))";
+            borderColor = "rgba(37, 140, 244, 0.15)";
+            glowColor = "";
           }
 
           // ハイライトアニメーション（色は上書きせず枠の光で表現）
@@ -254,14 +263,19 @@ export function BoardGrid({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: label.length > 1 ? "0.65rem" : "1rem",
+                fontSize: label.length > 2 ? "0.5rem" : label.startsWith("R") ? "0.8rem" : "1.1rem",
                 color: labelColor,
-                fontWeight: 800,
-                border: `2px solid ${borderColor}`,
+                fontWeight: label === "T" ? 900 : label.startsWith("R") ? 900 : 800,
+                fontFamily: label === "T" || label === "!" ? "'Orbitron', monospace" : "monospace",
+                letterSpacing: label === "···" ? "0.05em" : "0.02em",
+                border: trace || criminalTrace ? `2px solid ${borderColor}` : `2px solid ${borderColor}`,
                 transition: "transform 0.12s, filter 0.12s",
                 userSelect: "none",
-                boxShadow: "0 1px 3px rgba(0,0,0,.15)",
+                boxShadow: glowColor 
+                  ? `0 2px 10px ${glowColor}, 0 0 15px ${glowColor}, inset 0 1px 2px rgba(255,255,255,.08)`
+                  : "0 2px 6px rgba(0,0,0,.3), inset 0 1px 2px rgba(255,255,255,.05)",
                 animation,
+                backdropFilter: "blur(4px)",
               }}
             >
               {label}
@@ -275,14 +289,15 @@ export function BoardGrid({
                     width: 14,
                     height: 14,
                     borderRadius: 3,
-                    background: "rgba(255,255,255,.85)",
+                    background: "rgba(16, 25, 34, 0.8)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "0.5rem",
-                    color: "#16a34a",
+                    color: "#00e676",
                     fontWeight: 900,
                     lineHeight: 1,
+                    border: "1px solid #00e676",
                   }}
                 >
                   ✓
@@ -327,27 +342,31 @@ export function BoardGrid({
                 background: hasHeli
                   ? heliColor
                   : highlighted
-                    ? "rgba(34,197,94,.3)"
-                    : "rgba(148,163,184,.35)",
+                    ? "rgba(0, 230, 118, 0.35)"
+                    : "rgba(37, 140, 244, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: hasHeli ? "0.85rem" : "0.6rem",
+                fontSize: hasHeli ? "0.55rem" : "0.6rem",
                 color: "white",
-                fontWeight: 700,
+                fontWeight: 900,
+                fontFamily: hasHeli ? "'Orbitron', monospace" : "inherit",
+                letterSpacing: hasHeli ? "0.05em" : "normal",
                 border: isActiveHeli
                   ? "3px solid #fbbf24"
                   : hasHeli
-                    ? `2px solid ${heliColor}88`
-                    : "none",
+                    ? `2px solid ${heliColor}cc`
+                    : "1px solid rgba(37, 140, 244, 0.3)",
                 zIndex: 10,
                 transition: "transform 0.12s, filter 0.12s",
                 userSelect: "none",
                 boxShadow: isActiveHeli
-                  ? `0 0 10px 3px ${heliColor}66`
+                  ? `0 0 16px 4px ${heliColor}88`
                   : hasHeli
-                    ? `0 2px 6px ${heliColor}44`
-                    : "none",
+                    ? `0 0 12px 2px ${heliColor}66`
+                    : highlighted
+                      ? "0 0 8px 2px rgba(0, 230, 118, 0.4)"
+                      : "0 2px 4px rgba(0,0,0,.3)",
                 animation: isActiveHeli
                   ? "cc-heli-pulse 1.5s ease-in-out infinite"
                   : highlighted
@@ -355,7 +374,7 @@ export function BoardGrid({
                     : undefined,
               }}
             >
-              {hasHeli ? "🚁" : ""}
+              {hasHeli ? `H${heliIndex + 1}` : ""}
             </div>
           );
         })

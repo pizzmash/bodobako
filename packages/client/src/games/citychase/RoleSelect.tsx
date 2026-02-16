@@ -13,7 +13,8 @@ const CSS_ID = "cc-role-styles";
 const INJECTED_CSS = `
 .cc-role-btn:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(37,99,235,.25) !important;
+  box-shadow: 0 6px 20px rgba(37,140,244,.4) !important;
+  border-color: #258cf4 !important;
 }
 .cc-role-btn:active {
   transform: translateY(0) !important;
@@ -35,14 +36,14 @@ export function RoleSelect({ state, playerId, room, sendMove }: Props) {
   if (!isHost) {
     return (
       <div style={styles.section}>
-        <div style={styles.waitCard}>
-          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🎭</div>
+        <div className="cc-glass-panel" style={styles.waitCard}>
+          <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem", fontFamily: "'Orbitron', monospace", fontWeight: 900, color: "#258cf4" }}>[WAIT]</div>
           <p style={styles.waitText}>ホストが犯人を選んでいます...</p>
           <div style={styles.playerChips}>
             {state.playerIds.map((pid) => {
               const p = room.players.find((pl) => pl.id === pid);
               return (
-                <span key={pid} style={styles.chip}>
+                <span key={pid} className="cc-status-badge-primary" style={styles.chip}>
                   {p?.name ?? pid}
                   {pid === playerId ? " (自分)" : ""}
                 </span>
@@ -57,8 +58,10 @@ export function RoleSelect({ state, playerId, room, sendMove }: Props) {
   return (
     <div style={styles.section}>
       <div style={styles.description}>
-        <div style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>🎭</div>
-        犯人役のプレイヤーを選んでください
+        <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem", fontFamily: "'Orbitron', monospace", fontWeight: 900, color: "#dc2626" }}>[SELECT]</div>
+        <span className="cc-text-tactical" style={{ fontSize: "0.85rem", color: "#64c3ff" }}>
+          犯人役のプレイヤーを選んでください
+        </span>
       </div>
       <div style={styles.playerList}>
         {state.playerIds.map((pid) => {
@@ -66,11 +69,11 @@ export function RoleSelect({ state, playerId, room, sendMove }: Props) {
           return (
             <button
               key={pid}
-              className="cc-role-btn"
+              className="cc-role-btn cc-glass-panel"
               style={styles.playerButton}
               onClick={() => sendMove({ type: "assign-criminal", targetId: pid })}
             >
-              <span style={styles.btnIcon}>🎯</span>
+              <span style={styles.btnIcon}>▶</span>
               <span style={styles.btnName}>
                 {player?.name ?? pid}
                 {pid === playerId && (
@@ -94,78 +97,80 @@ const styles: Record<string, React.CSSProperties> = {
   },
   description: {
     fontSize: "0.95rem",
-    color: "#475569",
-    marginBottom: "1rem",
+    color: "#94a3b8",
+    marginBottom: "1.5rem",
     fontWeight: 600,
   },
   playerList: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.5rem",
+    gap: "0.6rem",
     alignItems: "center",
   },
   playerButton: {
     display: "flex",
     alignItems: "center",
     gap: "0.75rem",
-    padding: "0.75rem 1.25rem",
+    padding: "0.85rem 1.4rem",
     fontSize: "1rem",
-    border: "2px solid #e2e8f0",
+    border: "2px solid rgba(37, 140, 244, 0.3)",
     borderRadius: 12,
-    background: "white",
-    color: "#1e293b",
+    color: "#ffffff",
     cursor: "pointer",
-    minWidth: 240,
-    transition: "all 0.15s",
+    minWidth: 260,
+    transition: "all 0.2s",
     fontWeight: 600,
-    boxShadow: "0 1px 3px rgba(0,0,0,.08)",
+    boxShadow: "0 2px 8px rgba(0,0,0,.3)",
   },
   btnIcon: {
-    fontSize: "1.2rem",
+    fontSize: "1rem",
+    color: "#258cf4",
+    filter: "none",
   },
   btnName: {
     flex: 1,
     textAlign: "left",
+    letterSpacing: "0.02em",
   },
   btnArrow: {
-    color: "#94a3b8",
-    fontSize: "1.1rem",
+    color: "#258cf4",
+    fontSize: "1.2rem",
   },
   youTag: {
-    fontSize: "0.6rem",
+    fontSize: "0.55rem",
     fontWeight: 800,
-    color: "#6366f1",
-    background: "#eef2ff",
-    padding: "0.1rem 0.3rem",
+    color: "#258cf4",
+    background: "rgba(37, 140, 244, 0.15)",
+    padding: "0.15rem 0.4rem",
     borderRadius: 4,
-    marginLeft: "0.4rem",
+    marginLeft: "0.5rem",
     verticalAlign: "middle",
+    border: "1px solid rgba(37, 140, 244, 0.3)",
+    letterSpacing: "0.05em",
   },
   waitCard: {
-    padding: "2rem",
+    padding: "2.5rem",
     borderRadius: 16,
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 2px 8px rgba(0,0,0,.06)",
+    maxWidth: 400,
+    margin: "0 auto",
   },
   waitText: {
     fontSize: "1rem",
-    color: "#64748b",
+    color: "#94a3b8",
     fontWeight: 600,
-    margin: "0 0 1rem",
+    margin: "0 0 1.5rem",
+    letterSpacing: "0.02em",
   },
   playerChips: {
     display: "flex",
-    gap: "0.4rem",
+    gap: "0.5rem",
     justifyContent: "center",
     flexWrap: "wrap",
   },
   chip: {
-    fontSize: "0.8rem",
-    padding: "0.2rem 0.6rem",
+    fontSize: "0.75rem",
+    padding: "0.25rem 0.7rem",
     borderRadius: 8,
-    background: "#e2e8f0",
-    color: "#475569",
     fontWeight: 600,
   },
 };

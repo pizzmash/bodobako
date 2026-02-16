@@ -122,42 +122,40 @@ export function GameBoard({
 
       {/* ステータスバー */}
       <div style={styles.statusBar}>
-        <span style={{ ...styles.badge, ...styles.roundBadge }}>
-          ラウンド {state.round} / 11
-        </span>
-        <span
-          style={{
-            ...styles.badge,
-            background: isPolicePhase ? "#dbeafe" : "#fee2e2",
-            color: isPolicePhase ? "#1d4ed8" : "#b91c1c",
-          }}
+        <div className="cc-status-badge" style={styles.roundBadge}>
+          <span className="cc-dot-primary" style={{ width: 6, height: 6 }}></span>
+          ROUND {state.round} / 11
+        </div>
+        <div
+          className={`cc-status-badge ${isPolicePhase ? "cc-status-badge-primary" : "cc-status-badge-danger"}`}
         >
-          {isPolicePhase ? "🔵 警察フェーズ" : "🔴 犯人フェーズ"}
-        </span>
+          {isPolicePhase ? "[P] POLICE PHASE" : "[T] FUGITIVE PHASE"}
+        </div>
       </div>
 
       {/* 捜索結果バナー */}
       {searchResult && !searchResult.found && (
         <div
+          className={searchResult.traceFound ? "cc-glass-panel" : "cc-glass-panel"}
           style={{
             ...styles.searchBanner,
-            background: searchResult.traceFound
-              ? "linear-gradient(135deg, #fef3c7, #fde68a)"
-              : "#f1f5f9",
-            borderColor: searchResult.traceFound ? "#f59e0b" : "#cbd5e0",
-            color: searchResult.traceFound ? "#92400e" : "#64748b",
+            borderColor: searchResult.traceFound ? "#d97706" : "rgba(37, 140, 244, 0.3)",
+            color: searchResult.traceFound ? "#fbbf24" : "#64c3ff",
+            boxShadow: searchResult.traceFound 
+              ? "0 0 20px rgba(217, 119, 6, 0.3), 0 2px 8px rgba(0,0,0,.3)"
+              : "0 2px 8px rgba(0,0,0,.3)",
           }}
         >
           {searchResult.traceFound ? (
             <>
-              <span style={{ fontSize: "1.1rem" }}>⚠</span>
+              <span style={{ fontSize: "1.1rem", fontWeight: 900, fontFamily: "'Orbitron', monospace" }}>!</span>
               {searchResult.traceRound !== null
                 ? ` 痕跡発見！ ラウンド ${searchResult.traceRound} の痕跡`
                 : " 痕跡発見！（ラウンド不明）"}
             </>
           ) : (
             <>
-              <span style={{ fontSize: "1.1rem" }}>✓</span> 痕跡なし
+              <span style={{ fontSize: "1rem", fontWeight: 900 }}>✓</span> 痕跡なし
             </>
           )}
         </div>
@@ -166,36 +164,42 @@ export function GameBoard({
       {/* ターン案内（ゲーム終了時は非表示） */}
       {!isFinished && (
         <div
+          className={isMyPoliceTurn || isMyCriminalTurn ? "cc-glass-panel cc-pulse" : "cc-glass-panel"}
           style={{
             ...styles.turnGuide,
-            background: isMyPoliceTurn || isMyCriminalTurn
+            borderColor: isMyPoliceTurn || isMyCriminalTurn
               ? isCriminal
-                ? "linear-gradient(135deg, #dc2626, #b91c1c)"
-                : "linear-gradient(135deg, #2563eb, #1d4ed8)"
-              : "#f1f5f9",
-            color: isMyPoliceTurn || isMyCriminalTurn ? "white" : "#64748b",
-            border:
-              isMyPoliceTurn || isMyCriminalTurn
-                ? "none"
-                : "1px solid #e2e8f0",
+                ? "rgba(220, 38, 38, 0.5)"
+                : "rgba(37, 140, 244, 0.5)"
+              : "rgba(100, 116, 139, 0.3)",
+            color: isMyPoliceTurn || isMyCriminalTurn ? "#ffffff" : "#94a3b8",
+            boxShadow: isMyPoliceTurn || isMyCriminalTurn
+              ? isCriminal
+                ? "0 0 20px rgba(220, 38, 38, 0.3)"
+                : "0 0 20px rgba(37, 140, 244, 0.3)"
+              : "none",
           }}
         >
           {isMyPoliceTurn ? (
-            <>
-              🚁 ヘリ #{state.currentHelicopterIndex + 1} —{" "}
+            <span className="cc-text-tactical" style={{ fontSize: "0.75rem" }}>
+              [H{state.currentHelicopterIndex + 1}] ヘリ #{state.currentHelicopterIndex + 1} —{" "}
               <strong>交差点をクリックで移動</strong>、
-              <strong>ビルをクリックで捜索</strong>
-            </>
+              <strong>ビルをクリックで捕索</strong>
+            </span>
           ) : isMyCriminalTurn ? (
-            <>🚗 移動先のビルを選択してください</>
+            <span className="cc-text-tactical" style={{ fontSize: "0.75rem" }}>
+              [TARGET] 移動先のビルを選択してください
+            </span>
           ) : (
-            <>{currentPlayer?.name ?? "他のプレイヤー"}の番です</>
+            <span style={{ fontSize: "0.85rem" }}>
+              {currentPlayer?.name ?? "他のプレイヤー"}の番です
+            </span>
           )}
         </div>
       )}
 
       {/* ボード */}
-      <div style={{ marginTop: "0.5rem" }}>
+      <div style={{ marginTop: "1rem" }}>
         <BoardGrid
           state={state}
           playerId={playerId}
@@ -220,15 +224,15 @@ export function GameBoard({
       <div style={styles.legend}>
         {isMyPoliceTurn && (
           <>
-            <LegendItem color="#22c55e" label="移動先" glow />
-            <LegendItem color="#f59e0b" label="捜索可能" glow />
+            <LegendItem color="#00e676" label="移動先" glow />
+            <LegendItem color="#ff9800" label="捜索可能" glow />
           </>
         )}
-        {isMyCriminalTurn && <LegendItem color="#22c55e" label="移動先" glow />}
-        <LegendItem color="#fbbf24" icon="⚠" label="痕跡あり" />
-        <LegendItem color="#16a34a" icon="✓" label="捜索済み" badge />
+        {isMyCriminalTurn && <LegendItem color="#00e676" label="移動先" glow />}
+        <LegendItem color="#d97706" icon="!" label="痕跡あり" />
+        <LegendItem color="#00e676" icon="✓" label="捕索済み" badge />
         {isCriminal && (
-          <LegendItem color="#f87171" icon="👣" label="通過済み" />
+          <LegendItem color="#dc2626" icon="···" label="通過済み" />
         )}
       </div>
 
@@ -269,16 +273,19 @@ function LegendItem({
           width: 16,
           height: 16,
           borderRadius: badge ? 3 : 3,
-          background: badge ? "rgba(255,255,255,.85)" : glow ? "#64748b" : color,
-          fontSize: badge ? "0.5rem" : "0.55rem",
-          fontWeight: badge ? 900 : undefined,
-          color: badge ? color : undefined,
-          boxShadow: glow ? `0 0 0 2px ${color}, 0 0 4px 1px ${color}88` : undefined,
+          background: badge ? "rgba(16, 25, 34, 0.8)" : glow ? "rgba(100, 116, 139, 0.3)" : color,
+          fontSize: icon === "···" ? "0.7rem" : badge ? "0.55rem" : "0.65rem",
+          fontWeight: badge ? 900 : icon === "!" ? 900 : 700,
+          color: badge ? color : "#fff",
+          border: badge ? `1px solid ${color}` : "none",
+          boxShadow: glow ? `0 0 0 2px ${color}, 0 0 6px 1px ${color}88` : undefined,
+          fontFamily: icon === "!" || icon === "···" ? "'Orbitron', monospace" : "inherit",
+          letterSpacing: icon === "···" ? "0.1em" : "normal",
         }}
       >
         {icon ?? ""}
       </span>
-      <span style={{ fontSize: "0.7rem", color: "#64748b" }}>{label}</span>
+      <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 500 }}>{label}</span>
     </div>
   );
 }
@@ -286,34 +293,37 @@ function LegendItem({
 const styles: Record<string, React.CSSProperties> = {
   section: {
     textAlign: "center",
-    padding: "0.25rem",
+    padding: "0.5rem",
     width: "100%",
+    maxWidth: 900,
   },
   statusBar: {
     display: "flex",
     justifyContent: "center",
-    gap: "0.5rem",
-    marginBottom: "0.5rem",
+    gap: "0.75rem",
+    marginBottom: "0.75rem",
     flexWrap: "wrap",
   },
   badge: {
     display: "inline-block",
-    padding: "0.2rem 0.6rem",
-    borderRadius: 10,
-    fontSize: "0.8rem",
+    padding: "0.25rem 0.75rem",
+    borderRadius: 8,
+    fontSize: "0.75rem",
     fontWeight: 700,
+    letterSpacing: "0.05em",
+    textTransform: "uppercase",
   },
   roundBadge: {
-    background: "#f1f5f9",
-    color: "#475569",
-    border: "1px solid #e2e8f0",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
   },
   searchBanner: {
     padding: "0.5rem 1rem",
     borderRadius: 10,
-    margin: "0 0 0.5rem",
-    fontSize: "0.9rem",
-    fontWeight: 700,
+    margin: "0 0 0.75rem",
+    fontSize: "0.85rem",
+    fontWeight: 600,
     border: "1px solid",
     display: "flex",
     alignItems: "center",
@@ -321,22 +331,23 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "0.3rem",
   },
   turnGuide: {
-    padding: "0.5rem 1rem",
+    padding: "0.6rem 1.2rem",
     borderRadius: 10,
     fontSize: "0.85rem",
     fontWeight: 600,
-    marginBottom: "0.5rem",
+    marginBottom: "0.75rem",
+    border: "1px solid",
   },
   legend: {
     display: "flex",
     justifyContent: "center",
-    gap: "0.75rem",
-    marginTop: "0.5rem",
+    gap: "1rem",
+    marginTop: "1rem",
     flexWrap: "wrap",
   },
   legendItem: {
     display: "flex",
     alignItems: "center",
-    gap: "0.25rem",
+    gap: "0.3rem",
   },
 };
