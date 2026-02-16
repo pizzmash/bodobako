@@ -52,13 +52,13 @@ export function OthelloBoard() {
       {gameResult && (
         <GameResultCard
           result={
-            gameResult.winnerId === playerId
+            gameResult.ranking?.[0] === playerId
               ? "win"
-              : gameResult.winnerId
-                ? "lose"
-                : "draw"
+              : gameResult.ranking?.[0]
+              ? "lose"
+              : "draw"
           }
-          winnerName={room.players.find((p) => p.id === gameResult.winnerId)?.name}
+          winnerName={room.players.find((p) => p.id === gameResult.ranking?.[0])?.name}
           isHost={playerId === room.hostId}
           onRematch={startGame}
           onLeave={leaveRoom}

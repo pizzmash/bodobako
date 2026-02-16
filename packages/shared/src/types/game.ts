@@ -11,7 +11,8 @@ export interface GameDefinition<TState = unknown, TMove = unknown> {
   validateMove(state: TState, move: TMove, playerId: string): boolean;
   applyMove(state: TState, move: TMove, playerId: string): TState;
   getStatus(state: TState): GameStatus;
-  getWinner(state: TState): string | null;
+  /** プレイヤーIDの順位リスト（1位から順）を返す。nullの場合は引き分け。 */
+  getRanking(state: TState): string[] | null;
   getCurrentPlayerId(state: TState): string;
   getPlayerView?(state: TState, playerId: string): unknown;
 }

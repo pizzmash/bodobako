@@ -109,8 +109,14 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
     return state.finished ? "finished" : "playing";
   },
 
-  getWinner(state: AiueBattleState): string | null {
-    return state.winnerId;
+  getRanking(state: AiueBattleState): string[] | null {
+    if (!state.winnerId) return null;
+    // 勝者を1位として返す（他のプレイヤーは敗者として同順位）
+    const ranking = [state.winnerId];
+    state.playerIds.forEach((id) => {
+      if (id !== state.winnerId) ranking.push(id);
+    });
+    return ranking;
   },
 
   getCurrentPlayerId(state: AiueBattleState): string {

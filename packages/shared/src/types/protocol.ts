@@ -1,7 +1,7 @@
 import type { RoomInfo } from "./room.js";
 
 export interface GameResult {
-  winnerId: string | null;
+  ranking: string[] | null;
   reason: string;
 }
 
