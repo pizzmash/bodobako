@@ -51,6 +51,7 @@ export function OrderStartCountdown({ onComplete }: OrderStartCountdownProps) {
   // 表示テキスト
   const texts = ["3", "2", "1", "注文〜！"];
   const currentText = texts[step];
+  const isOrderText = step === 3; // 「注文〜！」かどうか
 
   return (
     <>
@@ -82,23 +83,49 @@ export function OrderStartCountdown({ onComplete }: OrderStartCountdownProps) {
           pointerEvents: "none",
         }}
       >
-        {/* 吹き出し */}
-        <div
-          className="jaggy-burst"
-          style={{
-            transform: isAnimating ? "scale(1)" : "scale(0.8)",
-            opacity: isAnimating ? 1 : 0,
-            transition: "all 0.3s ease-out",
-          }}
-        >
-          {/* インパクトテキスト */}
-          <h1 className="impact-text">{currentText}</h1>
-        </div>
+        {isOrderText ? (
+          /* 「注文〜！」は吹き出しで表示 */
+          <div
+            className="jaggy-burst"
+            style={{
+              transform: isAnimating ? "scale(1)" : "scale(0.8)",
+              opacity: isAnimating ? 1 : 0,
+              transition: "all 0.3s ease-out",
+            }}
+          >
+            <h1 className="impact-text">{currentText}</h1>
+          </div>
+        ) : (
+          /* 3, 2, 1 は文字のみ */
+          <h1
+            className="countdown-number"
+            style={{
+              transform: isAnimating ? "scale(1)" : "scale(0.8)",
+              opacity: isAnimating ? 1 : 0,
+              transition: "all 0.3s ease-out",
+            }}
+          >
+            {currentText}
+          </h1>
+        )}
       </div>
 
       {/* スタイル定義 */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&display=swap');
+
+        .countdown-number {
+          font-family: 'M PLUS Rounded 1c', sans-serif;
+          font-size: 10rem;
+          font-weight: 900;
+          color: #ffffff;
+          text-shadow: 
+            0 0 20px rgba(255, 255, 255, 0.8),
+            0 0 40px rgba(255, 255, 255, 0.6),
+            0 4px 8px rgba(0, 0, 0, 0.8);
+          margin: 0;
+          padding: 0;
+        }
 
         .impact-text {
           font-family: 'M PLUS Rounded 1c', sans-serif;
