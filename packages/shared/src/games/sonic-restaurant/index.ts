@@ -2,13 +2,13 @@
  * 音速飯点（ソニックレストラン）
  */
 
-export { sonicRestaurantGame } from "./definition";
-export { CARD_COUNTS, MENUS } from "./types";
+export { sonicRestaurantGame } from "./definition.js";
+export { CARD_COUNTS, MENUS } from "./types.js";
 export type {
     Card,
     CompletedMenu,
     MenuTreeNode,
     SonicRestaurantMove,
     SonicRestaurantState
-} from "./types";
+} from "./types.js";
 

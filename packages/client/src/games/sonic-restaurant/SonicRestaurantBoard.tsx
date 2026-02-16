@@ -2,25 +2,50 @@
  * 音速飯点 - メインボードコンポーネント
  */
 
-import { useCallback, useEffect, useState } from "react";
 import type {
   Card,
+  MenuTreeNode,
   SonicRestaurantMove,
   SonicRestaurantState,
 } from "@bodobako/shared";
+import { buildMenuTree } from "@bodobako/shared";
+import { useCallback, useMemo, useState } from "react";
 import { useRoom } from "../../context/RoomContext";
-import { AppHeader } from "../../components/AppHeader";
-import { MenuSidebar } from "./MenuSidebar";
-import { PlayersSidebar } from "./PlayersSidebar";
 import { CenterTable } from "./CenterTable";
 import { CompletedDishBanner } from "./CompletedDishBanner";
 import { HandCards } from "./HandCards";
+import { MenuSidebar } from "./MenuSidebar";
+import { PlayersSidebar } from "./PlayersSidebar";
+import { SonicRestaurantResult } from "./SonicRestaurantResult";
 import "./sonic-restaurant.css";
 
 export function SonicRestaurantBoard() {
-  const { gameState, playerId, sendMove, room } = useRoom();
+  const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom } = useRoom();
 
-  const state = gameState as SonicRestaurantState | null;
+  const rawState = gameState as SonicRestaurantState | null;
+
+  // Socket.IOでシリアライズされたMapを復元
+  const state = useMemo(() => {
+    if (!rawState) return null;
+    
+    // buildMenuTree()でルートを取得し、currentPathをたどって現在ノードを復元
+    const menuTree = buildMenuTree();
+    let currentNode: MenuTreeNode = menuTree;
+    
+    for (const card of rawState.currentPath) {
+      const children = currentNode.children;
+      const nextNode = children instanceof Map 
+        ? children.get(card)
+        : (children as any)[card];
+      if (!nextNode) break;
+      currentNode = nextNode;
+    }
+    
+    return {
+      ...rawState,
+      currentNode,
+    };
+  }, [rawState]);
 
   // 最後に出されたカードを追跡（アニメーション用）
   const [lastPlayedCard, setLastPlayedCard] = useState<Card | null>(null);
@@ -33,11 +58,11 @@ export function SonicRestaurantBoard() {
 
   // カードプレイハンドラ
   const handleCardPlay = useCallback(
-    (card: Card) => {
+    (card: Card, handIndex: number) => {
       if (!state || !playerId) return;
 
       // カードを出す
-      sendTypedMove({ type: "play-card", card });
+      sendTypedMove({ type: "play-card", card, handIndex });
 
       // アニメーション用に記録
       setLastPlayedCard(card);
@@ -69,30 +94,35 @@ export function SonicRestaurantBoard() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        overflow: "hidden",
-      }}
-    >
-      {/* ヘッダー */}
-      <AppHeader />
+    <>
+      {/* リザルト画面 */}
+      {gameResult && gameResult.ranking && (
+        <SonicRestaurantResult
+          state={state}
+          room={room}
+          playerId={playerId}
+          ranking={gameResult.ranking}
+          onRestart={startGame}
+          onLeave={leaveRoom}
+        />
+      )}
 
       {/* メインエリア */}
       <main
         style={{
+          position: "fixed",
+          top: "49px", // AppHeaderの高さ分
+          left: 0,
+          right: 0,
+          bottom: "176px", // 手札エリアの高さ分を除く
           display: "flex",
-          flex: 1,
-          overflow: "hidden",
         }}
       >
         {/* 左サイドバー: お品書き */}
         <MenuSidebar state={state} />
 
         {/* 中央エリア: 回転テーブル */}
-        <div style={{ position: "relative", flex: 1 }}>
+        <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
           {/* 完成バナー */}
           <CompletedDishBanner dishName={state.lastCompletedMenu?.name || null} />
 
@@ -105,6 +135,6 @@ export function SonicRestaurantBoard() {
 
       {/* 下部: 自分の手札 */}
       <HandCards state={state} playerId={playerId} onCardPlay={handleCardPlay} />
-    </div>
+    </>
   );
 }

@@ -48,12 +48,12 @@ export function processMove(
   const status = def.getStatus(newState);
 
   if (status === "finished") {
-    const winnerId = def.getWinner(newState);
+    const ranking = def.getRanking(newState);
     return {
       newState,
       result: {
-        winnerId,
-        reason: winnerId ? "勝利" : "引き分け",
+        ranking,
+        reason: ranking && ranking.length > 0 ? "勝利" : "引き分け",
       },
     };
   }

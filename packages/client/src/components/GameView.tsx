@@ -1,7 +1,7 @@
 import { useRoom } from "../context/RoomContext";
-import { OthelloBoard } from "../games/othello/OthelloBoard";
 import { AiueBattleBoard } from "../games/aiuebattle/AiueBattleBoard";
 import { CitychaseBoard } from "../games/citychase/CitychaseBoard";
+import { OthelloBoard } from "../games/othello/OthelloBoard";
 import { SonicRestaurantBoard } from "../games/sonic-restaurant/SonicRestaurantBoard";
 
 export function GameView() {

@@ -29,8 +29,8 @@ export const LAYOUT = {
   tableSize: 500,
   cardWidth: 112, // 28 * 4
   cardHeight: 160, // 40 * 4
-  cardWidthSmall: 56, // small用
-  cardHeightSmall: 80, // small用
+  cardWidthSmall: 48, // small用（縦幅削減）
+  cardHeightSmall: 64, // small用（縦幅削減）
   handHeight: 176, // 44 * 4
 } as const;
 
@@ -41,26 +41,28 @@ export const styles: Record<string, CSSProperties> = {
   // サイドバー共通
   sidebar: {
     width: LAYOUT.sidebarWidth,
+    height: "100%",
+    minHeight: 0,
     backgroundColor: C.white,
     display: "flex",
     flexDirection: "column",
-    padding: "1rem",
+    padding: "1rem 0.375rem 0.5rem",
     boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
     zIndex: 40,
   },
 
   sidebarTitle: {
-    marginBottom: "1.5rem",
-    padding: "0.5rem",
+    marginBottom: "0.125rem",
+    padding: "0",
   },
 
   // ゲームタイトル看板
   titleSign: {
     backgroundColor: C.primary,
-    padding: "1rem",
-    borderRadius: "0.75rem",
+    padding: "0.1875rem",
+    borderRadius: "0.25rem",
     boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-    borderBottom: `4px solid ${C.accentYellow}`,
+    borderBottom: `2px solid ${C.accentYellow}`,
     overflow: "hidden",
   },
 
@@ -68,25 +70,25 @@ export const styles: Record<string, CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "0.5rem 0.25rem",
-    border: `4px double ${C.accentYellow}`,
-    borderRadius: "0.75rem",
+    padding: "0.09375rem",
+    border: `2px double ${C.accentYellow}`,
+    borderRadius: "0.1875rem",
   },
 
   titleMain: {
-    fontSize: "1.875rem",
+    fontSize: "1.125rem",
     fontWeight: 800,
     color: C.white,
-    letterSpacing: "0.15em",
-    marginBottom: "0.25rem",
+    letterSpacing: "0.08em",
+    margin: "0",
     textShadow: "2px 2px 0px rgba(0,0,0,0.2)",
   },
 
   titleSub: {
-    fontSize: "0.5rem",
+    fontSize: "0.4rem",
     fontWeight: 700,
     color: C.accentYellow,
-    letterSpacing: "0.4em",
+    letterSpacing: "0.2em",
     textTransform: "uppercase",
   },
 
@@ -123,16 +125,16 @@ export const styles: Record<string, CSSProperties> = {
   menuHeader: {
     display: "flex",
     alignItems: "center",
-    gap: "0.5rem",
-    marginBottom: "1rem",
-    paddingLeft: "0.5rem",
-    marginTop: "0.5rem",
+    gap: "0.1875rem",
+    marginBottom: "0.125rem",
+    paddingLeft: "0.09375rem",
+    marginTop: "0.0625rem",
     borderTop: `1px solid ${C.gray100}`,
-    paddingTop: "1rem",
+    paddingTop: "0.125rem",
   },
 
   menuTitle: {
-    fontSize: "0.875rem",
+    fontSize: "0.8rem",
     fontWeight: 800,
     fontStyle: "italic",
     color: C.gray700,
@@ -140,16 +142,17 @@ export const styles: Record<string, CSSProperties> = {
 
   menuList: {
     flex: 1,
+    minHeight: 0,
     overflowY: "auto",
-    paddingRight: "0.5rem",
+    paddingRight: "0.125rem",
     display: "flex",
     flexDirection: "column",
-    gap: "0.5rem",
+    gap: "0.1875rem",
   },
 
   menuItem: {
-    padding: "0.75rem",
-    borderRadius: "0.75rem",
+    padding: "0.1875rem 0.25rem",
+    borderRadius: "0.125rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -157,12 +160,12 @@ export const styles: Record<string, CSSProperties> = {
 
   menuItemActive: {
     backgroundColor: `${C.primary}0D`, // 5% opacity
-    border: `2px solid ${C.primary}33`, // 20% opacity
+    border: `1px solid ${C.primary}33`, // 20% opacity
   },
 
   menuItemInactive: {
     backgroundColor: C.gray50,
-    border: "2px solid transparent",
+    border: "1px solid transparent",
     opacity: 0.5,
   },
 
@@ -170,16 +173,20 @@ export const styles: Record<string, CSSProperties> = {
     fontSize: "0.875rem",
     fontWeight: 700,
     fontStyle: "italic",
+    lineHeight: 1.2,
+    margin: 0,
   },
 
   menuRecipe: {
-    fontSize: "0.625rem",
+    fontSize: "0.6875rem",
     fontWeight: 500,
-    marginTop: "0.25rem",
+    marginTop: "0.0625rem",
+    marginBottom: 0,
+    lineHeight: 1.2,
   },
 
   badge: {
-    padding: "0.25rem 0.5rem",
+    padding: "0.09375rem 0.1875rem",
     fontSize: "0.625rem",
     fontWeight: 700,
     borderRadius: "9999px",
@@ -252,7 +259,6 @@ export const styles: Record<string, CSSProperties> = {
     justifyContent: "center",
     backgroundColor: "#fdf2f2",
     overflow: "hidden",
-    paddingBottom: LAYOUT.handHeight,
   },
 
   table: {

@@ -17,9 +17,8 @@ export function CompletedDishBanner({ dishName }: CompletedDishBannerProps) {
         position: "absolute",
         top: "1.5rem",
         left: "50%",
-        transform: "translateX(-50%)",
         zIndex: 20,
-        animation: "sr-dish-complete 0.6s ease-out",
+        animation: "sr-dish-complete 0.6s ease-out forwards",
       }}
     >
       <div

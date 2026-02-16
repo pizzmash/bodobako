@@ -24,22 +24,23 @@ export function MenuSidebar({ state }: MenuSidebarProps) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "0.5rem",
-                marginBottom: "0.25rem",
+                justifyContent: "center",
+                gap: "0.125rem",
+                marginBottom: "0.015625rem",
               }}
             >
-              <span style={{ fontSize: "1.25rem" }}>🍜</span>
+              <span style={{ fontSize: "0.625rem" }}>🍜</span>
               <span
                 style={{
-                  fontSize: "0.625rem",
+                  fontSize: "0.4375rem",
                   fontWeight: 800,
-                  letterSpacing: "0.3em",
+                  letterSpacing: "0.1em",
                   color: C.white,
                 }}
               >
                 オンソクハンテン
               </span>
-              <span style={{ fontSize: "1.25rem" }}>🥘</span>
+              <span style={{ fontSize: "0.625rem" }}>🥘</span>
             </div>
             <h1 style={styles.titleMain}>音速飯点</h1>
             <div
@@ -47,14 +48,14 @@ export function MenuSidebar({ state }: MenuSidebarProps) {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                gap: "0.5rem",
-                marginTop: "0.25rem",
+                gap: "0.1875rem",
+                marginTop: "0.015625rem",
               }}
             >
               <div
                 style={{
                   height: "1px",
-                  width: "1rem",
+                  width: "0.375rem",
                   backgroundColor: C.accentYellow,
                   opacity: 0.5,
                 }}
@@ -63,7 +64,7 @@ export function MenuSidebar({ state }: MenuSidebarProps) {
               <div
                 style={{
                   height: "1px",
-                  width: "1rem",
+                  width: "0.375rem",
                   backgroundColor: C.accentYellow,
                   opacity: 0.5,
                 }}
@@ -75,7 +76,7 @@ export function MenuSidebar({ state }: MenuSidebarProps) {
 
       {/* お品書きヘッダー */}
       <div style={styles.menuHeader}>
-        <span style={{ fontSize: "0.875rem" }}>📖</span>
+        <span style={{ fontSize: "0.75rem" }}>📖</span>
         <h2 style={styles.menuTitle}>お品書き</h2>
       </div>
 

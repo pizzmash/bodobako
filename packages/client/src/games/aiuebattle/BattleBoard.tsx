@@ -92,8 +92,8 @@ export function BattleBoard({
       {/* Result card */}
       {gameResult && (
         <GameResultCard
-          result={gameResult.winnerId === playerId ? "win" : "lose"}
-          winnerName={room.players.find((p) => p.id === gameResult.winnerId)?.name ?? "?"}
+          result={gameResult.ranking?.[0] === playerId ? "win" : "lose"}
+          winnerName={room.players.find((p) => p.id === gameResult.ranking?.[0])?.name ?? "?"}
           isHost={playerId === room.hostId}
           onRematch={startGame}
           onLeave={leaveRoom}

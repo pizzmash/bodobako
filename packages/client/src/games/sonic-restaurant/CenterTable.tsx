@@ -12,16 +12,27 @@ interface CenterTableProps {
 }
 
 export function CenterTable({ state, lastPlayedCard }: CenterTableProps) {
+  // 場に表示するカード：playedCardsHistory（すべての出されたカード）
+  const displayPath = state.playedCardsHistory;
+  // 下部の履歴表示用：currentPath（現在構築中のメニュー）
   const currentPath = state.currentPath;
 
-  // カードを重ねて表示するための位置計算
-  const getCardTransform = (index: number, total: number) => {
+  // カードを重ねて表示するための位置計算（固定値を使用）
+  const getCardTransform = (card: Card, index: number, total: number) => {
     if (total === 0) return {};
     
-    // ランダムな角度と位置でカードを少しずらす
-    const angle = (Math.random() - 0.5) * 20; // -10度 ~ +10度
-    const offsetX = (Math.random() - 0.5) * 40; // -20px ~ +20px
-    const offsetY = (Math.random() - 0.5) * 40;
+    // カード名とインデックスから決定論的に角度を生成
+    const cardCode = card.charCodeAt(0) + card.charCodeAt(card.length - 1);
+    const seed = cardCode * (index + 1) * 37; // 固定のシード値
+    
+    // 疑似ランダム値を生成（0-1の範囲）
+    const random = (seed % 1000) / 1000;
+    const random2 = ((seed * 7) % 1000) / 1000;
+    const random3 = ((seed * 13) % 1000) / 1000;
+    
+    const angle = (random - 0.5) * 20; // -10度 ~ +10度
+    const offsetX = (random2 - 0.5) * 40; // -20px ~ +20px
+    const offsetY = (random3 - 0.5) * 40;
     
     return {
       transform: `rotate(${angle}deg) translate(${offsetX}px, ${offsetY}px)`,
@@ -58,26 +69,27 @@ export function CenterTable({ state, lastPlayedCard }: CenterTableProps) {
           }}
         >
           {/* カードを重ねて表示 */}
-          {currentPath.length > 0 ? (
+          {displayPath.length > 0 ? (
             <div
               style={{
                 position: "relative",
-                display: "flex",
-                gap: "0.5rem",
+                width: "112px", // カード1枚分の幅
+                height: "160px", // カード1枚分の高さ
               }}
             >
-              {currentPath.map((card, index) => (
+              {displayPath.map((card, index) => (
                 <div
                   key={`${card}-${index}`}
                   style={{
-                    position: index === 0 ? "relative" : "absolute",
-                    left: index === 0 ? 0 : `${index * 20}px`,
-                    ...getCardTransform(index, currentPath.length),
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    ...getCardTransform(card, index, displayPath.length),
                   }}
                 >
                   <CardComponent
                     card={card}
-                    isNew={lastPlayedCard === card && index === currentPath.length - 1}
+                    isNew={lastPlayedCard === card && index === displayPath.length - 1}
                   />
                 </div>
               ))}
@@ -102,15 +114,21 @@ export function CenterTable({ state, lastPlayedCard }: CenterTableProps) {
         <div
           style={{
             position: "absolute",
-            bottom: "3rem",
+            bottom: "1.5rem",
+            left: "50%",
+            transform: "translateX(-50%)",
             display: "flex",
             gap: "0.25rem",
-            opacity: 0.4,
-            transform: "scale(0.75)",
+            padding: "0.5rem 0.75rem",
+            background: "rgba(255, 255, 255, 0.95)",
+            borderRadius: "0.5rem",
+            border: "2px solid #e5e7eb",
+            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+            zIndex: 15,
           }}
         >
           {currentPath.map((card, index) => (
-            <CardComponent key={`history-${index}`} card={card} size="small" />
+            <CardComponent key={`history-${index}`} card={card} size="small" hideLogo />
           ))}
         </div>
       )}

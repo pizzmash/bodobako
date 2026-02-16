@@ -2,12 +2,12 @@
  * 音速飯点（ソニックレストラン）- ゲームロジック
  */
 
-import type { Card, MenuTreeNode, SonicRestaurantState } from "./types";
-import { CARD_COUNTS, MENUS } from "./types";
+import type { Card, MenuTreeNode, SonicRestaurantState } from "./types.js";
+import { CARD_COUNTS, MENUS } from "./types.js";
 
 /**
  * メニュー木構造を構築する
- * 11種類のメニューから木構造を生成し、各ノードで完成可能なメニュー名を計算
+ * 12種類のメニューから木構造を生成し、各ノードで完成可能なメニュー名を計算
  */
 export function buildMenuTree(): MenuTreeNode {
   const root: MenuTreeNode = {
@@ -37,12 +37,16 @@ export function buildMenuTree(): MenuTreeNode {
       // 最後のカードに到達したらメニュー完成
       if (i === cards.length - 1) {
         node.isComplete = true;
+        // 完成ノードには直接メニュー名を設定
+        if (!node.possibleMenus.includes(menuName)) {
+          node.possibleMenus.push(menuName);
+        }
       }
     }
   }
 
-  // 各ノードの possibleMenus を計算
-  updatePossibleMenus(root);
+  // 各ノードの possibleMenus を計算（親から子へ伝播）
+  calculatePossibleMenus(root);
 
   return root;
 }
@@ -50,51 +54,22 @@ export function buildMenuTree(): MenuTreeNode {
 /**
  * 各ノードから完成可能なメニュー名を再帰的に計算
  */
-function updatePossibleMenus(node: MenuTreeNode): string[] {
+function calculatePossibleMenus(node: MenuTreeNode): string[] {
   const menus: string[] = [];
 
   // このノードで完成する場合、そのメニュー名を追加
-  if (node.isComplete && node.card !== null) {
-    // カードのパスからメニュー名を逆引き
-    const menuName = findMenuNameByNode(node);
-    if (menuName) {
-      menus.push(menuName);
-    }
+  if (node.isComplete) {
+    menus.push(...node.possibleMenus);
   }
 
   // 子ノードから完成可能なメニュー名を収集
   for (const child of node.children.values()) {
-    menus.push(...updatePossibleMenus(child));
+    menus.push(...calculatePossibleMenus(child));
   }
 
-  node.possibleMenus = [...new Set(menus)]; // 重複削除
+  // 重複削除してノードに設定
+  node.possibleMenus = [...new Set(menus)];
   return menus;
-}
-
-/**
- * ノードのカードパスからメニュー名を探す
- */
-function findMenuNameByNode(node: MenuTreeNode): string | null {
-  // ルートから現在ノードまでのパスを再構築して照合
-  // （簡易実装: 完成ノードなら該当メニューが1つに特定できる前提）
-  for (const [cards, menuName] of MENUS) {
-    const path = buildPathFromRoot(node);
-    if (arraysEqual(path, cards as readonly Card[])) {
-      return menuName;
-    }
-  }
-  return null;
-}
-
-/**
- * ノードからルートまでのパスを逆順に構築
- * （実際にはメニュー定義からの照合で済むため、簡易的な実装）
- */
-function buildPathFromRoot(node: MenuTreeNode): Card[] {
-  // 実装簡略化: MENUSから該当するパスを探す
-  // この関数は updatePossibleMenus の補助的役割なので、
-  // 実際には別のアプローチを取る
-  return [];
 }
 
 /**
@@ -141,7 +116,14 @@ export function canPlayCard(state: SonicRestaurantState, card: Card): boolean {
   }
 
   // 通常カードは現在ノードの子として存在するか確認
-  return state.currentNode.children.has(card);
+  // Socket.IOでシリアライズされるとMapがオブジェクトになるため両方に対応
+  const children = state.currentNode.children;
+  if (children instanceof Map) {
+    return children.has(card);
+  } else {
+    // プレーンオブジェクトの場合
+    return card in children;
+  }
 }
 
 /**

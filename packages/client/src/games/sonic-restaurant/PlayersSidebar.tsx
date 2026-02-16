@@ -2,8 +2,8 @@
  * プレイヤーサイドバー（他プレイヤー情報）
  */
 
-import type { SonicRestaurantState, RoomInfo } from "@bodobako/shared";
-import { C, styles } from "./constants";
+import type { RoomInfo, SonicRestaurantState } from "@bodobako/shared";
+import { styles } from "./constants";
 
 interface PlayersSidebarProps {
   state: SonicRestaurantState;
@@ -19,10 +19,8 @@ export function PlayersSidebar({
   // 他プレイヤーのリスト（自分以外）
   const otherPlayers = room.players.filter((p) => p.id !== playerId);
 
-  // 残り手札枚数の最大値（プログレスバー計算用）
-  const maxCards = Math.max(
-    ...state.playerIds.map((id) => state.hands[id]?.length || 0)
-  );
+  // 初期手札枚数を計算（60枚のデッキをプレイヤー数で割る）
+  const initialHandSize = Math.ceil(60 / state.playerIds.length);
 
   return (
     <aside style={styles.sidebar}>
@@ -33,11 +31,11 @@ export function PlayersSidebar({
       </div>
 
       {/* プレイヤーリスト */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", flex: 1, overflowY: "auto", minHeight: 0, paddingRight: "0.125rem" }}>
         {otherPlayers.map((player) => {
           const handCount = state.hands[player.id]?.length || 0;
           const isFinished = state.finishedOrder.includes(player.id);
-          const progressWidth = maxCards > 0 ? (handCount / maxCards) * 100 : 0;
+          const progressWidth = initialHandSize > 0 ? (handCount / initialHandSize) * 100 : 0;
 
           return (
             <div key={player.id} style={styles.playerItem}>

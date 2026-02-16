@@ -373,21 +373,25 @@ export const citychaseDefinition: GameDefinition<
     return "playing";
   },
 
-  getWinner(state: CitychaseState): string | null {
+  getRanking(state: CitychaseState): string[] | null {
+    // ゲーム終了時にはcriminalIdが必ず設定されている
+    if (!state.criminalId) return null;
+    
     if (state.winningSide === "police") {
-      // 警察陣営の勝利 - ホストIDを返す（チーム戦なので代表）
-      return state.policeIds[0] ?? null;
+      // 警察陣営の勝利 - 警察全員を1位、犯人を最下位
+      return [...state.policeIds, state.criminalId];
     }
     if (state.winningSide === "criminal") {
-      return state.criminalId;
+      // 犯人の勝利 - 犯人を1位、警察全員を最下位
+      return [state.criminalId, ...state.policeIds];
     }
 
     // getStatus で finished 判定されたがwinningSideが未設定のケース
     if (state.phase === "criminal-turn" && state.round >= MAX_ROUNDS) {
-      return state.criminalId;
+      return [state.criminalId, ...state.policeIds];
     }
     if (state.phase === "criminal-turn" && !canCriminalMove(state)) {
-      return state.policeIds[0] ?? null;
+      return [...state.policeIds, state.criminalId];
     }
 
     return null;

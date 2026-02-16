@@ -15,14 +15,14 @@
 /* 完成メニューバナーの登場アニメーション */
 @keyframes sr-dish-complete {
   0% {
-    transform: scale(0.8) rotate(-5deg);
+    transform: translateX(-50%) scale(0.8) rotate(-5deg);
     opacity: 0;
   }
   50% {
-    transform: scale(1.1) rotate(2deg);
+    transform: translateX(-50%) scale(1.1) rotate(2deg);
   }
   100% {
-    transform: scale(1) rotate(0);
+    transform: translateX(-50%) scale(1) rotate(0);
     opacity: 1;
   }
 }
@@ -50,7 +50,7 @@
 }
 
 /* 手札カードのホバー効果 */
-.sr-hand-card:hover:not(:disabled) {
+.sr-hand-card:hover {
   transform: translateY(-15px) !important;
   border-color: #ffd700 !important;
   border-width: 8px !important;
@@ -58,9 +58,25 @@
   z-index: 10 !important;
 }
 
-.sr-hand-card:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+/* カード振動アニメーション（選択できないカードをクリックした時） */
+@keyframes sr-card-shake {
+  0%, 100% {
+    transform: translateY(-15px) translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateY(-15px) translateX(-10px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateY(-15px) translateX(10px);
+  }
+}
+
+.sr-shaking {
+  animation: sr-card-shake 0.5s ease-in-out !important;
+  border-color: #ffd700 !important;
+  border-width: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  z-index: 10 !important;
 }
 
 /* 手札スクロールバー非表示 */
@@ -73,4 +89,27 @@
   background-color: #d74242;
   background-image: radial-gradient(#b53333 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+/* とりけしカードのバーストエフェクト */
+.sr-burst-effect {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(circle, #ff4400 0%, transparent 80%);
+  filter: blur(8px);
+  z-index: 0;
+  animation: sr-pulse-burst 2s infinite ease-in-out;
+}
+
+@keyframes sr-pulse-burst {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
 }

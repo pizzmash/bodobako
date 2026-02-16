@@ -2,20 +2,20 @@
  * 音速飯点（ソニックレストラン）- GameDefinition 実装
  */
 
-import type { GameDefinition } from "../../types/game";
+import type { GameDefinition } from "../../types/game.js";
 import {
     buildMenuTree,
     createDeck,
     getMenuName,
     hasAnyPlayableCard,
     shuffleArray
-} from "./logic";
+} from "./logic.js";
 import type {
     Card,
     CompletedMenu,
     SonicRestaurantMove,
     SonicRestaurantState,
-} from "./types";
+} from "./types.js";
 
 export const sonicRestaurantGame: GameDefinition<
   SonicRestaurantState,
@@ -71,9 +71,19 @@ export const sonicRestaurantGame: GameDefinition<
     move: SonicRestaurantMove,
     playerId: string
   ): boolean {
-    // プレイヤーがそのカードを所持しているか
+    // プレイヤーの手札を取得
     const hand = state.hands[playerId];
-    if (!hand || !hand.includes(move.card)) {
+    if (!hand) {
+      return false;
+    }
+
+    // handIndex が有効な範囲内か確認
+    if (move.handIndex < 0 || move.handIndex >= hand.length) {
+      return false;
+    }
+
+    // 指定されたインデックスのカードが move.card と一致するか確認
+    if (hand[move.handIndex] !== move.card) {
       return false;
     }
 
@@ -88,7 +98,13 @@ export const sonicRestaurantGame: GameDefinition<
     }
 
     // 通常カードは現在ノードの子として存在するか確認
-    return state.currentNode.children.has(move.card);
+    // Socket.IOでシリアライズされるとMapがオブジェクトになるため両方に対応
+    const children = state.currentNode.children;
+    if (children instanceof Map) {
+      return children.has(move.card);
+    } else {
+      return move.card in children;
+    }
   },
 
   applyMove(
@@ -99,7 +115,7 @@ export const sonicRestaurantGame: GameDefinition<
     // 【防御的チェック】非ターン制ゲームでは、validateMove通過後に
     // 状態が変わる可能性があるため、applyMove内でも再検証
     const hand = state.hands[playerId];
-    if (!hand || !hand.includes(move.card)) {
+    if (!hand || move.handIndex < 0 || move.handIndex >= hand.length || hand[move.handIndex] !== move.card) {
       // 不正な手の場合、状態を変更せずそのまま返す
       return state;
     }
@@ -110,7 +126,11 @@ export const sonicRestaurantGame: GameDefinition<
     }
 
     // とりけし以外のカードは、現在ノードの子として存在するか確認
-    if (move.card !== "とりけし" && !state.currentNode.children.has(move.card)) {
+    const children = state.currentNode.children;
+    const hasCard = children instanceof Map 
+      ? children.has(move.card) 
+      : move.card in children;
+    if (move.card !== "とりけし" && !hasCard) {
       // 不正な手の場合、状態を変更せずそのまま返す
       return state;
     }
@@ -121,8 +141,8 @@ export const sonicRestaurantGame: GameDefinition<
     // 出されたカードを履歴に追加
     const playedCardsHistory = [...state.playedCardsHistory, move.card];
 
-    // 手札からカードを削除
-    const newHand = hand.filter((c) => c !== move.card);
+    // 手札からカードを削除（指定されたインデックスのカードのみ）
+    const newHand = [...hand.slice(0, move.handIndex), ...hand.slice(move.handIndex + 1)];
     const hands = {
       ...state.hands,
       [playerId]: newHand,
@@ -152,7 +172,10 @@ export const sonicRestaurantGame: GameDefinition<
     }
 
     // 【通常カード】の処理
-    const nextNode = state.currentNode.children.get(move.card)!;
+    const childrenMap = state.currentNode.children;
+    const nextNode = childrenMap instanceof Map
+      ? childrenMap.get(move.card)!
+      : (childrenMap as any)[move.card];
     const newPath = [...state.currentPath, move.card];
 
     // メニュー完成判定
@@ -208,8 +231,9 @@ export const sonicRestaurantGame: GameDefinition<
       return "finished";
     }
 
-    // 全員上がった
-    if (state.finishedOrder.length === state.playerIds.length) {
+    // 全員上がった、または残りプレイヤーが1人になった
+    const remainingPlayers = state.playerIds.length - state.finishedOrder.length;
+    if (remainingPlayers <= 1) {
       return "finished";
     }
 
@@ -222,9 +246,22 @@ export const sonicRestaurantGame: GameDefinition<
     return anyoneCanPlay ? "playing" : "finished";
   },
 
-  getWinner(state: SonicRestaurantState): string | null {
-    // 1位のプレイヤーを返す
-    return state.finishedOrder[0] ?? null;
+  getRanking(state: SonicRestaurantState): string[] | null {
+    // 完全な順位リストを返す
+    const ranking = [...state.finishedOrder];
+    
+    // 残りプレイヤーを手札枚数の少ない順に追加
+    const remainingPlayers = state.playerIds.filter(
+      (id) => !state.finishedOrder.includes(id)
+    );
+    remainingPlayers.sort((a, b) => {
+      const aCards = state.hands[a]?.length || 0;
+      const bCards = state.hands[b]?.length || 0;
+      return aCards - bCards;
+    });
+    ranking.push(...remainingPlayers);
+    
+    return ranking.length > 0 ? ranking : null;
   },
 
   getCurrentPlayerId(state: SonicRestaurantState): string {

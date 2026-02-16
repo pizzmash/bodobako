@@ -74,12 +74,13 @@ export const othelloDefinition: GameDefinition<OthelloState, OthelloMove> = {
     return state.finished ? "finished" : "playing";
   },
 
-  getWinner(state: OthelloState): string | null {
+  getRanking(state: OthelloState): string[] | null {
     if (!state.finished) return null;
     const { black, white } = countDiscs(state.board);
-    if (black > white) return state.playerIds[0];
-    if (white > black) return state.playerIds[1];
-    return null; // draw
+    if (black === white) return null; // draw
+    // 勝者を1位、敗者を2位として返す
+    if (black > white) return [state.playerIds[0], state.playerIds[1]];
+    return [state.playerIds[1], state.playerIds[0]];
   },
 
   getCurrentPlayerId(state: OthelloState): string {
