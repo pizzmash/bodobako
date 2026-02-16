@@ -1,5 +1,4 @@
-import type { CitychasePlayerView, CitychaseMove } from "@bodobako/shared";
-import type { RoomInfo } from "@bodobako/shared";
+import type { CitychaseMove, CitychasePlayerView, RoomInfo } from "@bodobako/shared";
 import { BoardGrid } from "./BoardGrid";
 import { PlayerPanel } from "./PlayerPanel";
 

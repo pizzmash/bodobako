@@ -1,6 +1,5 @@
+import type { CitychaseMove, CitychasePlayerView, RoomInfo } from "@bodobako/shared";
 import { useEffect } from "react";
-import type { CitychasePlayerView, CitychaseMove } from "@bodobako/shared";
-import type { RoomInfo } from "@bodobako/shared";
 
 interface Props {
   state: CitychasePlayerView;

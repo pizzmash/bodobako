@@ -1,20 +1,20 @@
 import type {
-  CitychasePlayerView,
-  CitychaseMove,
-  BuildingPos,
-  IntersectionPos,
-  GameResult,
+    BuildingPos,
+    CitychaseMove,
+    CitychasePlayerView,
+    GameResult,
+    IntersectionPos,
+    RoomInfo,
 } from "@bodobako/shared";
-import type { RoomInfo } from "@bodobako/shared";
 import {
-  getAdjacentIntersections,
-  getSurroundingBuildings,
-  getValidCriminalMoves,
-  isSamePos,
+    getAdjacentIntersections,
+    getSurroundingBuildings,
+    getValidCriminalMoves,
+    isSamePos,
 } from "@bodobako/shared";
+import { GameResultCard } from "../../components/GameResultCard";
 import { BoardGrid } from "./BoardGrid";
 import { PlayerPanel } from "./PlayerPanel";
-import { GameResultCard } from "../../components/GameResultCard";
 
 interface Props {
   state: CitychasePlayerView;

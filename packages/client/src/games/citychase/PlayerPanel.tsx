@@ -1,5 +1,4 @@
-import type { CitychasePlayerView } from "@bodobako/shared";
-import type { RoomInfo } from "@bodobako/shared";
+import type { CitychasePlayerView, RoomInfo } from "@bodobako/shared";
 import { getHelicoptersForPlayer } from "@bodobako/shared";
 
 interface Props {
