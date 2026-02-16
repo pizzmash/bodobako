@@ -28,17 +28,44 @@ export function AiueBattleBoard() {
   const Title = (
     <h2
       style={{
-        fontSize: "1.6rem",
-        fontWeight: 800,
-        margin: "0.5rem 0 0.25rem",
-        background: `linear-gradient(135deg, ${C.primary}, ${C.primaryLight})`,
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
+        fontSize: "clamp(1.5rem, 5vw, 2.5rem)",
+        fontWeight: 900,
+        margin: "1rem 0",
         fontFamily: FONT,
-        letterSpacing: "0.05em",
+        letterSpacing: "0.02em",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "clamp(0.2rem, 1vw, 0.4rem)",
+        flexWrap: "nowrap",
+        overflow: "hidden",
       }}
     >
-      あいうえバトル
+      {[
+        { char: "あ", color: "#ff5c8d", rotate: "-2deg" },
+        { char: "い", color: "#ffbc42", rotate: "3deg" },
+        { char: "う", color: "#0496ff", rotate: "-1deg" },
+        { char: "え", color: "#06d6a0", rotate: "2deg" },
+        { char: "バトル", color: "#ff5c8d", rotate: "0deg" },
+      ].map((item, i) => (
+        <span
+          key={i}
+          style={{
+            color: item.color,
+            background: "linear-gradient(145deg, #ffffff, #fafafa)",
+            padding: "clamp(0.2rem, 1vw, 0.3rem) clamp(0.5rem, 2vw, 1.1rem)",
+            borderRadius: "clamp(10px, 2vw, 16px)",
+            border: "2px solid rgba(0,0,0,0.08)",
+            transform: `rotate(${item.rotate})`,
+            display: "inline-block",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {item.char}
+        </span>
+      ))}
     </h2>
   );
 
@@ -62,9 +89,6 @@ export function AiueBattleBoard() {
     return (
       <div style={styles.container}>
         {Title}
-        <div style={styles.topicBadge}>
-          お題: <strong>{state.topic}</strong>
-        </div>
         <WordInput
           state={state}
           playerId={playerId}
@@ -82,9 +106,6 @@ export function AiueBattleBoard() {
   return (
     <div style={styles.container}>
       {Title}
-      <div style={styles.topicBadge}>
-        お題: <strong>{state.topic}</strong>
-      </div>
       <BattleBoard
         state={state}
         playerId={playerId}
