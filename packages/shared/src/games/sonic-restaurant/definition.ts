@@ -4,17 +4,17 @@
 
 import type { GameDefinition } from "../../types/game.js";
 import {
-    buildMenuTree,
-    createDeck,
-    getMenuName,
-    hasAnyPlayableCard,
-    shuffleArray
+  buildMenuTree,
+  createDeck,
+  getMenuName,
+  hasAnyPlayableCard,
+  shuffleArray
 } from "./logic.js";
 import type {
-    Card,
-    CompletedMenu,
-    SonicRestaurantMove,
-    SonicRestaurantState,
+  Card,
+  CompletedMenu,
+  SonicRestaurantMove,
+  SonicRestaurantState,
 } from "./types.js";
 
 export const sonicRestaurantGame: GameDefinition<
@@ -178,6 +178,12 @@ export const sonicRestaurantGame: GameDefinition<
 
     // 【とりけしカード】の処理
     if (move.card === "とりけし") {
+      // 手札が0になったら上がり
+      let finishedOrder = state.finishedOrder;
+      if (newHand.length === 0) {
+        finishedOrder = [...finishedOrder, playerId];
+      }
+
       // currentPath が空でない場合のみルートに戻る（no-op 防止）
       if (state.currentPath.length > 0) {
         return {
@@ -187,6 +193,7 @@ export const sonicRestaurantGame: GameDefinition<
           lastCompletedMenu,
           currentPath: [],
           currentNode: buildMenuTree(), // ルートに戻る
+          finishedOrder,
         };
       } else {
         // rootで「とりけし」が出された場合は何もしない（no-op）
@@ -195,6 +202,7 @@ export const sonicRestaurantGame: GameDefinition<
           hands,
           playedCardsHistory,
           lastCompletedMenu,
+          finishedOrder,
         };
       }
     }
