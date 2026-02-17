@@ -19,7 +19,11 @@ export function ConfirmModal({ wordChars, onCancel, onSubmit }: ConfirmModalProp
             return (
               <span key={i} style={{
                 ...styles.confirmChar,
-                ...(isFiller ? { background: "#f5f5f5", borderColor: "#ccc", color: C.textSub } : {}),
+                ...(isFiller ? { 
+                  background: C.gray100, 
+                  borderColor: C.gray300, 
+                  color: C.textSub 
+                } : {}),
               }}>{c}</span>
             );
           })}

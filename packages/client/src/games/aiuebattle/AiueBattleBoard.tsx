@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useRoom } from "../../context/RoomContext";
 import type { AiueBattleState, AiueBattleMove } from "@bodobako/shared";
 import { useAiueState } from "./hooks/useAiueState";
-import { C, FONT, styles } from "./constants";
+import { C, FONT, styles, SPACING, TYPOGRAPHY, RADIUS } from "./constants";
 import { TopicSelect } from "./TopicSelect";
 import { WordInput } from "./WordInput";
 import { BattleBoard } from "./BattleBoard";
@@ -25,43 +25,44 @@ export function AiueBattleBoard() {
 
   if (!state || !playerId || !room) return null;
 
+  // カラフルでポップなタイトル
   const Title = (
     <h2
       style={{
-        fontSize: "clamp(1.5rem, 5vw, 2.5rem)",
+        ...TYPOGRAPHY["3xl"],
         fontWeight: 900,
-        margin: "1rem 0",
+        margin: `${SPACING.lg} 0 ${SPACING.xl}`,
         fontFamily: FONT,
-        letterSpacing: "0.02em",
+        letterSpacing: "0.05em",
+        textAlign: "center",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: "clamp(0.2rem, 1vw, 0.4rem)",
-        flexWrap: "nowrap",
-        overflow: "hidden",
+        gap: "clamp(4px, 1vw, 8px)",
+        flexWrap: "wrap",
       }}
     >
       {[
         { char: "あ", color: "#ff5c8d", rotate: "-2deg" },
-        { char: "い", color: "#ffbc42", rotate: "3deg" },
+        { char: "い", color: "#ffbc42", rotate: "2deg" },
         { char: "う", color: "#0496ff", rotate: "-1deg" },
-        { char: "え", color: "#06d6a0", rotate: "2deg" },
-        { char: "バトル", color: "#ff5c8d", rotate: "0deg" },
+        { char: "え", color: "#06d6a0", rotate: "1deg" },
+        { char: "バトル", color: "#9d4edd", rotate: "0deg" },
       ].map((item, i) => (
         <span
           key={i}
           style={{
             color: item.color,
-            background: "linear-gradient(145deg, #ffffff, #fafafa)",
-            padding: "clamp(0.2rem, 1vw, 0.3rem) clamp(0.5rem, 2vw, 1.1rem)",
-            borderRadius: "clamp(10px, 2vw, 16px)",
-            border: "2px solid rgba(0,0,0,0.08)",
+            background: C.bgCard,
+            padding: "clamp(4px, 1vw, 8px) clamp(8px, 2vw, 16px)",
+            borderRadius: RADIUS.md,
+            border: `2px solid ${item.color}`,
             transform: `rotate(${item.rotate})`,
             display: "inline-block",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
+            boxShadow: `0 4px 12px ${item.color}30`,
+            transition: "transform 0.2s ease",
           }}
+          className="ab-title-char"
         >
           {item.char}
         </span>

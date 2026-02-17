@@ -1,6 +1,6 @@
 import type { AiueBattleState, AiueBattleMove, RoomInfo } from "@bodobako/shared";
 import { TOPIC_LIST } from "@bodobako/shared";
-import { styles } from "./constants";
+import { styles, SPACING } from "./constants";
 
 interface TopicSelectProps {
   state: AiueBattleState;
@@ -26,7 +26,11 @@ export function TopicSelect({
 
   if (isSelector) {
     return (
-      <div style={{ animation: "ab-fadeIn .4s ease-out" }}>
+      <div style={{ 
+        animation: "ab-fadeIn .4s ease-out",
+        width: "100%",
+        maxWidth: "700px",
+      }}>
         <p style={styles.subtitle}>お題を選んでください</p>
         <div style={styles.topicGrid}>
           {TOPIC_LIST.map((topic, i) => (

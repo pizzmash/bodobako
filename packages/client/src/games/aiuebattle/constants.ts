@@ -2,31 +2,98 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { BOARD_CHARS } from "@bodobako/shared";
 
-/* ── Colour palette ── */
-export const C = {
-  primary: "#f4d125",
-  primaryLight: "#ffec6e",
-  primaryDark: "#d4b51a",
-  hit: "#e05555",
-  hitBg: "#fff0f0",
-  success: "#06d6a0",
-  warning: "#ffbc42",
-  bgMain: "#fafafa",
-  bgCard: "#ffffff",
-  textMain: "#181711",
-  textSub: "#718096",
-  border: "#181711",
-  borderDark: "#cbd5e0",
+/* ── Design System ── */
+
+// Spacing Scale (8px base)
+export const SPACING = {
+  xs: "0.25rem",   // 4px
+  sm: "0.5rem",    // 8px
+  md: "0.75rem",   // 12px
+  lg: "1rem",      // 16px
+  xl: "1.5rem",    // 24px
+  "2xl": "2rem",   // 32px
+  "3xl": "3rem",   // 48px
 } as const;
 
-// カラフルな文字ボタンのカラー（サンプルHTMLより）
-export const CHAR_COLORS = [
-  "#ff5c8d", // ピンク
-  "#ffbc42", // オレンジ
-  "#0496ff", // 青
-  "#06d6a0", // 緑
-  "#9d4edd", // 紫
-] as const;
+// Typography Scale
+export const TYPOGRAPHY = {
+  xs: { fontSize: "0.75rem", lineHeight: "1.5" },      // 12px
+  sm: { fontSize: "0.875rem", lineHeight: "1.5" },     // 14px
+  base: { fontSize: "1rem", lineHeight: "1.5" },       // 16px
+  lg: { fontSize: "1.125rem", lineHeight: "1.5" },     // 18px
+  xl: { fontSize: "1.25rem", lineHeight: "1.4" },      // 20px
+  "2xl": { fontSize: "1.5rem", lineHeight: "1.3" },    // 24px
+  "3xl": { fontSize: "2rem", lineHeight: "1.2" },      // 32px
+} as const;
+
+// Color Palette (Simplified & Accessible)
+export const C = {
+  // Primary - Yellow accent
+  primary: "#f4d125",
+  primaryLight: "#fff4cc",
+  primaryDark: "#d4b51a",
+  
+  // Accent - Pink for important actions
+  accent: "#ff5c8d",
+  accentLight: "#ffebf1",
+  
+  // Success - Soft lime green (softer than before)
+  success: "#8ed973",
+  successLight: "#e6faf5",
+  successBg: "linear-gradient(135deg, #f4d125 0%, #8ed973 100%)",
+  
+  // Warning - Orange
+  warning: "#ff9f1c",
+  warningLight: "#fff3e0",
+  
+  // Neutral - Grays
+  gray50: "#fafafa",
+  gray100: "#f5f5f5",
+  gray200: "#e5e5e5",
+  gray300: "#d4d4d4",
+  gray400: "#a3a3a3",
+  gray500: "#737373",
+  gray600: "#525252",
+  gray700: "#404040",
+  gray800: "#262626",
+  gray900: "#171717",
+  
+  // Legacy aliases (for gradual migration)
+  bgMain: "#fafafa",
+  bgCard: "#ffffff",
+  textMain: "#171717",
+  textSub: "#737373",
+  border: "rgba(0,0,0,0.08)",
+  borderDark: "#e5e5e5",
+} as const;
+
+// Shadow Scale
+export const SHADOWS = {
+  sm: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05)",
+  md: "0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05)",
+  lg: "0 8px 24px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06)",
+  xl: "0 12px 32px rgba(0,0,0,0.12), 0 6px 12px rgba(0,0,0,0.08)",
+} as const;
+
+// Border Radius Scale
+export const RADIUS = {
+  sm: "8px",
+  md: "12px",
+  lg: "16px",
+  xl: "20px",
+  "2xl": "24px",
+  full: "9999px",
+} as const;
+
+// Player colors (for identification)
+export const PLAYER_COLORS = [
+  "#0496ff",  // Blue
+  "#ff5c8d",  // Pink
+  "#ffbc42",  // Orange
+  "#06d6a0",  // Green
+  "#9d4edd",  // Purple
+  "#ec4899",  // Hot Pink
+];
 
 export const FONT = "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
 
@@ -72,14 +139,41 @@ export function charToIndex(char: string): number {
   return (BOARD_CHARS as readonly string[]).indexOf(char);
 }
 
-export const PLAYER_COLORS = [
-  "#0496ff", 
-  "#ff5c8d", 
-  "#ffbc42", 
-  "#06d6a0", 
-  "#9d4edd", 
-  "#ec4899"
-];
+/* ── Common Component Styles ── */
+
+// Topic Card (お題カード) - 全フェーズで共通使用
+export const topicCardStyle: React.CSSProperties = {
+  background: C.bgCard,
+  padding: SPACING.xl,
+  borderRadius: RADIUS.xl,
+  border: `2px solid ${C.border}`,
+  boxShadow: SHADOWS.md,
+  textAlign: "center",
+  maxWidth: "100%",
+};
+
+export const topicBadgeStyle: React.CSSProperties = {
+  ...TYPOGRAPHY.xs,
+  fontWeight: 800,
+  textTransform: "uppercase",
+  letterSpacing: "0.15em",
+  color: C.textMain,
+  background: C.primaryLight,
+  padding: `${SPACING.xs} ${SPACING.lg}`,
+  borderRadius: RADIUS.full,
+  display: "inline-block",
+  marginBottom: SPACING.md,
+  border: `2px solid ${C.primary}`,
+};
+
+export const topicTextStyle: React.CSSProperties = {
+  ...TYPOGRAPHY["2xl"],
+  fontWeight: 900,
+  color: C.textMain,
+  margin: 0,
+  letterSpacing: "0.02em",
+  wordBreak: "break-word",
+};
 
 /* ── Styles ── */
 export const styles: Record<string, React.CSSProperties> = {
@@ -90,138 +184,120 @@ export const styles: Record<string, React.CSSProperties> = {
     justifyContent: "flex-start",
     minHeight: "100vh",
     fontFamily: FONT,
-    padding: "1rem",
-    background: C.bgMain,
+    padding: SPACING.lg,
+    background: C.gray50,
     color: C.textMain,
   },
   subtitle: {
     color: C.textSub,
-    margin: "0.5rem 0",
+    margin: `${SPACING.md} 0`,
     textAlign: "center",
-    fontSize: "0.95rem",
-  },
-  topicBadge: {
-    fontSize: "1.05rem",
-    margin: "0.25rem 0 0.5rem",
-    padding: "0.4rem 1.2rem",
-    borderRadius: "20px",
-    background: C.bgCard,
-    border: `1px solid ${C.border}`,
-    boxShadow: "0 1px 3px rgba(0,0,0,.06)",
+    ...TYPOGRAPHY.base,
   },
   waiting: {
     color: C.textSub,
     fontStyle: "italic",
-    fontSize: "1.1rem",
-    marginTop: "2rem",
+    ...TYPOGRAPHY.lg,
+    marginTop: SPACING["2xl"],
   },
   topicGrid: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "0.75rem",
+    gap: SPACING.md,
     justifyContent: "center",
+    width: "100%",
     maxWidth: "600px",
-    margin: "1rem auto",
-    maxHeight: "400px",
-    overflowY: "auto",
-    padding: "1.5rem",
-    background: "linear-gradient(145deg, #ffffff, #fafafa)",
-    borderRadius: "20px",
-    border: "none",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.05)",
+    margin: `${SPACING.lg} auto`,
+    padding: `${SPACING.lg} ${SPACING.md}`,
+    background: C.bgCard,
+    borderRadius: RADIUS.xl,
+    border: `2px solid ${C.border}`,
+    boxShadow: SHADOWS.md,
   },
   topicButton: {
-    padding: "0.6rem 1.4rem",
-    fontSize: "1rem",
-    borderRadius: "14px",
+    padding: `${SPACING.md} ${SPACING.xl}`,
+    ...TYPOGRAPHY.base,
+    borderRadius: RADIUS.md,
     border: "none",
-    background: "linear-gradient(145deg, #ffffff, #f5f5f5)",
+    background: C.gray100,
     cursor: "pointer",
     fontFamily: FONT,
     color: C.textMain,
-    fontWeight: 700,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5)",
-    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+    fontWeight: 600,
+    boxShadow: SHADOWS.sm,
+    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
     animation: "ab-fadeIn .3s ease-out both",
   },
   customTopicRow: {
     display: "flex",
-    gap: "0.5rem",
-    margin: "1rem 0",
+    gap: SPACING.md,
+    margin: `${SPACING.lg} 0`,
     justifyContent: "center",
+    flexWrap: "wrap",
   },
   input: {
-    padding: "0.7rem 1rem",
-    fontSize: "1rem",
-    borderRadius: "14px",
-    border: "2px solid rgba(0,0,0,0.1)",
-    width: "220px",
+    padding: `${SPACING.md} ${SPACING.lg}`,
+    ...TYPOGRAPHY.base,
+    borderRadius: RADIUS.md,
+    border: `2px solid ${C.border}`,
+    minWidth: "180px",
+    maxWidth: "100%",
+    flex: "1 1 auto",
     fontFamily: FONT,
-    background: "linear-gradient(145deg, #ffffff, #fafafa)",
+    background: C.bgCard,
     color: C.textMain,
-    transition: "all .25s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+    transition: "all .2s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: SHADOWS.sm,
   },
   wordDisplay: {
     display: "flex",
-    gap: "0.35rem",
-    margin: "1rem 0 0.5rem",
+    gap: "clamp(4px, 1vw, 8px)",
+    margin: `${SPACING.lg} 0`,
     justifyContent: "center",
-  },
-  wordCell: {
-    width: "42px",
-    height: "42px",
-    border: `2px solid ${C.borderDark}`,
-    borderRadius: "8px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "1.3rem",
-    fontWeight: "bold",
-    background: C.bgCard,
-    transition: "border-color .2s, background .2s",
+    flexWrap: "nowrap",
+    overflow: "hidden",
   },
   charCount: {
     color: C.textSub,
-    fontSize: "0.85rem",
-    margin: "0 0 0.5rem",
+    ...TYPOGRAPHY.sm,
+    margin: `0 0 ${SPACING.md}`,
     textAlign: "center",
   },
   kbCard: {
-    background: "linear-gradient(145deg, #ffffff, #fafafa)",
-    borderRadius: "24px",
-    border: `2px solid rgba(24,23,17,0.1)`,
-    boxShadow: "0 10px 30px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)",
-    padding: "2rem",
-    margin: "1rem 0",
+    background: C.bgCard,
+    borderRadius: RADIUS.xl,
+    border: `2px solid ${C.border}`,
+    boxShadow: SHADOWS.md,
+    padding: "clamp(12px, 3vw, 32px)",
+    margin: `${SPACING.lg} 0`,
   },
   boardGrid: {
     display: "flex",
     flexDirection: "column",
-    gap: "4px",
+    gap: SPACING.xs,
   },
   boardRow: {
     display: "flex",
-    gap: "4px",
+    gap: SPACING.xs,
     justifyContent: "center",
   },
   boardGridH: {
     display: "flex",
     flexDirection: "column",
-    gap: "3px",
+    gap: SPACING.xs,
   },
   boardRowH: {
     display: "flex",
-    gap: "3px",
+    gap: SPACING.xs,
     justifyContent: "center",
   },
   charButton: {
     width: "48px",
     height: "48px",
-    fontSize: "1.2rem",
-    borderRadius: "12px",
+    ...TYPOGRAPHY.lg,
+    borderRadius: RADIUS.md,
     border: "none",
-    background: "linear-gradient(145deg, #ffffff, #f5f5f5)",
+    background: C.bgCard,
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
@@ -229,17 +305,17 @@ export const styles: Record<string, React.CSSProperties> = {
     fontFamily: FONT,
     fontWeight: 700,
     color: C.textMain,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5)",
+    boxShadow: SHADOWS.sm,
     position: "relative",
     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   charButtonH: {
     width: "42px",
     height: "42px",
-    fontSize: "1.1rem",
-    borderRadius: "10px",
+    ...TYPOGRAPHY.base,
+    borderRadius: RADIUS.sm,
     border: "none",
-    background: "linear-gradient(145deg, #ffffff, #f5f5f5)",
+    background: C.bgCard,
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
@@ -247,7 +323,7 @@ export const styles: Record<string, React.CSSProperties> = {
     fontFamily: FONT,
     fontWeight: 700,
     color: C.textMain,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5)",
+    boxShadow: SHADOWS.sm,
     position: "relative",
     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
   },
@@ -260,43 +336,44 @@ export const styles: Record<string, React.CSSProperties> = {
     height: "42px",
   },
   charUsed: {
-    background: "linear-gradient(145deg, #e5e7eb, #d1d5db)",
-    color: "#9ca3af",
+    background: C.gray200,
+    color: C.gray400,
     cursor: "not-allowed",
     border: "none",
-    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.15)",
-    opacity: 0.5,
+    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.1)",
+    opacity: 0.6,
   },
   actionRow: {
     display: "flex",
-    gap: "1rem",
-    margin: "1rem 0",
+    gap: SPACING.lg,
+    margin: `${SPACING.lg} 0`,
     justifyContent: "center",
+    flexWrap: "wrap",
   },
   backspaceButton: {
-    padding: "0.75rem 2rem",
-    fontSize: "1.1rem",
-    borderRadius: "14px",
+    padding: `${SPACING.md} ${SPACING["2xl"]}`,
+    ...TYPOGRAPHY.lg,
+    borderRadius: RADIUS.md,
     border: "none",
-    background: "linear-gradient(135deg, #ffbc42, #ff9f1c)",
-    color: "#fff",
+    background: C.warning,
+    color: C.bgCard,
     cursor: "pointer",
     fontFamily: FONT,
     fontWeight: 700,
-    boxShadow: "0 4px 15px rgba(255,188,66,0.4), 0 2px 4px rgba(0,0,0,0.1)",
+    boxShadow: `0 4px 12px ${C.warning}40`,
     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   submitButton: {
-    padding: "0.75rem 2rem",
-    fontSize: "1.1rem",
-    borderRadius: "14px",
+    padding: `${SPACING.md} ${SPACING["2xl"]}`,
+    ...TYPOGRAPHY.lg,
+    borderRadius: RADIUS.md,
     border: "none",
-    background: "linear-gradient(135deg, #ff5c8d, #ff3366)",
-    color: "#fff",
+    background: C.primary,
+    color: C.textMain,
     cursor: "pointer",
     fontFamily: FONT,
     fontWeight: 700,
-    boxShadow: "0 4px 15px rgba(255,92,141,0.4), 0 2px 4px rgba(0,0,0,0.1)",
+    boxShadow: `0 4px 12px ${C.primary}40`,
     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   turnBanner: {
@@ -325,42 +402,42 @@ export const styles: Record<string, React.CSSProperties> = {
   sheets: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "1rem",
+    gap: SPACING.lg,
     justifyContent: "center",
-    margin: "1rem 0",
+    margin: `${SPACING.lg} 0`,
   },
   sheet: {
-    padding: "1.25rem 1.5rem",
-    borderRadius: "20px",
-    background: "linear-gradient(145deg, #ffffff, #fafafa)",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04)",
+    padding: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    background: C.bgCard,
+    boxShadow: SHADOWS.md,
     border: "none",
     borderLeft: "4px solid",
     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   sheetName: {
-    fontSize: "0.9rem",
+    ...TYPOGRAPHY.sm,
     fontWeight: 600,
-    marginBottom: "0.5rem",
+    marginBottom: SPACING.md,
     display: "flex",
     alignItems: "center",
     color: C.textMain,
   },
   sheetCells: {
     display: "flex",
-    gap: "3px",
+    gap: SPACING.xs,
   },
   sheetCell: {
-    width: "34px",
-    height: "34px",
-    border: `1.5px solid ${C.border}`,
-    borderRadius: "6px",
+    width: "36px",
+    height: "36px",
+    border: `2px solid ${C.border}`,
+    borderRadius: RADIUS.sm,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "1rem",
-    fontWeight: "bold",
-    transition: "background .3s, border-color .3s",
+    ...TYPOGRAPHY.base,
+    fontWeight: 700,
+    transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   confirmOverlay: {
     position: "fixed",
@@ -368,73 +445,82 @@ export const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(0,0,0,.4)",
+    background: "rgba(0,0,0,.5)",
     backdropFilter: "blur(4px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1000,
+    padding: SPACING.lg,
   },
   confirmCard: {
-    background: "#fff",
-    borderRadius: 16,
-    padding: "1.5rem 2rem",
+    background: C.bgCard,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.xl,
     textAlign: "center" as const,
-    boxShadow: "0 8px 32px rgba(0,0,0,.2)",
-    minWidth: 260,
+    boxShadow: SHADOWS.xl,
+    minWidth: "min(280px, 90vw)",
+    maxWidth: "90%",
     fontFamily: FONT,
   },
   confirmTitle: {
-    fontSize: "1.1rem",
+    ...TYPOGRAPHY.lg,
     fontWeight: 700,
-    marginBottom: "1rem",
+    marginBottom: SPACING.lg,
     color: C.textMain,
   },
   confirmWord: {
     display: "flex",
-    gap: 6,
+    gap: "clamp(3px, 1vw, 8px)",
     justifyContent: "center",
-    marginBottom: "1.25rem",
+    marginBottom: SPACING.xl,
+    flexWrap: "nowrap",
+    overflow: "hidden",
   },
   confirmChar: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    background: "#e8f0fe",
+    width: "clamp(34px, 9vw, 44px)",
+    height: "clamp(34px, 9vw, 44px)",
+    minWidth: "34px",
+    minHeight: "34px",
+    borderRadius: RADIUS.sm,
+    background: C.primaryLight,
     border: `2px solid ${C.primary}`,
-    fontSize: "1.1rem",
+    ...TYPOGRAPHY.lg,
     fontWeight: 700,
     color: C.textMain,
+    flexShrink: 0,
   },
   confirmButtons: {
     display: "flex",
-    gap: "0.75rem",
+    gap: SPACING.md,
     justifyContent: "center",
   },
   confirmCancel: {
-    padding: "0.6rem 1.5rem",
-    fontSize: "0.95rem",
-    borderRadius: 10,
+    padding: `${SPACING.md} ${SPACING.xl}`,
+    ...TYPOGRAPHY.base,
+    borderRadius: RADIUS.md,
     border: "none",
-    background: "#e2e8f0",
+    background: C.gray200,
     color: C.textMain,
     cursor: "pointer",
     fontFamily: FONT,
     fontWeight: 600,
+    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   confirmSubmit: {
-    padding: "0.6rem 1.5rem",
-    fontSize: "0.95rem",
-    borderRadius: 10,
+    padding: `${SPACING.md} ${SPACING.xl}`,
+    ...TYPOGRAPHY.base,
+    borderRadius: RADIUS.md,
     border: "none",
     background: C.primary,
-    color: "#fff",
+    color: C.textMain,
     cursor: "pointer",
     fontFamily: FONT,
-    fontWeight: 600,
-    boxShadow: `0 2px 8px ${C.primary}44`,
+    fontWeight: 700,
+    boxShadow: `0 4px 12px ${C.primary}40`,
+    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
   },
 };

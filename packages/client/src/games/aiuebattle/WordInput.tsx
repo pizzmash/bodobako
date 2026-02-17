@@ -1,7 +1,20 @@
 import type { AiueBattleMove, AiueBattleState, RoomInfo } from "@bodobako/shared";
 import { WORD_LENGTH } from "@bodobako/shared";
 import { ConfirmModal } from "./ConfirmModal";
-import { BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, C, FONT, styles, useIsWideBoard } from "./constants";
+import { 
+  BOARD_LAYOUT, 
+  BOARD_LAYOUT_HORIZONTAL, 
+  C, 
+  FONT, 
+  styles, 
+  useIsWideBoard,
+  topicCardStyle,
+  topicBadgeStyle,
+  topicTextStyle,
+  SPACING,
+  RADIUS,
+  SHADOWS,
+} from "./constants";
 
 interface WordInputProps {
   state: AiueBattleState;
@@ -30,7 +43,12 @@ export function WordInput({
 
   if (hasSubmitted) {
     return (
-      <div style={{ animation: "ab-fadeIn .4s ease-out", textAlign: "center" as const }}>
+      <div style={{ 
+        animation: "ab-fadeIn .4s ease-out", 
+        textAlign: "center" as const,
+        width: "100%",
+        maxWidth: "400px",
+      }}>
         <p style={styles.waiting}>
           <span style={{ animation: "ab-pulse 1.5s ease-in-out infinite", display: "inline-block" }}>
             他のプレイヤーを待っています... ({state.submittedPlayers.length}/
@@ -40,9 +58,8 @@ export function WordInput({
         <div style={{
           display: "flex",
           flexDirection: "column",
-          gap: "0.4rem",
-          margin: "1rem auto",
-          maxWidth: 280,
+          gap: SPACING.md,
+          margin: `${SPACING.xl} auto`,
         }}>
           {state.playerIds.map((pid) => {
             const name = room.players.find((p) => p.id === pid)?.name ?? "?";
@@ -54,21 +71,22 @@ export function WordInput({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "0.4rem 0.75rem",
-                  borderRadius: "8px",
-                  background: done ? "#f0faf0" : C.bgCard,
-                  border: `1px solid ${done ? C.success : C.border}`,
+                  padding: SPACING.md,
+                  borderRadius: RADIUS.md,
+                  background: done ? C.primaryLight : C.bgCard,
+                  border: `2px solid ${done ? C.primary : C.border}`,
                   fontFamily: FONT,
-                  fontSize: "0.9rem",
                 }}
               >
-                <span style={{ color: C.textMain, fontWeight: pid === playerId ? 600 : 400 }}>
+                <span style={{ 
+                  color: C.textMain, 
+                  fontWeight: pid === playerId ? 600 : 400 
+                }}>
                   {name}{pid === playerId ? "（あなた）" : ""}
                 </span>
                 <span style={{
-                  fontSize: "0.8rem",
                   fontWeight: 600,
-                  color: done ? C.success : C.textSub,
+                  color: done ? C.textMain : C.textSub,
                 }}>
                   {done ? "決定済み" : "入力中..."}
                 </span>
@@ -81,53 +99,15 @@ export function WordInput({
   }
 
   return (
-    <div style={{ animation: "ab-fadeIn .4s ease-out" }}>
-      {/* お題カード */}
-      <div
-        style={{
-          background: "linear-gradient(145deg, #ffffff, #fafafa)",
-          padding: "clamp(0.75rem, 3vw, 1.5rem)",
-          borderRadius: "clamp(12px, 3vw, 20px)",
-          border: "none",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
-          transform: "rotate(-1deg)",
-          textAlign: "center",
-          margin: "0 auto 1.5rem",
-          maxWidth: "600px",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "clamp(0.5rem, 1.5vw, 0.65rem)",
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-            background: "linear-gradient(135deg, #f4d125, #ffbc42)",
-            padding: "clamp(0.25rem, 1vw, 0.4rem) clamp(0.5rem, 2vw, 1rem)",
-            borderRadius: "clamp(12px, 3vw, 20px)",
-            display: "inline-block",
-            marginBottom: "clamp(0.35rem, 1.5vw, 0.75rem)",
-            boxShadow: "0 2px 8px rgba(244,209,37,0.3)",
-          }}
-        >
-          Topic
-        </div>
-        <p style={{ 
-          fontSize: state.topic.length > 20 
-            ? "clamp(0.9rem, 3vw, 1.3rem)" 
-            : state.topic.length > 12 
-              ? "clamp(1rem, 3.5vw, 1.6rem)" 
-              : "clamp(1.2rem, 4vw, 2rem)", 
-          fontWeight: 900, 
-          color: C.textMain, 
-          margin: 0, 
-          letterSpacing: "0.02em", 
-          wordBreak: "break-word", 
-          lineHeight: "1.2" 
-        }}>
-          {state.topic}
-        </p>
+    <div style={{ 
+      animation: "ab-fadeIn .4s ease-out",
+      width: "100%",
+      maxWidth: "700px",
+    }}>
+      {/* お題カード - 共通スタイルを使用 */}
+      <div style={topicCardStyle}>
+        <div style={topicBadgeStyle}>Topic</div>
+        <p style={topicTextStyle}>{state.topic}</p>
       </div>
       
       <p style={styles.subtitle}>
@@ -139,22 +119,21 @@ export function WordInput({
           <div
             key={i}
             style={{
-              width: "52px",
-              height: "52px",
-              border: wordChars[i] ? "none" : "2px dashed rgba(0,0,0,0.15)",
-              borderRadius: "14px",
+              width: "clamp(38px, 10vw, 52px)",
+              height: "clamp(38px, 10vw, 52px)",
+              minWidth: "38px",
+              minHeight: "38px",
+              border: wordChars[i] ? "none" : `2px dashed ${C.border}`,
+              borderRadius: RADIUS.md,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "1.5rem",
+              fontSize: "clamp(1.1rem, 4vw, 1.5rem)",
               fontWeight: 900,
-              background: wordChars[i] 
-                ? "linear-gradient(145deg, #ffffff, #f5f5f5)" 
-                : "transparent",
-              transition: "all .25s cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: wordChars[i] 
-                ? "0 4px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)" 
-                : "none",
+              background: wordChars[i] ? C.bgCard : "transparent",
+              transition: "all .2s cubic-bezier(0.4, 0, 0.2, 1)",
+              boxShadow: wordChars[i] ? SHADOWS.sm : "none",
+              flexShrink: 0,
               ...(wordChars[i]
                 ? {
                     animation: "ab-charPop .3s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -183,10 +162,10 @@ export function WordInput({
                     className="ab-char-btn"
                     style={{
                       ...(isWide ? styles.charButtonH : styles.charButton),
-                      background: isDisabled ? "#e5e7eb" : "#fff",
+                      background: isDisabled ? C.gray200 : C.bgCard,
                       color: C.textMain,
                       cursor: isDisabled ? "not-allowed" : "pointer",
-                      opacity: isDisabled ? 0.6 : 1,
+                      opacity: isDisabled ? 0.5 : 1,
                     }}
                     disabled={isDisabled}
                     onClick={() => setWordChars([...wordChars, char])}

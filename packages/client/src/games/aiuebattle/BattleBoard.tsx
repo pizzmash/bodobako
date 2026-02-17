@@ -1,6 +1,21 @@
 import type { AiueBattleMove, AiueBattleState, GameResult, RoomInfo } from "@bodobako/shared";
 import { GameResultCard } from "../../components/GameResultCard";
-import { BOARD_LAYOUT, BOARD_LAYOUT_HORIZONTAL, C, charToIndex, styles, useIsWideBoard } from "./constants";
+import { 
+  BOARD_LAYOUT, 
+  BOARD_LAYOUT_HORIZONTAL, 
+  C, 
+  charToIndex, 
+  styles, 
+  useIsWideBoard,
+  topicCardStyle,
+  topicBadgeStyle,
+  topicTextStyle,
+  SPACING,
+  RADIUS,
+  SHADOWS,
+  TYPOGRAPHY,
+  PLAYER_COLORS,
+} from "./constants";
 import { PlayerSheet } from "./PlayerSheet";
 
 interface BattleBoardProps {
@@ -33,62 +48,37 @@ export function BattleBoard({
     state.playerIds[state.currentPlayerIndex] === playerId && !state.finished;
   const isEliminated = state.eliminatedPlayers.includes(playerId);
   const isWide = useIsWideBoard();
+
+  // Attack result banner variables
+  const attackPlayerIndex = room.players.findIndex((p) => p.id === state.lastAttackPlayerId);
+  const playerColor = attackPlayerIndex >= 0 ? PLAYER_COLORS[attackPlayerIndex] : C.gray400;
   const layout = isWide ? BOARD_LAYOUT_HORIZONTAL : BOARD_LAYOUT;
 
   return (
     <>
-      {/* Topic & Turn banner (横一列) */}
+      {/* Topic & Status */}
       {!gameResult && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(150px, 1fr) minmax(0, 2fr)",
-            gap: "0.5rem",
-            margin: "0 0 1rem",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: SPACING.md,
+            margin: `0 0 ${SPACING.lg}`,
+            width: "100%",
+            maxWidth: "1000px",
           }}
+          className="ab-topic-status-container"
         >
-          {/* お題カード */}
-          <div
-            style={{
-              background: "linear-gradient(145deg, #ffffff, #fafafa)",
-              padding: "clamp(0.75rem, 3vw, 1.5rem)",
-              borderRadius: "clamp(12px, 3vw, 20px)",
-              border: "none",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
-              transform: "rotate(-1deg)",
-              textAlign: "center",
-              overflow: "visible",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "clamp(0.5rem, 1.5vw, 0.65rem)",
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.15em",
-                color: "#fff",
-                background: "linear-gradient(135deg, #f4d125, #ffbc42)",
-                padding: "clamp(0.25rem, 1vw, 0.4rem) clamp(0.5rem, 2vw, 1rem)",
-                borderRadius: "clamp(12px, 3vw, 20px)",
-                display: "inline-block",
-                marginBottom: "clamp(0.35rem, 1.5vw, 0.75rem)",
-                boxShadow: "0 2px 8px rgba(244,209,37,0.3)",
-              }}
-            >
-              Topic
-            </div>
-            <p style={{ 
+          {/* お題カード - 共通スタイルを使用 */}
+          <div style={{ ...topicCardStyle, padding: SPACING.lg }}>
+            <div style={topicBadgeStyle}>Topic</div>
+            <p style={{
+              ...topicTextStyle,
               fontSize: state.topic.length > 20 
-                ? "clamp(0.9rem, 3vw, 1.3rem)" 
+                ? "1rem" 
                 : state.topic.length > 12 
-                  ? "clamp(1rem, 3.5vw, 1.6rem)" 
-                  : "clamp(1.2rem, 4vw, 2rem)", 
-              fontWeight: 900, 
-              color: C.textMain, 
-              margin: 0, 
-              letterSpacing: "0.02em", 
-              wordBreak: "break-word", 
-              lineHeight: "1.2" 
+                  ? "1.2rem" 
+                  : "1.5rem",
             }}>
               {state.topic}
             </p>
@@ -99,42 +89,93 @@ export function BattleBoard({
             style={{
               ...(isMyTurn
                 ? {
-                    background: "linear-gradient(135deg, #ffbc42, #ffd96a)",
+                    background: C.primary,
                     color: C.textMain,
                     animation: "ab-turnPulse 2s ease-in-out infinite",
-                    boxShadow: "0 12px 35px rgba(255,188,66,0.35), 0 4px 12px rgba(0,0,0,0.1)",
+                    boxShadow: `0 8px 24px ${C.primary}40, 0 4px 8px rgba(0,0,0,0.1)`,
                   }
                 : isEliminated
                   ? { 
-                      background: "linear-gradient(145deg, #e2e8f0, #cbd5e0)",
+                      background: C.gray200,
                       color: C.textSub,
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                      boxShadow: SHADOWS.sm,
                     }
                   : { 
-                      background: "linear-gradient(145deg, #ffffff, #fafafa)",
+                      background: C.bgCard,
                       color: C.textMain,
-                      boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                      boxShadow: SHADOWS.md,
                     }),
-              padding: "clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem)",
-              borderRadius: "clamp(16px, 4vw, 24px)",
-              border: "none",
+              padding: SPACING.xl,
+              borderRadius: RADIUS.lg,
+              border: `2px solid ${C.border}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "clamp(1rem, 3vw, 1.5rem)",
-              fontWeight: 900,
+              ...TYPOGRAPHY.xl,
+              fontWeight: 800,
               position: "relative",
               overflow: "hidden",
-              letterSpacing: "0.02em",
               minWidth: 0,
               textAlign: "center",
             }}
           >
-            {isEliminated
-              ? "あなたは脱落しました"
-              : isMyTurn
-                ? `🎯 あなたの番です！${state.attackCount > 0 ? " （連続攻撃！）" : ""}`
-                : `${currentPlayer?.name ?? "..."} の番です`}
+            {isEliminated ? (
+              "あなたは脱落しました"
+            ) : isMyTurn ? (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: SPACING.sm, flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: C.textMain,
+                    animation: "ab-pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+                あなたの番です！
+                {state.attackCount > 0 && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "4px 12px",
+                      background: "linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)",
+                      color: "#fff",
+                      borderRadius: RADIUS.full,
+                      fontSize: TYPOGRAPHY.sm.fontSize,
+                      fontWeight: 800,
+                      boxShadow: "0 2px 8px rgba(255, 107, 53, 0.3)",
+                      animation: "ab-comboFlash 0.6s ease-in-out infinite",
+                    }}
+                  >
+                    <span style={{
+                      display: "inline-block",
+                      width: "0",
+                      height: "0",
+                      borderLeft: "4px solid transparent",
+                      borderRight: "4px solid transparent",
+                      borderBottom: "7px solid #fff",
+                      filter: "drop-shadow(0 0 2px rgba(255,255,255,0.5))",
+                    }} />
+                    連続攻撃
+                  </span>
+                )}
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: C.textMain,
+                    animation: "ab-pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+              </span>
+            ) : (
+              `${currentPlayer?.name ?? "..."} の番です`
+            )}
           </div>
         </div>
       )}
@@ -143,33 +184,121 @@ export function BattleBoard({
       {state.lastAttackChar && !gameResult && (
         <div
           style={{
-            fontSize: "1.1rem",
-            fontWeight: 700,
-            margin: "0 0 1rem",
-            padding: "1rem 1.5rem",
-            borderRadius: "16px",
-            textAlign: "center",
-            letterSpacing: "0.02em",
+            margin: `0 0 ${SPACING.md}`,
+            padding: `${SPACING.md} ${SPACING.lg}`,
+            borderRadius: RADIUS.md,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: SPACING.sm,
             ...(state.lastAttackHit
               ? {
-                  background: "linear-gradient(135deg, #06d6a0, #4ade80)",
-                  color: "#fff",
-                  boxShadow: "0 8px 24px rgba(6,214,160,0.35), 0 2px 8px rgba(0,0,0,0.1)",
+                  background: C.successBg,
+                  boxShadow: `0 2px 12px rgba(142, 217, 115, 0.2), 0 1px 4px rgba(244, 209, 37, 0.15)`,
                   animation: attackAnim === "hit" ? "ab-shake .5s ease-out" : undefined,
                 }
               : {
-                  background: "linear-gradient(145deg, #f5f5f5, #e5e5e5)",
-                  color: C.textSub,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                  background: C.gray200,
+                  boxShadow: SHADOWS.sm,
                   animation: attackAnim === "miss" ? "ab-missFade .5s ease-out" : undefined,
                 }),
           }}
         >
-          <span style={{ fontWeight: 800 }}>
-            {room.players.find((p) => p.id === state.lastAttackPlayerId)?.name ?? "?"}
-          </span>
-          ：「{state.lastAttackChar}」→{" "}
-          {state.lastAttackHit ? "ヒット！" : "ミス"}
+          {/* Player badge */}
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "4px 10px",
+            background: state.lastAttackHit ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.7)",
+            borderRadius: RADIUS.full,
+            boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+            flexShrink: 0,
+          }}>
+            <div style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              background: playerColor,
+            }} />
+            <span style={{
+              fontSize: "13px",
+              fontWeight: 800,
+              color: state.lastAttackHit ? C.textMain : C.textSub,
+            }}>
+              {room.players.find((p) => p.id === state.lastAttackPlayerId)?.name ?? "?"}
+            </span>
+          </div>
+          
+          {/* Attack character */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "40px",
+            height: "40px",
+            background: state.lastAttackHit ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.6)",
+            borderRadius: RADIUS.md,
+            border: state.lastAttackHit ? `2px solid ${C.primary}` : `2px solid ${C.gray300}`,
+            flexShrink: 0,
+          }}>
+            <span style={{
+              fontSize: "20px",
+              fontWeight: 900,
+              color: state.lastAttackHit ? C.textMain : C.textSub,
+            }}>
+              {state.lastAttackChar}
+            </span>
+          </div>
+          
+          {/* Arrow */}
+          <svg width="20" height="20" viewBox="0 0 24 24" style={{ opacity: 0.7, flexShrink: 0 }}>
+            <path d="M5 12h14m-7-7l7 7-7 7" stroke={state.lastAttackHit ? "#fff" : C.textSub} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          
+          {/* Result */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            {state.lastAttackHit ? (
+              <>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "24px",
+                  height: "24px",
+                  background: "rgba(255,255,255,0.95)",
+                  borderRadius: "50%",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M5 13l4 4L19 7" stroke={C.primary} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: "16px", fontWeight: 900, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
+                  ヒット！
+                </span>
+              </>
+            ) : (
+              <>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "24px",
+                  height: "24px",
+                  background: "rgba(255,255,255,0.6)",
+                  borderRadius: "50%",
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path d="M6 6l12 12M6 18L18 6" stroke={C.textSub} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: "16px", fontWeight: 900, color: C.textSub }}>
+                  ミス
+                </span>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -189,6 +318,8 @@ export function BattleBoard({
         className={isMyTurn ? "ab-board-pulse" : ""}
         style={{
           ...styles.kbCard,
+          maxWidth: "900px",
+          margin: `${SPACING.lg} auto`,
           ...(!isMyTurn ? {
             opacity: 0.5,
             filter: "grayscale(0.4)",
@@ -214,7 +345,7 @@ export function BattleBoard({
                         ? styles.charUsed
                         : {
                             cursor: isMyTurn ? "pointer" : "default",
-                            background: isMyTurn ? "#fff" : "#f5f5f5",
+                            background: isMyTurn ? C.bgCard : C.gray100,
                             color: C.textMain,
                           }),
                     }}

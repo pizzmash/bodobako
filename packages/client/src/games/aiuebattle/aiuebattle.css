@@ -1,125 +1,184 @@
-@keyframes ab-pulse {
-  0%,100%{ opacity:1 }
-  50%{ opacity:.6 }
-}
-@keyframes ab-shake {
-  0%,100%{ transform:translateX(0) }
-  15%{ transform:translateX(-6px) }
-  30%{ transform:translateX(6px) }
-  45%{ transform:translateX(-4px) }
-  60%{ transform:translateX(4px) }
-  75%{ transform:translateX(-2px) }
-  90%{ transform:translateX(2px) }
-}
-@keyframes ab-missFade {
-  0%{ opacity:1; transform:scale(1) }
-  50%{ opacity:.5; transform:scale(.97) }
-  100%{ opacity:1; transform:scale(1) }
-}
+/* ── Aiuebattle Animations & Interactions ── */
+
+/* Base Animations */
 @keyframes ab-fadeIn {
-  from{ opacity:0; transform:translateY(8px) }
-  to{ opacity:1; transform:translateY(0) }
-}
-@keyframes ab-celebrate {
-  0%{ transform:scale(1) }
-  25%{ transform:scale(1.08) rotate(-2deg) }
-  50%{ transform:scale(1.12) rotate(2deg) }
-  75%{ transform:scale(1.08) rotate(-1deg) }
-  100%{ transform:scale(1) rotate(0) }
-}
-@keyframes ab-eliminate {
-  from{ filter:grayscale(0); opacity:1 }
-  to{ filter:grayscale(1); opacity:.55 }
-}
-@keyframes ab-reveal {
-  0%{ transform:rotateX(90deg); opacity:0 }
-  60%{ transform:rotateX(-10deg); opacity:1 }
-  100%{ transform:rotateX(0) }
-}
-@keyframes ab-turnPulse {
-  0%,100%{ transform:scale(1); box-shadow:0 12px 35px rgba(255,188,66,0.35), 0 4px 12px rgba(0,0,0,0.1) }
-  50%{ transform:scale(1.02); box-shadow:0 16px 45px rgba(255,188,66,0.45), 0 6px 16px rgba(0,0,0,0.12) }
-}
-@keyframes ab-boardPulse {
-  0%,100%{ box-shadow:0 10px 30px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.05) }
-  50%{ box-shadow:0 14px 40px rgba(244,209,37,.2), 0 4px 12px rgba(0,0,0,.08) }
-}
-@keyframes ab-charPop {
-  0%{ transform:scale(0); opacity:0 }
-  60%{ transform:scale(1.2) }
-  100%{ transform:scale(1); opacity:1 }
-}
-@keyframes ab-slideUp {
-  from{ opacity:0; transform:translateY(16px) }
-  to{ opacity:1; transform:translateY(0) }
-}
-@keyframes ab-glowPulse {
-  0%,100%{ box-shadow:0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04) }
-  50%{ box-shadow:0 12px 32px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06) }
-}
-@keyframes ab-hitFlash {
-  0%{ background:rgba(224,85,85,.3) }
-  100%{ background:transparent }
-}
-@keyframes ab-spin {
-  from{ transform:rotate(0deg) }
-  to{ transform:rotate(360deg) }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* hover / active classes */
+@keyframes ab-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes ab-shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-6px); }
+  30%, 60%, 90% { transform: translateX(6px); }
+}
+
+@keyframes ab-missFade {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ab-comboFlash {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.6), 0 0 20px rgba(255, 107, 53, 0.4);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes ab-celebrate {
+  0% { transform: scale(1); }
+  25%, 75% { transform: scale(1.08); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ab-eliminate {
+  from { filter: grayscale(0); opacity: 1; }
+  to { filter: grayscale(1); opacity: 0.55; }
+}
+
+@keyframes ab-reveal {
+  0% { transform: rotateX(90deg); opacity: 0; }
+  60% { transform: rotateX(-10deg); opacity: 1; }
+  100% { transform: rotateX(0); }
+}
+
+@keyframes ab-turnPulse {
+  0%, 100% { 
+    transform: scale(1); 
+    box-shadow: 0 8px 24px rgba(244, 209, 37, 0.4), 0 4px 8px rgba(0, 0, 0, 0.1); 
+  }
+  50% { 
+    transform: scale(1.01); 
+    box-shadow: 0 12px 32px rgba(244, 209, 37, 0.5), 0 6px 12px rgba(0, 0, 0, 0.12); 
+  }
+}
+
+@keyframes ab-boardPulse {
+  0%, 100% { 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05); 
+  }
+  50% { 
+    box-shadow: 0 8px 20px rgba(244, 209, 37, 0.2), 0 4px 8px rgba(0, 0, 0, 0.08); 
+  }
+}
+
+@keyframes ab-charPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes ab-glowPulse {
+  0%, 100% { 
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04); 
+  }
+  50% { 
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.06); 
+  }
+}
+
+/* ── Hover & Active States ── */
+
+/* Topic Button */
 .ab-topic-btn {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ab-topic-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  filter: brightness(0.98);
 }
 .ab-topic-btn:active {
-  transform: translateY(0px) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-}
-.ab-char-btn {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.ab-char-btn:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.05) !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8) !important;
-  background: linear-gradient(145deg, #ffffff, #fafafa) !important;
-}
-.ab-char-btn:active:not(:disabled) {
-  transform: translateY(-1px) scale(1.02) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5) !important;
-}
-.ab-battle-char {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.ab-battle-char:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.08) !important;
-  box-shadow: 0 8px 24px rgba(244,209,37,0.35), 0 4px 8px rgba(0,0,0,0.1) !important;
-  background: linear-gradient(135deg, #f4d125, #ffec6e) !important;
-}
-.ab-battle-char:active:not(:disabled) {
-  transform: translateY(-1px) scale(1.04) !important;
-  box-shadow: 0 4px 12px rgba(244,209,37,0.3), 0 2px 4px rgba(0,0,0,0.08) !important;
-}
-.ab-board-pulse {
-  animation: ab-boardPulse 2s ease-in-out infinite !important;
-}
-.ab-action-btn {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.ab-action-btn:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 6px 20px currentColor, 0 3px 8px rgba(0,0,0,0.15) !important;
-  filter: brightness(1.08) !important;
-}
-.ab-action-btn:active:not(:disabled) {
-  transform: translateY(0px) scale(1) !important;
-  box-shadow: 0 2px 8px currentColor, 0 1px 3px rgba(0,0,0,0.1) !important;
-}
-.ab-input:focus {
-  outline: none !important;
-  border-color: #f4d125 !important;
-  box-shadow: 0 0 0 3px rgba(244,209,37,.2), 0 2px 8px rgba(0,0,0,0.08) !important;
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Character Button (Word Input) */
+.ab-char-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ab-char-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  filter: brightness(0.98);
+}
+.ab-char-btn:active:not(:disabled) {
+  transform: translateY(0) scale(1.02);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Battle Character Button */
+.ab-battle-char {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ab-battle-char:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 6px 20px rgba(244, 209, 37, 0.35), 0 4px 8px rgba(0, 0, 0, 0.1);
+  filter: brightness(0.98);
+}
+.ab-battle-char:active:not(:disabled) {
+  transform: translateY(0) scale(1.04);
+  box-shadow: 0 4px 12px rgba(244, 209, 37, 0.3), 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Board Pulse (during turn) */
+.ab-board-pulse {
+  animation: ab-boardPulse 2s ease-in-out infinite;
+}
+
+/* Action Button */
+.ab-action-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ab-action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+.ab-action-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Input Focus */
+.ab-input:focus {
+  outline: none;
+  border-color: #f4d125;
+  box-shadow: 0 0 0 3px rgba(244, 209, 37, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Accessibility ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Responsive Layout ── */
+
+/* PC表示：トピックと手番を横並びに */
+@media (min-width: 768px) {
+  .ab-topic-status-container {
+    grid-template-columns: minmax(200px, 1fr) minmax(0, 2fr) !important;
+  }
+}
+
+/* タイトル文字のホバーエフェクト */
+.ab-title-char:hover {
+  transform: rotate(0deg) scale(1.1) !important;
+}
