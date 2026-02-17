@@ -74,13 +74,13 @@ export function BattleBoard({
             <div style={topicBadgeStyle}>Topic</div>
             <p style={{
               ...topicTextStyle,
-              fontSize: state.topic.length > 20 
+              fontSize: !state.topic || state.topic.length > 20 
                 ? "1rem" 
                 : state.topic.length > 12 
                   ? "1.2rem" 
                   : "1.5rem",
             }}>
-              {state.topic}
+              {state.topic ?? "..."}
             </p>
           </div>
 
