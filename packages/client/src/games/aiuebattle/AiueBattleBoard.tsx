@@ -1,12 +1,12 @@
-import { useState, useCallback } from "react";
+import type { AiueBattleMove, AiueBattleState } from "@bodobako/shared";
+import { useCallback, useState } from "react";
 import { useRoom } from "../../context/RoomContext";
-import type { AiueBattleState, AiueBattleMove } from "@bodobako/shared";
+import "./aiuebattle.css";
+import { BattleBoard } from "./BattleBoard";
+import { C, FONT, RADIUS, SPACING, styles, TYPOGRAPHY } from "./constants";
 import { useAiueState } from "./hooks/useAiueState";
-import { C, FONT, styles, SPACING, TYPOGRAPHY, RADIUS } from "./constants";
 import { TopicSelect } from "./TopicSelect";
 import { WordInput } from "./WordInput";
-import { BattleBoard } from "./BattleBoard";
-import "./aiuebattle.css";
 
 export function AiueBattleBoard() {
   const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =

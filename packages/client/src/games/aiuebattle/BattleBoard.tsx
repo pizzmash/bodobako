@@ -1,20 +1,20 @@
 import type { AiueBattleMove, AiueBattleState, GameResult, RoomInfo } from "@bodobako/shared";
 import { GameResultCard } from "../../components/GameResultCard";
-import { 
-  BOARD_LAYOUT, 
-  BOARD_LAYOUT_HORIZONTAL, 
-  C, 
-  charToIndex, 
-  styles, 
-  useIsWideBoard,
-  topicCardStyle,
-  topicBadgeStyle,
-  topicTextStyle,
-  SPACING,
-  RADIUS,
-  SHADOWS,
-  TYPOGRAPHY,
-  PLAYER_COLORS,
+import {
+    BOARD_LAYOUT,
+    BOARD_LAYOUT_HORIZONTAL,
+    C,
+    charToIndex,
+    PLAYER_COLORS,
+    RADIUS,
+    SHADOWS,
+    SPACING,
+    styles,
+    topicBadgeStyle,
+    topicCardStyle,
+    topicTextStyle,
+    TYPOGRAPHY,
+    useIsWideBoard,
 } from "./constants";
 import { PlayerSheet } from "./PlayerSheet";
 

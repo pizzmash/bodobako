@@ -1,6 +1,6 @@
-import type React from "react";
-import { useState, useEffect } from "react";
 import { BOARD_CHARS } from "@bodobako/shared";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 /* ── Design System ── */
 

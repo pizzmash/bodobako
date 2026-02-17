@@ -1,6 +1,6 @@
-import type { AiueBattleState, AiueBattleMove, RoomInfo } from "@bodobako/shared";
+import type { AiueBattleMove, AiueBattleState, RoomInfo } from "@bodobako/shared";
 import { TOPIC_LIST } from "@bodobako/shared";
-import { styles, SPACING } from "./constants";
+import { styles } from "./constants";
 
 interface TopicSelectProps {
   state: AiueBattleState;

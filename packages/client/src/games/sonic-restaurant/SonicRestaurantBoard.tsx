@@ -3,10 +3,10 @@
  */
 
 import type {
-  Card,
-  MenuTreeNode,
-  SonicRestaurantMove,
-  SonicRestaurantState,
+    Card,
+    MenuTreeNode,
+    SonicRestaurantMove,
+    SonicRestaurantState,
 } from "@bodobako/shared";
 import { buildMenuTree } from "@bodobako/shared";
 import { useCallback, useMemo, useState } from "react";

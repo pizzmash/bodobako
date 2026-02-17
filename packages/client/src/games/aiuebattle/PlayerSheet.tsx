@@ -1,7 +1,6 @@
+import type { AiueBattleState, GameResult, RoomInfo } from "@bodobako/shared";
 import { memo } from "react";
-import type { AiueBattleState } from "@bodobako/shared";
-import type { RoomInfo, GameResult } from "@bodobako/shared";
-import { C, PLAYER_COLORS, styles, SPACING, RADIUS, SHADOWS } from "./constants";
+import { C, PLAYER_COLORS, RADIUS, SHADOWS, SPACING, styles } from "./constants";
 
 interface PlayerSheetProps {
   pid: string;

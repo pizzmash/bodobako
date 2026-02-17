@@ -1,19 +1,19 @@
 import type { AiueBattleMove, AiueBattleState, RoomInfo } from "@bodobako/shared";
 import { WORD_LENGTH } from "@bodobako/shared";
 import { ConfirmModal } from "./ConfirmModal";
-import { 
-  BOARD_LAYOUT, 
-  BOARD_LAYOUT_HORIZONTAL, 
-  C, 
-  FONT, 
-  styles, 
-  useIsWideBoard,
-  topicCardStyle,
-  topicBadgeStyle,
-  topicTextStyle,
-  SPACING,
-  RADIUS,
-  SHADOWS,
+import {
+    BOARD_LAYOUT,
+    BOARD_LAYOUT_HORIZONTAL,
+    C,
+    FONT,
+    RADIUS,
+    SHADOWS,
+    SPACING,
+    styles,
+    topicBadgeStyle,
+    topicCardStyle,
+    topicTextStyle,
+    useIsWideBoard,
 } from "./constants";
 
 interface WordInputProps {
