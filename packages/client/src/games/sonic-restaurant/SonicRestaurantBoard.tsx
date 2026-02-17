@@ -121,7 +121,7 @@ export function SonicRestaurantBoard() {
       <main
         style={{
           position: "fixed",
-          top: "49px", // AppHeaderの高さ分
+          top: "76px", // AppHeaderの高さ分（padding 14px×2 + pill minHeight 32px + padding 6px×2 + border 1px + margin）
           left: 0,
           right: 0,
           bottom: "176px", // 手札エリアの高さ分を除く
