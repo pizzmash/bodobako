@@ -58,11 +58,11 @@ bodobako/
 ### 全体の流れ
 
 ```
-┌──────────┐  ネイティブWS   ┌────────────────────┐    import     ┌──────────┐
+┌──────────┐  ネイティブWS    ┌─────────────────────┐    import     ┌──────────┐
 │  Client  │ ◄─────────────► │  Cloudflare Worker  │ ◄───────────► │  Shared  │
 │ (React)  │  HTTP (POST)    │  + Durable Objects  │               │ (Types/  │
 │          │ ◄─────────────► │  (Hono / RoomDO)    │               │  Logic)  │
-└──────────┘                 └────────────────────┘               └──────────┘
+└──────────┘                 └─────────────────────┘               └──────────┘
 ```
 
 - **shared**: ゲームルール（ロジック）と型定義を持つ。サーバーとクライアントの両方から参照される
@@ -94,20 +94,20 @@ Lobby or GameView
 ルーム作成のみ HTTP POST、それ以外はすべてネイティブ WebSocket で通信する。
 コールバックの代わりに `reqId` による非同期リクエスト/レスポンスパターンを使用。
 
-| 方向            | タイプ              | 説明                               |
-| --------------- | ------------------- | ---------------------------------- |
-| Client → Server | `room:join`         | ルーム参加（reqId付き、ack返却）   |
-| Client → Server | `session:reconnect` | セッションで再接続（reqId付き）    |
-| Client → Server | `room:leave`        | ルーム退出                         |
-| Client → Server | `game:start`        | ゲーム開始（ホストのみ）           |
-| Client → Server | `game:move`         | 手を打つ                           |
-| Server → Client | `ack`               | reqIdに対する応答（ok/error）      |
-| Server → Client | `room:updated`      | ルーム状態の同期                   |
-| Server → Client | `game:started`      | ゲーム開始通知                     |
-| Server → Client | `game:stateUpdated` | ゲーム状態更新                     |
-| Server → Client | `game:ended`        | ゲーム終了・結果通知               |
-| Server → Client | `room:left`         | ルーム退出完了                     |
-| Server → Client | `error`             | エラー通知                         |
+| 方向            | タイプ              | 説明                             |
+| --------------- | ------------------- | -------------------------------- |
+| Client → Server | `room:join`         | ルーム参加（reqId付き、ack返却） |
+| Client → Server | `session:reconnect` | セッションで再接続（reqId付き）  |
+| Client → Server | `room:leave`        | ルーム退出                       |
+| Client → Server | `game:start`        | ゲーム開始（ホストのみ）         |
+| Client → Server | `game:move`         | 手を打つ                         |
+| Server → Client | `ack`               | reqIdに対する応答（ok/error）    |
+| Server → Client | `room:updated`      | ルーム状態の同期                 |
+| Server → Client | `game:started`      | ゲーム開始通知                   |
+| Server → Client | `game:stateUpdated` | ゲーム状態更新                   |
+| Server → Client | `game:ended`        | ゲーム終了・結果通知             |
+| Server → Client | `room:left`         | ルーム退出完了                   |
+| Server → Client | `error`             | エラー通知                       |
 
 ### GameDefinition インターフェース
 
@@ -115,8 +115,8 @@ Lobby or GameView
 
 ```typescript
 interface GameDefinition<TState, TMove> {
-  id: string;        // 一意なゲームID（例: "othello"）
-  name: string;      // 表示名（例: "オセロ"）
+  id: string; // 一意なゲームID（例: "othello"）
+  name: string; // 表示名（例: "オセロ"）
   description: string;
   minPlayers: number;
   maxPlayers: number;
@@ -166,8 +166,8 @@ npm run build   # shared → worker → client の順にビルド
 
 ### 環境変数
 
-| 変数           | デフォルト（dev） | 説明                               |
-| -------------- | ----------------- | ---------------------------------- |
+| 変数           | デフォルト（dev）       | 説明                         |
+| -------------- | ----------------------- | ---------------------------- |
 | `VITE_API_URL` | `http://localhost:8787` | Worker の URL（HTTP/WS共用） |
 
 ## デプロイ（Cloudflare）
@@ -207,10 +207,26 @@ export interface MyGameMove {
 **`logic.ts`** - ゲームルールの実装
 
 ```typescript
-export function createInitialState(playerIds: string[]): MyGameState { /* ... */ }
-export function validateMove(state: MyGameState, move: MyGameMove, playerId: string): boolean { /* ... */ }
-export function applyMove(state: MyGameState, move: MyGameMove, playerId: string): MyGameState { /* ... */ }
-export function getRanking(state: MyGameState): string[] | null { /* ... */ }
+export function createInitialState(playerIds: string[]): MyGameState {
+  /* ... */
+}
+export function validateMove(
+  state: MyGameState,
+  move: MyGameMove,
+  playerId: string,
+): boolean {
+  /* ... */
+}
+export function applyMove(
+  state: MyGameState,
+  move: MyGameMove,
+  playerId: string,
+): MyGameState {
+  /* ... */
+}
+export function getRanking(state: MyGameState): string[] | null {
+  /* ... */
+}
 ```
 
 **`definition.ts`** - GameDefinition の実装
@@ -292,10 +308,12 @@ Worker 側のコード修正は不要。`GameDefinition` インターフェー�
 ## 収録
 
 <!-- GAMES:START -->
-| ゲーム | 人数 | 概要 |
-|--------|------|------|
-| オセロ | 2人 | 8x8 盤面で石を挟んでひっくり返す定番ゲーム |
-| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル |
+
+| ゲーム         | 人数   | 概要                                                                        |
+| -------------- | ------ | --------------------------------------------------------------------------- |
+| オセロ         | 2人    | 8x8 盤面で石を挟んでひっくり返す定番ゲーム                                  |
+| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル              |
 | シティチェイス | 2〜4人 | 犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム |
-| 音速飯点 | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！ |
+| 音速飯点       | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！          |
+
 <!-- GAMES:END -->
