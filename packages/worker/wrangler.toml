@@ -7,17 +7,14 @@ compatibility_flags = ["nodejs_compat"]
 name = "ROOM_DO"
 class_name = "RoomDO"
 
+[[durable_objects.bindings]]
+name = "REGISTRY"
+class_name = "RoomRegistry"
+
 [[migrations]]
 tag = "v1"
 new_classes = ["RoomDO"]
 
-[[kv_namespaces]]
-binding = "ROOM_REGISTRY"
-# ローカル開発時はダミー値でOK（wrangler dev --local で自動的にローカルDBを使用）
-id = "a1e06a202bb94e9281b7273670f3676e"
-preview_id = "ec52fa631177483690c1a513ce6f3f32"
-
-# 本番デプロイ前に以下のコマンドで実際のIDを取得してください:
-# npx wrangler kv:namespace create ROOM_REGISTRY
-# npx wrangler kv:namespace create ROOM_REGISTRY --preview
-# → 取得したIDで上記の id と preview_id を置き換えてください
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["RoomRegistry"]

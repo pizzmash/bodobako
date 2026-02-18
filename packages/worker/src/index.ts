@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { RoomDO } from "./RoomDO.js";
+import { RoomRegistry } from "./RoomRegistry.js";
 
-export { RoomDO };
+export { RoomDO, RoomRegistry };
 
 // 4文字ルームコード生成
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -14,7 +15,11 @@ function generateCode(): string {
 
 interface Env {
   ROOM_DO: DurableObjectNamespace;
-  ROOM_REGISTRY: KVNamespace;
+  REGISTRY: DurableObjectNamespace;
+}
+
+function getRegistry(env: Env) {
+  return env.REGISTRY.get(env.REGISTRY.idFromName("global"));
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -36,13 +41,17 @@ app.post("/rooms", async (c) => {
     return c.json({ error: "playerName, gameId, sessionToken は必須です" }, 400);
   }
 
-  // KVで重複しないコードを生成
+  const registry = getRegistry(c.env);
+
+  // SQLiteレジストリで重複しないコードを生成
   let code: string;
   let attempts = 0;
   do {
     code = generateCode();
     if (attempts++ > 20) return c.json({ error: "ルームコード生成に失敗しました" }, 500);
-  } while (await c.env.ROOM_REGISTRY.get(code));
+    const check = await registry.fetch(new Request(`http://do/rooms/${code}`));
+    if (check.status === 404) break; // コードが未使用
+  } while (true);
 
   const doId = c.env.ROOM_DO.idFromName(code);
   const stub = c.env.ROOM_DO.get(doId);
@@ -60,8 +69,12 @@ app.post("/rooms", async (c) => {
 
   const { playerId } = await initRes.json<{ playerId: string }>();
 
-  // KVにコードを登録（TTL: 24時間）
-  await c.env.ROOM_REGISTRY.put(code, doId.toString(), { expirationTtl: 86400 });
+  // SQLiteレジストリにコードを登録
+  await registry.fetch(new Request("http://do/rooms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  }));
 
   return c.json({ code, playerId });
 });
@@ -74,8 +87,9 @@ app.get("/rooms/:code/ws", async (c) => {
   const code = c.req.param("code").toUpperCase();
   const sessionToken = c.req.query("sessionToken") ?? "";
 
-  const kvEntry = await c.env.ROOM_REGISTRY.get(code);
-  if (!kvEntry) {
+  const registry = getRegistry(c.env);
+  const check = await registry.fetch(new Request(`http://do/rooms/${code}`));
+  if (!check.ok) {
     return c.json({ error: "ルームが見つかりません" }, 404);
   }
 
@@ -91,9 +105,12 @@ app.get("/rooms/:code/ws", async (c) => {
 // 管理API
 // ---------------------------------------------------------------------------
 app.get("/admin/api/rooms", async (c) => {
-  const list = await c.env.ROOM_REGISTRY.list();
+  const registry = getRegistry(c.env);
+  const codesRes = await registry.fetch(new Request("http://do/rooms"));
+  const codes = await codesRes.json<string[]>();
+
   const rooms = await Promise.all(
-    list.keys.map(async ({ name: code }) => {
+    codes.map(async (code) => {
       const doId = c.env.ROOM_DO.idFromName(code);
       const stub = c.env.ROOM_DO.get(doId);
       const res = await stub.fetch(new Request("http://do/info"));
