@@ -143,6 +143,13 @@ const INJECTED_STYLES = `
   border-color: #6366F1;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(99, 102, 241, 0.15);
 }
+
+@media (max-width: 480px) {
+  .lobby-join-section {
+    max-width: calc(100vw - 48px) !important;
+    width: calc(100vw - 48px) !important;
+  }
+}
 `;
 
 function useInjectStyles() {
@@ -270,16 +277,16 @@ export function Lobby() {
       {/* ── Separator ── */}
       <div style={styles.separator}>
         <div style={styles.separatorLine} />
-        <span style={styles.separatorText}>または</span>
+        <span style={styles.separatorText}>ルームコードで参加</span>
         <div style={styles.separatorLine} />
       </div>
 
       {/* ── Join room section ── */}
-      <div style={styles.joinSection}>
+      <div className="lobby-join-section" style={styles.joinSection}>
         <input
           className="lobby-join-input"
           style={styles.joinInput}
-          placeholder="ルームコード（例: A3K9）"
+          placeholder="例: A3K9"
           value={roomCode}
           onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === "Enter" && handleJoin()}
@@ -458,6 +465,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "2px 10px",
     borderRadius: 12,
     display: "inline-block",
+    alignSelf: "flex-start",
   },
   cardDesc: {
     fontSize: "0.9rem",
@@ -526,7 +534,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     gap: 10,
     width: "100%",
-    maxWidth: 400,
+    maxWidth: 480,
     padding: "0 24px",
     boxSizing: "border-box",
     position: "relative",
@@ -534,6 +542,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   joinInput: {
     flex: 1,
+    minWidth: 0,
     padding: "14px 18px",
     fontSize: "1.1rem",
     borderRadius: 16,

@@ -1,6 +1,6 @@
+import { getAllGames, getGameDefinition } from "@bodobako/shared";
 import { useEffect } from "react";
 import { useRoom } from "../context/RoomContext";
-import { getGameDefinition } from "@bodobako/shared";
 
 const FONT = "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
 
@@ -14,6 +14,30 @@ const INJECTED_STYLES = `
 @keyframes room-fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+/* ローディング用: 外側リング */
+@keyframes room-spin-outer {
+  to { transform: rotate(360deg); }
+}
+/* ローディング用: 内側リング（逆回転） */
+@keyframes room-spin-inner {
+  to { transform: rotate(-360deg); }
+}
+/* モーダル枚のパルスグロー */
+@keyframes room-modal-pulse {
+  0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 0 0 0 rgba(99,102,241,0.3); }
+  50%       { box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 0 0 8px rgba(99,102,241,0); }
+}
+/* 接続中テキストのドットアニメーション */
+@keyframes room-dots {
+  0%, 20%  { content: ''; }
+  40%      { content: '.'; }
+  60%      { content: '..'; }
+  80%, 100% { content: '...'; }
+}
+.room-loading-dots::after {
+  content: '';
+  animation: room-dots 1.4s steps(1) infinite;
 }
 .room-start-btn:hover:not(:disabled) {
   filter: brightness(1.08);
@@ -44,7 +68,38 @@ function useInjectStyles() {
 
 export function Room() {
   useInjectStyles();
-  const { room, playerId, startGame, leaveRoom } = useRoom();
+  const { room, playerId, startGame, leaveRoom, isCreatingRoom, creatingGameId } = useRoom();
+
+  // ローディング中はスピナー付きモーダルを表示
+  if (isCreatingRoom && !room) {
+    const allGames = getAllGames();
+    const pendingGame = creatingGameId ? allGames.find((g) => g.id === creatingGameId) : null;
+    return (
+      <div style={styles.backdrop}>
+        <div style={{ ...styles.modal, animation: "room-bounceIn .4s ease both", animationFillMode: "both" }}>
+          {/* ゲーム名 */}
+          <div style={styles.gameName}>{pendingGame?.name ?? "ゲーム"}</div>
+
+          {/* 二重リングスピナー */}
+          <div style={loadingStyles.spinnerWrap}>
+            {/* 外側リング */}
+            <div style={loadingStyles.outerRing} />
+            {/* 内側リング */}
+            <div style={loadingStyles.innerRing} />
+            {/* 中心ドット */}
+            <div style={loadingStyles.centerDot} />
+          </div>
+
+          {/* 接続中テキスト */}
+          <div style={loadingStyles.connectingText}>
+            <span className="room-loading-dots">ルームを作成中</span>
+          </div>
+          <div style={loadingStyles.subText}>サーバーに接続しています</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!room) return null;
 
   const gameDef = getGameDefinition(room.gameId);
@@ -254,5 +309,59 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#718096",
     cursor: "pointer",
     transition: "background .15s ease, color .15s ease",
+  },
+};
+/* ── Loading spinner styles ── */
+const SPINNER_SIZE = 88;
+const loadingStyles: Record<string, React.CSSProperties> = {
+  spinnerWrap: {
+    position: "relative",
+    width: SPINNER_SIZE,
+    height: SPINNER_SIZE,
+    margin: "12px auto 4px",
+    flexShrink: 0,
+  },
+  outerRing: {
+    position: "absolute",
+    inset: 0,
+    borderRadius: "50%",
+    border: "4px solid #e2e8f0",
+    borderTopColor: "#6366F1",
+    borderRightColor: "#818CF8",
+    animation: "room-spin-outer 1s cubic-bezier(0.4,0,0.2,1) infinite",
+  },
+  innerRing: {
+    position: "absolute",
+    inset: 14,
+    borderRadius: "50%",
+    border: "3px solid #e2e8f0",
+    borderBottomColor: "#a5b4fc",
+    borderLeftColor: "#c7d2fe",
+    animation: "room-spin-inner 0.75s cubic-bezier(0.4,0,0.2,1) infinite",
+  },
+  centerDot: {
+    position: "absolute",
+    inset: 0,
+    margin: "auto",
+    width: 14,
+    height: 14,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #6366F1, #818CF8)",
+    boxShadow: "0 2px 8px rgba(99,102,241,0.5)",
+  },
+  connectingText: {
+    fontSize: "1.1rem",
+    fontWeight: 700,
+    color: "#4F46E5",
+    fontFamily: FONT,
+    marginTop: 8,
+    textAlign: "center",
+  },
+  subText: {
+    fontSize: "0.82rem",
+    color: "#a0aec0",
+    fontFamily: FONT,
+    textAlign: "center",
+    marginTop: 2,
   },
 };

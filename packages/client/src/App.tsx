@@ -1,12 +1,12 @@
-import { RoomProvider, useRoom } from "./context/RoomContext";
 import { AppHeader } from "./components/AppHeader";
-import { NameEntryModal } from "./components/NameEntryModal";
-import { Lobby } from "./components/Lobby";
-import { Room } from "./components/Room";
 import { GameView } from "./components/GameView";
+import { Lobby } from "./components/Lobby";
+import { NameEntryModal } from "./components/NameEntryModal";
+import { Room } from "./components/Room";
+import { RoomProvider, useRoom } from "./context/RoomContext";
 
 function AppContent() {
-  const { room, playerName } = useRoom();
+  const { room, playerName, isCreatingRoom } = useRoom();
 
   return (
     <>
@@ -16,10 +16,10 @@ function AppContent() {
       ) : (
         <>
           <Lobby />
-          {room && room.status === "waiting" && <Room />}
+          {(isCreatingRoom || (room && room.status === "waiting")) && <Room />}
         </>
       )}
-      {!playerName && !room && <NameEntryModal />}
+      {!playerName && !room && !isCreatingRoom && <NameEntryModal />}
     </>
   );
 }

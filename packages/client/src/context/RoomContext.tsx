@@ -1,13 +1,13 @@
+import type { GameResult, RoomInfo, WsServerMessage } from "@bodobako/shared";
 import {
   createContext,
-  useContext,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
-import type { RoomInfo, GameResult, WsServerMessage } from "@bodobako/shared";
 import { wsClient } from "../lib/socket";
 
 const STORAGE_KEYS = {
@@ -34,6 +34,8 @@ interface RoomContextValue {
   gameState: unknown | null;
   gameResult: GameResult | null;
   errorMsg: string | null;
+  isCreatingRoom: boolean;
+  creatingGameId: string | null;
   createRoom: (playerName: string, gameId: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
   startGame: () => void;
@@ -57,6 +59,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [gameState, setGameState] = useState<unknown | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [creatingGameId, setCreatingGameId] = useState<string | null>(null);
   const reconnectAttempted = useRef(false);
 
   const setPlayerName = useCallback((name: string) => {
@@ -78,6 +82,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onRoomUpdated = (msg: Extract<WsServerMessage, { type: "room:updated" }>) => {
       setRoom(msg.room);
+      setIsCreatingRoom(false);
+      setCreatingGameId(null);
     };
     const onGameStarted = (msg: Extract<WsServerMessage, { type: "game:started" }>) => {
       setGameState(msg.state);
@@ -98,6 +104,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     };
     const onError = (msg: Extract<WsServerMessage, { type: "error" }>) => {
       setErrorMsg(msg.message);
+      setIsCreatingRoom(false);
+      setCreatingGameId(null);
     };
 
     wsClient.on("room:updated", onRoomUpdated);
@@ -173,6 +181,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
 
   const createRoom = useCallback((playerName: string, gameId: string) => {
     const sessionToken = getSessionToken();
+    setIsCreatingRoom(true);
+    setCreatingGameId(gameId);
     wsClient
       .createRoom({ playerName, gameId, sessionToken })
       .then(({ code, playerId: pid }) => {
@@ -183,6 +193,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         wsClient.connect(code, sessionToken);
       })
       .catch((err: Error) => {
+        setIsCreatingRoom(false);
+        setCreatingGameId(null);
         setErrorMsg(err.message ?? "ルーム作成に失敗しました");
       });
   }, [saveRoomSession]);
@@ -255,6 +267,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setPlayerId(null);
     setGameState(null);
     setGameResult(null);
+    setIsCreatingRoom(false);
+    setCreatingGameId(null);
     clearRoomSession();
   }, [clearRoomSession]);
 
@@ -270,6 +284,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         gameState,
         gameResult,
         errorMsg,
+        isCreatingRoom,
+        creatingGameId,
         createRoom,
         joinRoom,
         startGame,
