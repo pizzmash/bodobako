@@ -46,7 +46,7 @@ npm run update-readme  # README のゲーム一覧を更新
 
 - **Workers（index.ts）**: Hono による HTTP API。ルーム作成（`POST /rooms`）とWebSocket upgrade（`GET /rooms/:code/ws`）を担当
 - **RoomDO**: Durable Object クラス。1ルーム = 1 DOインスタンス。WebSocket Hibernation APIで接続管理、DO Alarmsで切断タイマーを実装
-- **KV（ROOM_REGISTRY）**: ルームコード→DO名のマッピングを保持。コードの重複防止に使用
+- **RoomRegistry**: SQLite-backed Durable Object（シングルインスタンス）。ルームコードの登録・重複確認・一覧管理を担当。KVの代替
 
 ### WebSocket通信プロトコル（ネイティブWS）
 
@@ -112,11 +112,7 @@ Worker側のコード修正は不要。`GameDefinition` インターフェース
 ## デプロイ（Cloudflare）
 
 ```bash
-# KV名前空間を作成してwrangler.tomlのIDを更新
-npx wrangler kv:namespace create ROOM_REGISTRY
-npx wrangler kv:namespace create ROOM_REGISTRY --preview
-
-# Workerをデプロイ
+# Workerをデプロイ（初回はDurable Objectのマイグレーションも自動適用）
 npx wrangler deploy --config packages/worker/wrangler.toml
 
 # フロントエンドはCloudflare Pagesにデプロイ
