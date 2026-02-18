@@ -5,13 +5,14 @@
 
 ## 技術スタック
 
-| レイヤー       | 技術                         |
-| -------------- | ---------------------------- |
-| 言語           | TypeScript 5.7 (strict mode) |
-| フロントエンド | React 19 + Vite 6            |
-| バックエンド   | Hono 4 + Socket.IO 4         |
-| モジュール     | ES Modules                   |
-| パッケージ管理 | npm workspaces (monorepo)    |
+| レイヤー       | 技術                                          |
+| -------------- | --------------------------------------------- |
+| 言語           | TypeScript 5.7 (strict mode)                  |
+| フロントエンド | React 19 + Vite 6                             |
+| バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects |
+| 通信           | ネイティブ WebSocket（reqIdベースプロトコル） |
+| モジュール     | ES Modules                                    |
+| パッケージ管理 | npm workspaces (monorepo)                     |
 
 ## プロジェクト構成
 
@@ -23,26 +24,24 @@ bodobako/
 │   │       ├── types/
 │   │       │   ├── game.ts       # GameDefinition インターフェース
 │   │       │   ├── room.ts       # RoomInfo, Player 型
-│   │       │   └── protocol.ts   # Socket.IO イベント型定義
+│   │       │   └── protocol.ts   # WebSocket メッセージ型定義
 │   │       └── games/
 │   │           ├── index.ts      # ゲームレジストリ
 │   │           └── <game-id>/    # 各ゲームのロジック
 │   │
-│   ├── server/          # バックエンド
-│   │   └── src/
-│   │       ├── index.ts          # Hono + Socket.IO サーバー起動
-│   │       ├── engine/
-│   │       │   ├── room-manager.ts   # ルーム管理・セッション復帰
-│   │       │   └── game-engine.ts    # ゲーム進行エンジン
-│   │       └── handlers/
-│   │           ├── room-handlers.ts  # ルーム系イベントハンドラ
-│   │           └── game-handlers.ts  # ゲーム系イベントハンドラ
+│   ├── worker/          # Cloudflare Workers バックエンド
+│   │   ├── src/
+│   │   │   ├── index.ts      # Hono エントリ（HTTP API + WS upgrade）
+│   │   │   └── RoomDO.ts     # Durable Object（ルーム管理・WebSocket）
+│   │   └── wrangler.toml
 │   │
 │   └── client/          # フロントエンド
 │       └── src/
 │           ├── main.tsx              # エントリーポイント
+│           ├── lib/
+│           │   └── socket.ts         # WebSocket クライアント（再接続付き）
 │           ├── context/
-│           │   └── RoomContext.tsx    # Socket.IO 接続 & 状態管理
+│           │   └── RoomContext.tsx   # WS 接続 & 状態管理
 │           ├── components/
 │           │   ├── Lobby.tsx         # ロビー（ゲーム選択・ルーム作成/参加）
 │           │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
@@ -59,15 +58,15 @@ bodobako/
 ### 全体の流れ
 
 ```
-┌──────────┐    Socket.IO     ┌──────────┐    import     ┌──────────┐
-│  Client  │ ◄──────────────► │  Server  │ ◄───────────► │  Shared  │
-│ (React)  │    WebSocket     │  (Hono)  │               │ (Types/  │
-│          │                  │          │               │  Logic)  │
-└──────────┘                  └──────────┘               └──────────┘
+┌──────────┐  ネイティブWS   ┌────────────────────┐    import     ┌──────────┐
+│  Client  │ ◄─────────────► │  Cloudflare Worker  │ ◄───────────► │  Shared  │
+│ (React)  │  HTTP (POST)    │  + Durable Objects  │               │ (Types/  │
+│          │ ◄─────────────► │  (Hono / RoomDO)    │               │  Logic)  │
+└──────────┘                 └────────────────────┘               └──────────┘
 ```
 
 - **shared**: ゲームルール（ロジック）と型定義を持つ。サーバーとクライアントの両方から参照される
-- **server**: ルーム管理とゲーム進行を担当。shared のロジックを使って手の検証・適用を行う
+- **worker**: ルーム管理とゲーム進行を担当。Durable Objects で状態を永続化する
 - **client**: UI の描画とユーザー操作の送信を担当。shared の型とユーティリティを使って盤面を表示する
 
 ### 画面遷移
@@ -77,7 +76,7 @@ NameEntryModal（名前入力）
   │
   ▼
 Lobby（ロビー）
-  │  ルーム作成 or 参加
+  │  ルーム作成（HTTP POST）or 参加（WS + room:join）
   ▼
 Room（待機画面）
   │  ホストがゲーム開始
@@ -90,23 +89,25 @@ Lobby or GameView
 
 ルーターは使わず、`RoomContext` の状態（`playerName` の有無 → `room` の有無 → `room.status`）に応じたコンポーネントの出し分けで画面遷移を実現している。
 
-### Socket.IO プロトコル
+### WebSocket プロトコル
 
-| 方向            | イベント              | 説明                       |
-| --------------- | --------------------- | -------------------------- |
-| Client → Server | `room:create`         | ルーム作成                 |
-| Client → Server | `room:join`           | ルーム参加                 |
-| Client → Server | `room:leave`          | ルーム退出                 |
-| Client → Server | `game:start`          | ゲーム開始（ホストのみ）   |
-| Client → Server | `game:move`           | 手を打つ                   |
-| Client → Server | `session:reconnect`   | セッショントークンで再接続 |
-| Server → Client | `room:updated`        | ルーム状態の同期           |
-| Server → Client | `game:started`        | ゲーム開始通知             |
-| Server → Client | `game:stateUpdated`   | ゲーム状態更新             |
-| Server → Client | `game:ended`          | ゲーム終了・結果通知       |
-| Server → Client | `room:left`           | ルーム退出完了             |
-| Server → Client | `player:disconnected` | 他プレイヤーの切断通知     |
-| Server → Client | `error`               | エラー通知                 |
+ルーム作成のみ HTTP POST、それ以外はすべてネイティブ WebSocket で通信する。
+コールバックの代わりに `reqId` による非同期リクエスト/レスポンスパターンを使用。
+
+| 方向            | タイプ              | 説明                               |
+| --------------- | ------------------- | ---------------------------------- |
+| Client → Server | `room:join`         | ルーム参加（reqId付き、ack返却）   |
+| Client → Server | `session:reconnect` | セッションで再接続（reqId付き）    |
+| Client → Server | `room:leave`        | ルーム退出                         |
+| Client → Server | `game:start`        | ゲーム開始（ホストのみ）           |
+| Client → Server | `game:move`         | 手を打つ                           |
+| Server → Client | `ack`               | reqIdに対する応答（ok/error）      |
+| Server → Client | `room:updated`      | ルーム状態の同期                   |
+| Server → Client | `game:started`      | ゲーム開始通知                     |
+| Server → Client | `game:stateUpdated` | ゲーム状態更新                     |
+| Server → Client | `game:ended`        | ゲーム終了・結果通知               |
+| Server → Client | `room:left`         | ルーム退出完了                     |
+| Server → Client | `error`             | エラー通知                         |
 
 ### GameDefinition インターフェース
 
@@ -114,9 +115,9 @@ Lobby or GameView
 
 ```typescript
 interface GameDefinition<TState, TMove> {
-  id: string; // 一意なゲームID（例: "othello"）
-  name: string; // 表示名（例: "オセロ"）
-  description: string; // ゲーム概要
+  id: string;        // 一意なゲームID（例: "othello"）
+  name: string;      // 表示名（例: "オセロ"）
+  description: string;
   minPlayers: number;
   maxPlayers: number;
 
@@ -124,17 +125,17 @@ interface GameDefinition<TState, TMove> {
   validateMove(state: TState, move: TMove, playerId: string): boolean;
   applyMove(state: TState, move: TMove, playerId: string): TState;
   getStatus(state: TState): "playing" | "finished";
+  getRanking(state: TState): string[] | null; // 1位から順、null=引き分け
   getCurrentPlayerId(state: TState): string;
-  getWinner(state: TState): string | null;
-  getPlayerView?(state: TState, playerId: string): unknown; // プレイヤーごとの視界制御
+  getPlayerView?(state: TState, playerId: string): unknown; // 非対称情報対応
 }
 ```
 
-サーバーの `game-engine` がこのインターフェースを通じてゲームを動かすため、ゲーム固有のロジックはサーバー本体に一切入らない。`getPlayerView` を実装すれば、非対称情報ゲームにも対応可能。
+Worker の `RoomDO` がこのインターフェースを通じてゲームを動かすため、ゲーム固有のロジックはWorker本体に一切入らない。`getPlayerView` を実装すれば、手牌を隠すなどの非対称情報ゲームにも対応可能。
 
 ### セッション管理
 
-クライアントは `crypto.randomUUID()` で生成したセッショントークンを `localStorage` に保持する。WebSocket 切断時、サーバーは猶予期間中プレイヤーのセッションを保持し、同じトークンでの `session:reconnect` により進行中のゲームに復帰できる。
+クライアントは `crypto.randomUUID()` で生成したセッショントークンを `localStorage` に保持する。WebSocket 切断時、RoomDO は Alarms API で 30 秒の猶予期間を設け、同じトークンでの `session:reconnect` により進行中のゲームに復帰できる。
 
 ## 開発
 
@@ -153,27 +154,37 @@ npm run dev
 以下が並行して起動する:
 
 - **Vite dev server** (クライアント): `http://localhost:5173`
-- **Hono + Socket.IO** (サーバー): `http://localhost:3001`
+- **wrangler dev** (Worker): `http://localhost:8787`
 
-Vite の proxy 設定により、クライアントからの `/socket.io` リクエストはサーバーに転送される。
+クライアントの `VITE_API_URL=http://localhost:8787` により Worker に接続する（`.env.development` で設定済み）。
 
 ### ビルド
 
 ```bash
-npm run build
+npm run build   # shared → worker → client の順にビルド
 ```
-
-shared → server → client の順にビルドされる。
-
-### 管理ダッシュボード
-
-サーバー起動後、`http://localhost:3001/admin` で稼働中のルーム一覧やソケット接続数をリアルタイムに確認できる。
 
 ### 環境変数
 
-| 変数   | デフォルト | 説明                 |
-| ------ | ---------- | -------------------- |
-| `PORT` | `3001`     | サーバーのポート番号 |
+| 変数           | デフォルト（dev） | 説明                               |
+| -------------- | ----------------- | ---------------------------------- |
+| `VITE_API_URL` | `http://localhost:8787` | Worker の URL（HTTP/WS共用） |
+
+## デプロイ（Cloudflare）
+
+```bash
+# 1. KV名前空間を作成してwrangler.tomlのIDを更新
+npx wrangler kv:namespace create ROOM_REGISTRY
+npx wrangler kv:namespace create ROOM_REGISTRY --preview
+
+# 2. Workerをデプロイ
+npx wrangler deploy --config packages/worker/wrangler.toml
+
+# 3. フロントエンドをCloudflare Pagesにデプロイ
+#    ビルドコマンド: npm run build
+#    出力ディレクトリ: packages/client/dist
+#    環境変数: VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
+```
 
 ## 新しいゲームの追加方法
 
@@ -186,18 +197,13 @@ shared → server → client の順にビルドされる。
 **`types.ts`** - ゲーム固有の型定義
 
 ```typescript
-// ゲームの状態
 export interface MyGameState {
-  board: string[][];
   currentPlayerIndex: number;
   playerIds: string[];
   // ...ゲーム固有のフィールド
 }
 
-// プレイヤーの手
 export interface MyGameMove {
-  row: number;
-  col: number;
   // ...ゲーム固有のフィールド
 }
 ```
@@ -205,34 +211,16 @@ export interface MyGameMove {
 **`logic.ts`** - ゲームルールの実装
 
 ```typescript
-import type { MyGameState, MyGameMove } from "./types.js";
-
-export function createInitialState(playerIds: string[]): MyGameState {
-  /* ... */
-}
-export function validateMove(
-  state: MyGameState,
-  move: MyGameMove,
-  playerId: string,
-): boolean {
-  /* ... */
-}
-export function applyMove(
-  state: MyGameState,
-  move: MyGameMove,
-  playerId: string,
-): MyGameState {
-  /* ... */
-}
-// ...
+export function createInitialState(playerIds: string[]): MyGameState { /* ... */ }
+export function validateMove(state: MyGameState, move: MyGameMove, playerId: string): boolean { /* ... */ }
+export function applyMove(state: MyGameState, move: MyGameMove, playerId: string): MyGameState { /* ... */ }
+export function getRanking(state: MyGameState): string[] | null { /* ... */ }
 ```
 
 **`definition.ts`** - GameDefinition の実装
 
 ```typescript
 import type { GameDefinition } from "../../types/game.js";
-import type { MyGameState, MyGameMove } from "./types.js";
-import * as logic from "./logic.js";
 
 export const myGameDefinition: GameDefinition<MyGameState, MyGameMove> = {
   id: "mygame",
@@ -240,19 +228,8 @@ export const myGameDefinition: GameDefinition<MyGameState, MyGameMove> = {
   description: "ゲームの概要説明",
   minPlayers: 2,
   maxPlayers: 4,
-  createInitialState: logic.createInitialState,
-  validateMove: logic.validateMove,
-  applyMove: logic.applyMove,
-  getStatus: logic.getStatus,
-  getCurrentPlayerId: logic.getCurrentPlayerId,
-  getWinner: logic.getWinner,
+  // ...メソッド実装
 };
-```
-
-**`index.ts`** - バレルエクスポート
-
-```typescript
-export { myGameDefinition } from "./definition.js";
 ```
 
 ### 2. ゲームレジストリへの登録 (shared)
@@ -261,7 +238,6 @@ export { myGameDefinition } from "./definition.js";
 
 ```typescript
 import { myGameDefinition } from "./mygame/index.js";
-
 registry.set(myGameDefinition.id, myGameDefinition);
 ```
 
@@ -272,17 +248,12 @@ registry.set(myGameDefinition.id, myGameDefinition);
 `packages/client/src/games/<game-id>/` にボードコンポーネントを作成する。
 
 ```typescript
-// packages/client/src/games/mygame/MyGameBoard.tsx
 import { useRoom } from "../../context/RoomContext";
 import type { MyGameState, MyGameMove } from "@bodobako/shared";
 
 export function MyGameBoard() {
-  const { gameState, playerId, sendMove } = useRoom();
+  const { gameState, playerId, sendMove, gameResult, room, leaveRoom } = useRoom();
   const state = gameState as MyGameState;
-
-  const handleMove = (move: MyGameMove) => {
-    sendMove(move);
-  };
 
   return (
     <div>{/* 盤面の描画 */}</div>
@@ -305,7 +276,6 @@ export function MyGameBoard() {
 ```typescript
 import { MyGameBoard } from "../games/mygame/MyGameBoard";
 
-// switch (room.gameId) 内に追加
 case "mygame":
   return <MyGameBoard />;
 ```
@@ -321,7 +291,7 @@ case "mygame":
 - [ ] 必要に応じて `shared/src/index.ts` に型の export を追加した
 - [ ] `npm run update-readme` で README の収録ゲーム一覧を更新した
 
-サーバー側のコード修正は不要。`GameDefinition` インターフェースを通じて自動的にゲームが動作する。
+Worker 側のコード修正は不要。`GameDefinition` インターフェースを通じて自動的にゲームが動作する。
 
 ## 収録
 

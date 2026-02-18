@@ -5,49 +5,25 @@ export interface GameResult {
   reason: string;
 }
 
-export interface JoinResult {
-  ok: boolean;
-  error?: string;
-  room?: RoomInfo;
-  playerId?: string;
-}
+// --- ネイティブWebSocket用プロトコル型（Workers/DO向け） ---
 
-export interface ReconnectResult {
-  success: boolean;
-  room?: RoomInfo;
-  playerId?: string;
-  gameState?: unknown;
-  gameResult?: GameResult | null;
-}
+export type WsClientMessage =
+  | { type: "room:create"; reqId: string; playerName: string; gameId: string; sessionToken: string }
+  | { type: "room:join"; reqId: string; roomCode: string; playerName: string; sessionToken: string }
+  | { type: "session:reconnect"; reqId: string; sessionToken: string }
+  | { type: "room:leave" }
+  | { type: "game:start" }
+  | { type: "game:move"; move: unknown }
 
-export interface ClientToServerEvents {
-  "room:create": (
-    playerName: string,
-    gameId: string,
-    sessionToken: string,
-    cb: (roomCode: string) => void
-  ) => void;
-  "room:join": (
-    roomCode: string,
-    playerName: string,
-    sessionToken: string,
-    cb: (result: JoinResult) => void
-  ) => void;
-  "game:start": () => void;
-  "game:move": (move: unknown) => void;
-  "room:leave": () => void;
-  "session:reconnect": (
-    sessionToken: string,
-    cb: (result: ReconnectResult) => void
-  ) => void;
-}
+export type WsAckSuccess<T = unknown> = { type: "ack"; reqId: string; ok: true; data: T };
+export type WsAckError = { type: "ack"; reqId: string; ok: false; error: string };
 
-export interface ServerToClientEvents {
-  "room:updated": (room: RoomInfo) => void;
-  "game:started": (state: unknown) => void;
-  "game:stateUpdated": (state: unknown) => void;
-  "game:ended": (result: GameResult) => void;
-  "room:left": () => void;
-  "player:disconnected": (playerId: string) => void;
-  error: (message: string) => void;
-}
+export type WsServerMessage =
+  | WsAckSuccess
+  | WsAckError
+  | { type: "room:updated"; room: RoomInfo }
+  | { type: "game:started"; state: unknown }
+  | { type: "game:stateUpdated"; state: unknown }
+  | { type: "game:ended"; result: GameResult }
+  | { type: "room:left" }
+  | { type: "error"; message: string }

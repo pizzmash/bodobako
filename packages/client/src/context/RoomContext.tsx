@@ -7,8 +7,8 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import type { RoomInfo, GameResult } from "@bodobako/shared";
-import { socket } from "../lib/socket";
+import type { RoomInfo, GameResult, WsServerMessage } from "@bodobako/shared";
+import { wsClient } from "../lib/socket";
 
 const STORAGE_KEYS = {
   sessionToken: "bodobako:sessionToken",
@@ -74,37 +74,50 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEYS.playerId);
   }, []);
 
+  // サーバーからのpushイベント購読
   useEffect(() => {
-    socket.connect();
-
-    socket.on("room:updated", (r) => setRoom(r));
-    socket.on("game:started", (s) => {
-      setGameState(s);
+    const onRoomUpdated = (msg: Extract<WsServerMessage, { type: "room:updated" }>) => {
+      setRoom(msg.room);
+    };
+    const onGameStarted = (msg: Extract<WsServerMessage, { type: "game:started" }>) => {
+      setGameState(msg.state);
       setGameResult(null);
-    });
-    socket.on("game:stateUpdated", (s) => setGameState(s));
-    socket.on("game:ended", (result) => setGameResult(result));
-    socket.on("room:left", () => {
+    };
+    const onGameStateUpdated = (msg: Extract<WsServerMessage, { type: "game:stateUpdated" }>) => {
+      setGameState(msg.state);
+    };
+    const onGameEnded = (msg: Extract<WsServerMessage, { type: "game:ended" }>) => {
+      setGameResult(msg.result);
+    };
+    const onRoomLeft = (_msg: Extract<WsServerMessage, { type: "room:left" }>) => {
       setRoom(null);
       setPlayerId(null);
       setGameState(null);
       setGameResult(null);
       clearRoomSession();
-    });
-    socket.on("error", (msg) => setErrorMsg(msg));
+    };
+    const onError = (msg: Extract<WsServerMessage, { type: "error" }>) => {
+      setErrorMsg(msg.message);
+    };
+
+    wsClient.on("room:updated", onRoomUpdated);
+    wsClient.on("game:started", onGameStarted);
+    wsClient.on("game:stateUpdated", onGameStateUpdated);
+    wsClient.on("game:ended", onGameEnded);
+    wsClient.on("room:left", onRoomLeft);
+    wsClient.on("error", onError);
 
     return () => {
-      socket.off("room:updated");
-      socket.off("game:started");
-      socket.off("game:stateUpdated");
-      socket.off("game:ended");
-      socket.off("room:left");
-      socket.off("error");
-      socket.disconnect();
+      wsClient.off("room:updated", onRoomUpdated);
+      wsClient.off("game:started", onGameStarted);
+      wsClient.off("game:stateUpdated", onGameStateUpdated);
+      wsClient.off("game:ended", onGameEnded);
+      wsClient.off("room:left", onRoomLeft);
+      wsClient.off("error", onError);
     };
   }, [clearRoomSession]);
 
-  // Reconnect on mount
+  // ページロード時のセッション再接続
   useEffect(() => {
     if (reconnectAttempted.current) return;
     reconnectAttempted.current = true;
@@ -113,66 +126,131 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     const savedRoomCode = localStorage.getItem(STORAGE_KEYS.roomCode);
     if (!sessionToken || !savedRoomCode) return;
 
+    // WebSocket接続してsession:reconnectを送信
+    wsClient.connect(savedRoomCode, sessionToken);
+
+    const reqId = crypto.randomUUID();
+    // 接続完立後に送信するため少し待つ
     const attemptReconnect = () => {
-      socket.emit("session:reconnect", sessionToken, (result) => {
-        if (result.success && result.room && result.playerId) {
-          setRoom(result.room);
-          setPlayerId(result.playerId);
-          setGameState(result.gameState ?? null);
-          setGameResult(result.gameResult ?? null);
-        } else {
+      wsClient
+        .request<{
+          room: RoomInfo;
+          playerId: string;
+          gameState: unknown | null;
+          gameResult: GameResult | null;
+        }>({ type: "session:reconnect", reqId, sessionToken })
+        .then((data) => {
+          setRoom(data.room);
+          setPlayerId(data.playerId);
+          setGameState(data.gameState ?? null);
+          setGameResult(data.gameResult ?? null);
+          saveRoomSession(savedRoomCode, data.playerId);
+        })
+        .catch(() => {
+          wsClient.disconnect();
           clearRoomSession();
-        }
-      });
+        });
     };
 
-    if (socket.connected) {
+    // wsClientが接続されるまで待機（最大2秒）
+    if (wsClient.connected) {
       attemptReconnect();
     } else {
-      socket.once("connect", attemptReconnect);
+      let waited = 0;
+      const interval = setInterval(() => {
+        waited += 100;
+        if (wsClient.connected) {
+          clearInterval(interval);
+          attemptReconnect();
+        } else if (waited >= 2000) {
+          clearInterval(interval);
+          wsClient.disconnect();
+          clearRoomSession();
+        }
+      }, 100);
     }
-  }, [clearRoomSession]);
+  }, [saveRoomSession, clearRoomSession]);
 
   const createRoom = useCallback((playerName: string, gameId: string) => {
     const sessionToken = getSessionToken();
-    socket.emit("room:create", playerName, gameId, sessionToken, (roomCode) => {
-      // Room will arrive via room:updated
-      // Save room session info once we get the room:updated
-      localStorage.setItem(STORAGE_KEYS.roomCode, roomCode);
-    });
-  }, []);
+    wsClient
+      .createRoom({ playerName, gameId, sessionToken })
+      .then(({ code, playerId: pid }) => {
+        localStorage.setItem(STORAGE_KEYS.roomCode, code);
+        setPlayerId(pid);
+        saveRoomSession(code, pid);
+        // WebSocket接続（セッションは既にDO側で作成済み）
+        wsClient.connect(code, sessionToken);
+      })
+      .catch((err: Error) => {
+        setErrorMsg(err.message ?? "ルーム作成に失敗しました");
+      });
+  }, [saveRoomSession]);
 
   const joinRoom = useCallback((roomCode: string, playerName: string) => {
     const sessionToken = getSessionToken();
-    socket.emit("room:join", roomCode, playerName, sessionToken, (result) => {
-      if (!result.ok) {
-        setErrorMsg(result.error ?? "参加に失敗しました");
-      } else if (result.playerId) {
-        setPlayerId(result.playerId);
-        saveRoomSession(roomCode, result.playerId);
-      }
-    });
+    const reqId = crypto.randomUUID();
+
+    // まずWS接続してからroom:joinメッセージを送る
+    wsClient.connect(roomCode, sessionToken);
+
+    const tryJoin = () => {
+      wsClient
+        .request<{ room: RoomInfo; playerId: string }>({
+          type: "room:join",
+          reqId,
+          roomCode,
+          playerName,
+          sessionToken,
+        })
+        .then((data) => {
+          setPlayerId(data.playerId);
+          setRoom(data.room);
+          saveRoomSession(roomCode, data.playerId);
+        })
+        .catch((err: string) => {
+          wsClient.disconnect();
+          setErrorMsg(typeof err === "string" ? err : "参加に失敗しました");
+        });
+    };
+
+    if (wsClient.connected) {
+      tryJoin();
+    } else {
+      let waited = 0;
+      const interval = setInterval(() => {
+        waited += 100;
+        if (wsClient.connected) {
+          clearInterval(interval);
+          tryJoin();
+        } else if (waited >= 5000) {
+          clearInterval(interval);
+          wsClient.disconnect();
+          setErrorMsg("接続タイムアウトしました");
+        }
+      }, 100);
+    }
   }, [saveRoomSession]);
 
-  // For the room creator, we need to set their playerId from the room info
+  // ルーム作成者のplayerId設定（room:updatedで初回取得時）
   useEffect(() => {
     if (room && !playerId && room.players.length > 0) {
-      // The first player is the host/creator
       setPlayerId(room.hostId);
       saveRoomSession(room.code, room.hostId);
     }
   }, [room, playerId, saveRoomSession]);
 
   const startGame = useCallback(() => {
-    socket.emit("game:start");
+    wsClient.send({ type: "game:start" });
   }, []);
 
   const sendMove = useCallback((move: unknown) => {
-    socket.emit("game:move", move);
+    wsClient.send({ type: "game:move", move });
   }, []);
 
   const leaveRoom = useCallback(() => {
-    socket.emit("room:leave");
+    wsClient.send({ type: "room:leave" });
+    wsClient.disconnect();
     setRoom(null);
     setPlayerId(null);
     setGameState(null);

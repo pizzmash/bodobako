@@ -3,3 +3,5 @@ dist/
 *.tsbuildinfo
 tmp
 .claude/
+.wrangler/
+packages/client/.env.production
