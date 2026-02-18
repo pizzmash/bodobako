@@ -14,8 +14,8 @@ new_classes = ["RoomDO"]
 [[kv_namespaces]]
 binding = "ROOM_REGISTRY"
 # ローカル開発時はダミー値でOK（wrangler dev --local で自動的にローカルDBを使用）
-id = "00000000000000000000000000000000"
-preview_id = "00000000000000000000000000000000"
+id = "a1e06a202bb94e9281b7273670f3676e"
+preview_id = "ec52fa631177483690c1a513ce6f3f32"
 
 # 本番デプロイ前に以下のコマンドで実際のIDを取得してください:
 # npx wrangler kv:namespace create ROOM_REGISTRY
