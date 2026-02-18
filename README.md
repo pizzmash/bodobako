@@ -173,14 +173,10 @@ npm run build   # shared → worker → client の順にビルド
 ## デプロイ（Cloudflare）
 
 ```bash
-# 1. KV名前空間を作成してwrangler.tomlのIDを更新
-npx wrangler kv:namespace create ROOM_REGISTRY
-npx wrangler kv:namespace create ROOM_REGISTRY --preview
-
-# 2. Workerをデプロイ
+# 1. Workerをデプロイ（初回はDurable Objectのマイグレーションも自動適用）
 npx wrangler deploy --config packages/worker/wrangler.toml
 
-# 3. フロントエンドをCloudflare Pagesにデプロイ
+# 2. フロントエンドをCloudflare Pagesにデプロイ
 #    ビルドコマンド: npm run build
 #    出力ディレクトリ: packages/client/dist
 #    環境変数: VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
