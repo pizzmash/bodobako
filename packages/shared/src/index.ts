@@ -26,9 +26,8 @@ export type {
 } from "./games/sonic-restaurant/types.js";
 export type { GameDefinition, GameStatus } from "./types/game.js";
 export type {
-  ClientToServerEvents, GameResult,
-  JoinResult,
-  ReconnectResult, ServerToClientEvents
+  GameResult,
+  WsClientMessage, WsServerMessage, WsAckSuccess, WsAckError
 } from "./types/protocol.js";
 export type { Player, RoomInfo } from "./types/room.js";
 

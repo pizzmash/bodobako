@@ -110,7 +110,7 @@ export const sonicRestaurantGame: GameDefinition<
     }
 
     // 通常カードは現在ノードの子として存在するか確認
-    // Socket.IOでシリアライズされるとMapがオブジェクトになるため両方に対応
+    // JSONシリアライズ後の復元時にMapがオブジェクトになる場合があるため両方に対応
     const children = state.currentNode.children;
     if (children instanceof Map) {
       return children.has(move.card);

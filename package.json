@@ -3,12 +3,12 @@
   "private": true,
   "workspaces": [
     "packages/shared",
-    "packages/server",
+    "packages/worker",
     "packages/client"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=packages/server & npm run dev --workspace=packages/client & wait",
-    "build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/server && npm run build --workspace=packages/client",
+    "dev": "npm run dev --workspace=packages/worker & npm run dev --workspace=packages/client & wait",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/worker && npm run build --workspace=packages/client",
     "update-readme": "tsx scripts/update-readme.ts"
   }
 }
