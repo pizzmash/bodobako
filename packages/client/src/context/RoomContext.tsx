@@ -154,9 +154,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
           setGameResult(data.gameResult ?? null);
           saveRoomSession(savedRoomCode, data.playerId);
         })
-        .catch(() => {
+        .catch((err: unknown) => {
           wsClient.disconnect();
           clearRoomSession();
+          console.warn("[RoomContext] セッション再接続に失敗しました:", err);
         });
     };
 
@@ -192,10 +193,16 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         // WebSocket接続（セッションは既にDO側で作成済み）
         wsClient.connect(code, sessionToken);
       })
-      .catch((err: Error) => {
+      .catch((err: unknown) => {
         setIsCreatingRoom(false);
         setCreatingGameId(null);
-        setErrorMsg(err.message ?? "ルーム作成に失敗しました");
+        const msg =
+          typeof err === "string"
+            ? err
+            : err instanceof Error
+              ? err.message ?? "ルーム作成に失敗しました"
+              : "ルーム作成に失敗しました";
+        setErrorMsg(msg);
       });
   }, [saveRoomSession]);
 
@@ -220,9 +227,15 @@ export function RoomProvider({ children }: { children: ReactNode }) {
           setRoom(data.room);
           saveRoomSession(roomCode, data.playerId);
         })
-        .catch((err: string) => {
+        .catch((err: unknown) => {
           wsClient.disconnect();
-          setErrorMsg(typeof err === "string" ? err : "参加に失敗しました");
+          const msg =
+            typeof err === "string"
+              ? err
+              : err instanceof Error
+                ? err.message
+                : "参加に失敗しました";
+          setErrorMsg(msg);
         });
     };
 

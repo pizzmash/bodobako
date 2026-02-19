@@ -9,6 +9,42 @@ import { getGameDefinition } from "@bodobako/shared";
 
 const DISCONNECT_GRACE_MS = 30_000;
 
+// --- メッセージバリデーション ---
+
+function parseClientMessage(raw: unknown): WsClientMessage | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const msg = raw as Record<string, unknown>;
+
+  switch (msg.type) {
+    case "room:create":
+      if (typeof msg.reqId !== "string" || typeof msg.playerName !== "string" ||
+          typeof msg.gameId !== "string" || typeof msg.sessionToken !== "string") return null;
+      return msg as Extract<WsClientMessage, { type: "room:create" }>;
+
+    case "room:join":
+      if (typeof msg.reqId !== "string" || typeof msg.roomCode !== "string" ||
+          typeof msg.playerName !== "string" || typeof msg.sessionToken !== "string") return null;
+      return msg as Extract<WsClientMessage, { type: "room:join" }>;
+
+    case "session:reconnect":
+      if (typeof msg.reqId !== "string" || typeof msg.sessionToken !== "string") return null;
+      return msg as Extract<WsClientMessage, { type: "session:reconnect" }>;
+
+    case "room:leave":
+      return { type: "room:leave" };
+
+    case "game:start":
+      return { type: "game:start" };
+
+    case "game:move":
+      if (!("move" in msg)) return null;
+      return { type: "game:move", move: msg.move };
+
+    default:
+      return null;
+  }
+}
+
 interface RoomState {
   code: string;
   gameId: string;
@@ -94,12 +130,37 @@ export class RoomDO implements DurableObject {
   // ---------------------------------------------------------------------------
 
   private async handleInit(request: Request): Promise<Response> {
-    const { code, gameId, playerName, sessionToken } = (await request.json()) as {
-      code: string;
-      gameId: string;
-      playerName: string;
-      sessionToken: string;
-    };
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json({ error: "リクエストボディが不正です" }, { status: 400 });
+    }
+
+    if (typeof body !== "object" || body === null) {
+      return Response.json({ error: "リクエストボディが不正です" }, { status: 400 });
+    }
+
+    const b = body as Record<string, unknown>;
+    const { code, gameId, playerName, sessionToken } = b;
+
+    if (typeof code !== "string" || !code) {
+      return Response.json({ error: "code は必須です" }, { status: 400 });
+    }
+    if (typeof gameId !== "string" || !gameId.trim()) {
+      return Response.json({ error: "gameId は必須です" }, { status: 400 });
+    }
+    if (typeof playerName !== "string" || !playerName.trim() || playerName.trim().length > 20) {
+      return Response.json({ error: "playerName は1〜20文字で入力してください" }, { status: 400 });
+    }
+    if (typeof sessionToken !== "string" || !sessionToken) {
+      return Response.json({ error: "sessionToken は必須です" }, { status: 400 });
+    }
+    if (!getGameDefinition(gameId)) {
+      return Response.json({ error: `不明なゲームID: ${gameId}` }, { status: 400 });
+    }
+
+    const trimmedPlayerName = playerName.trim();
 
     await this.loadRoom();
     if (this.room) {
@@ -110,7 +171,7 @@ export class RoomDO implements DurableObject {
     this.room = {
       code,
       gameId,
-      players: [{ id: playerId, name: playerName }],
+      players: [{ id: playerId, name: trimmedPlayerName }],
       hostId: playerId,
       status: "waiting",
       gameState: null,
@@ -190,15 +251,33 @@ export class RoomDO implements DurableObject {
     const tags = this.state.getTags(ws);
     const sessionToken = tags[0] ?? "";
     const playerId = this.room.sessions[sessionToken];
-    if (!playerId && !this.wsToPlayer.has(ws)) {
-      // 未認証の接続 - room:createかroom:joinのみ許可
-    }
 
-    let msg: WsClientMessage;
+    // JSON パース + 構造バリデーション
+    let parsed: unknown;
     try {
-      msg = JSON.parse(typeof message === "string" ? message : new TextDecoder().decode(message)) as WsClientMessage;
+      parsed = JSON.parse(typeof message === "string" ? message : new TextDecoder().decode(message));
     } catch {
       ws.send(JSON.stringify({ type: "error", message: "不正なメッセージ形式です" } satisfies WsServerMessage));
+      return;
+    }
+
+    const msg = parseClientMessage(parsed);
+    if (!msg) {
+      ws.send(JSON.stringify({ type: "error", message: "不正なメッセージ形式です" } satisfies WsServerMessage));
+      return;
+    }
+
+    // 未認証接続: room:join と session:reconnect のみ許可
+    if (!playerId) {
+      if (msg.type === "room:join") {
+        await this.handleJoin(ws, msg, sessionToken);
+      } else if (msg.type === "session:reconnect") {
+        await this.handleReconnect(ws, msg);
+      } else if ("reqId" in msg && typeof msg.reqId === "string") {
+        this.sendAck(ws, msg.reqId, { error: "先にルームに参加してください" }, false);
+      } else {
+        ws.send(JSON.stringify({ type: "error", message: "先にルームに参加してください" } satisfies WsServerMessage));
+      }
       return;
     }
 
@@ -274,6 +353,11 @@ export class RoomDO implements DurableObject {
       this.sendAck(ws, msg.reqId, { error: "ルームが見つかりません" }, false);
       return;
     }
+    const trimmedName = msg.playerName.trim();
+    if (!trimmedName || trimmedName.length > 20) {
+      this.sendAck(ws, msg.reqId, { error: "プレイヤー名は1〜20文字で入力してください" }, false);
+      return;
+    }
     if (this.room.status !== "waiting") {
       this.sendAck(ws, msg.reqId, { error: "ゲームはすでに開始されています" }, false);
       return;
@@ -285,7 +369,7 @@ export class RoomDO implements DurableObject {
     }
 
     const playerId = crypto.randomUUID();
-    this.room.players.push({ id: playerId, name: msg.playerName });
+    this.room.players.push({ id: playerId, name: trimmedName });
     this.room.sessions[sessionToken] = playerId;
     this.wsToPlayer.set(ws, playerId);
     await this.saveRoom();

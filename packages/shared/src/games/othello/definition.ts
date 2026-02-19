@@ -25,16 +25,25 @@ export const othelloDefinition: GameDefinition<OthelloState, OthelloMove> = {
     };
   },
 
-  validateMove(state: OthelloState, move: OthelloMove, playerId: string): boolean {
+  validateMove(state: OthelloState, move: unknown, playerId: string): boolean {
+    // 型ガード: move が OthelloMove の形であるか確認
+    if (typeof move !== "object" || move === null) return false;
+    const m = move as Record<string, unknown>;
+    if (typeof m.pass !== "undefined" && typeof m.pass !== "boolean") return false;
+    if (typeof m.row !== "undefined" && typeof m.row !== "number") return false;
+    if (typeof m.col !== "undefined" && typeof m.col !== "number") return false;
+    if (!m.pass && (typeof m.row !== "number" || typeof m.col !== "number")) return false;
+    const typedMove = move as OthelloMove;
+
     const playerIndex = state.playerIds.indexOf(playerId);
     if (playerIndex === -1 || playerIndex !== state.currentPlayerIndex) return false;
     if (state.finished) return false;
 
-    if (move.pass) {
+    if (typedMove.pass) {
       return getValidMoves(state.board, playerIndex).length === 0;
     }
 
-    return isValidMove(state.board, move.row, move.col, playerIndex);
+    return isValidMove(state.board, typedMove.row, typedMove.col, playerIndex);
   },
 
   applyMove(state: OthelloState, move: OthelloMove, playerId: string): OthelloState {

@@ -69,14 +69,24 @@ export const sonicRestaurantGame: GameDefinition<
 
   validateMove(
     state: SonicRestaurantState,
-    move: SonicRestaurantMove,
+    move: unknown,
     playerId: string
   ): boolean {
+    // 型ガード: move が SonicRestaurantMove の基本構造を持つか確認
+    if (typeof move !== "object" || move === null) return false;
+    const m = move as Record<string, unknown>;
+    if (typeof m.type !== "string") return false;
+
     // カウントダウン完了の処理
-    if (move.type === "countdown-complete") {
+    if (m.type === "countdown-complete") {
       // カウントダウンフェーズの間のみ有効
       return state.phase === "countdown";
     }
+
+    // play-card の場合は追加フィールドを確認
+    if (m.type !== "play-card") return false;
+    if (typeof m.card !== "string") return false;
+    if (typeof m.handIndex !== "number") return false;
 
     // カウントダウン中は通常の手は出せない
     if (state.phase === "countdown") {
@@ -90,12 +100,12 @@ export const sonicRestaurantGame: GameDefinition<
     }
 
     // handIndex が有効な範囲内か確認
-    if (move.handIndex < 0 || move.handIndex >= hand.length) {
+    if (m.handIndex < 0 || m.handIndex >= hand.length) {
       return false;
     }
 
-    // 指定されたインデックスのカードが move.card と一致するか確認
-    if (hand[move.handIndex] !== move.card) {
+    // 指定されたインデックスのカードが m.card と一致するか確認
+    if (hand[m.handIndex] !== m.card) {
       return false;
     }
 
@@ -105,7 +115,7 @@ export const sonicRestaurantGame: GameDefinition<
     }
 
     // 「とりけし」カードは常に出せる
-    if (move.card === "とりけし") {
+    if (m.card === "とりけし") {
       return true;
     }
 
@@ -113,9 +123,9 @@ export const sonicRestaurantGame: GameDefinition<
     // JSONシリアライズ後の復元時にMapがオブジェクトになる場合があるため両方に対応
     const children = state.currentNode.children;
     if (children instanceof Map) {
-      return children.has(move.card);
+      return children.has(m.card as Card);
     } else {
-      return move.card in children;
+      return m.card in children;
     }
   },
 

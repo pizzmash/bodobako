@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { getGameDefinition } from "@bodobako/shared";
 import { RoomDO } from "./RoomDO.js";
 import { RoomRegistry } from "./RoomRegistry.js";
 
@@ -31,15 +32,36 @@ app.use("*", cors({ origin: "*" }));
 // POST /rooms  body: { playerName, gameId, sessionToken }
 // ---------------------------------------------------------------------------
 app.post("/rooms", async (c) => {
-  const { playerName, gameId, sessionToken } = await c.req.json<{
-    playerName: string;
-    gameId: string;
-    sessionToken: string;
-  }>();
-
-  if (!playerName || !gameId || !sessionToken) {
-    return c.json({ error: "playerName, gameId, sessionToken は必須です" }, 400);
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
   }
+
+  if (typeof body !== "object" || body === null) {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
+  }
+
+  const { playerName, gameId, sessionToken } = body as Record<string, unknown>;
+
+  if (typeof playerName !== "string" || !playerName.trim() || playerName.trim().length > 20) {
+    return c.json({ error: "playerName は1〜20文字の文字列で入力してください" }, 400);
+  }
+  if (typeof gameId !== "string" || !gameId.trim()) {
+    return c.json({ error: "gameId は必須です" }, 400);
+  }
+  if (typeof sessionToken !== "string" || !sessionToken.trim()) {
+    return c.json({ error: "sessionToken は必須です" }, 400);
+  }
+
+  // gameId の存在確認
+  if (!getGameDefinition(gameId)) {
+    return c.json({ error: `不明なゲームID: ${gameId}` }, 400);
+  }
+
+  const trimmedPlayerName = playerName.trim();
+  const trimmedGameId = gameId.trim();
 
   const registry = getRegistry(c.env);
 
@@ -59,7 +81,7 @@ app.post("/rooms", async (c) => {
   const initRes = await stub.fetch(new Request("http://do/init", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code, gameId, playerName, sessionToken }),
+    body: JSON.stringify({ code, gameId: trimmedGameId, playerName: trimmedPlayerName, sessionToken }),
   }));
 
   if (!initRes.ok) {
