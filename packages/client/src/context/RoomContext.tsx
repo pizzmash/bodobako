@@ -8,6 +8,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { wsClient } from "../lib/socket";
 
@@ -89,9 +90,13 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   // サーバーからのpushイベント購読
   useEffect(() => {
     const onRoomUpdated = (msg: Extract<WsServerMessage, { type: "room:updated" }>) => {
-      setRoom(msg.room);
-      setIsCreatingRoom(false);
-      setCreatingGameId(null);
+      // flushSync で setState を即時コミットしてから navigate する。
+      // これにより RoomPage マウント時に room が確実にセットされている。
+      flushSync(() => {
+        setRoom(msg.room);
+        setIsCreatingRoom(false);
+        setCreatingGameId(null);
+      });
       // createRoom 後の room:updated を受け取ったタイミングで navigate（ロビーでロード表示後に遷移）
       if (pendingNavigateRef.current === msg.room.code) {
         pendingNavigateRef.current = null;
@@ -183,10 +188,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
           sessionToken,
         })
         .then((data) => {
-          setPlayerId(data.playerId);
-          setRoom(data.room);
-          saveRoomSession(roomCode, data.playerId);
           const alreadyOnPage = window.location.pathname === `/room/${roomCode}`;
+          flushSync(() => {
+            setPlayerId(data.playerId);
+            setRoom(data.room);
+          });
+          saveRoomSession(roomCode, data.playerId);
           navigate(`/room/${roomCode}`, { replace: alreadyOnPage });
         })
         .catch((err: unknown) => {
