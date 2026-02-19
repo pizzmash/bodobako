@@ -1,13 +1,15 @@
 import type { GameResult, RoomInfo, WsServerMessage } from "@bodobako/shared";
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+    type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { wsClient } from "../lib/socket";
 
 const STORAGE_KEYS = {
@@ -38,9 +40,14 @@ interface RoomContextValue {
   creatingGameId: string | null;
   createRoom: (playerName: string, gameId: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
+  /** ルームを退出してURLをルートに戻す（Room.tsx 等の退出ボタン用） */
+  leaveRoom: () => void;
+  /** WS切断＋状態クリアのみ（navigate なし）。useBlocker で proceed する際に使用 */
+  proceedLeave: () => void;
+  /** URL の :code を元にセッション再接続 → 失敗時は joinRoom にフォールバック */
+  connectToRoom: (code: string, playerName: string) => void;
   startGame: () => void;
   sendMove: (move: unknown) => void;
-  leaveRoom: () => void;
   clearError: () => void;
 }
 
@@ -51,6 +58,7 @@ export function useRoom() {
 }
 
 export function RoomProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [playerName, setPlayerNameState] = useState(
@@ -61,7 +69,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [creatingGameId, setCreatingGameId] = useState<string | null>(null);
-  const reconnectAttempted = useRef(false);
+  /** createRoom 後、room:updated を受け取ったら navigate するためのコード */
+  const pendingNavigateRef = useRef<string | null>(null);
 
   const setPlayerName = useCallback((name: string) => {
     setPlayerNameState(name);
@@ -81,9 +90,18 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   // サーバーからのpushイベント購読
   useEffect(() => {
     const onRoomUpdated = (msg: Extract<WsServerMessage, { type: "room:updated" }>) => {
-      setRoom(msg.room);
-      setIsCreatingRoom(false);
-      setCreatingGameId(null);
+      // flushSync で setState を即時コミットしてから navigate する。
+      // これにより RoomPage マウント時に room が確実にセットされている。
+      flushSync(() => {
+        setRoom(msg.room);
+        setIsCreatingRoom(false);
+        setCreatingGameId(null);
+      });
+      // createRoom 後の room:updated を受け取ったタイミングで navigate（ロビーでロード表示後に遷移）
+      if (pendingNavigateRef.current === msg.room.code) {
+        pendingNavigateRef.current = null;
+        navigate(`/room/${msg.room.code}`);
+      }
     };
     const onGameStarted = (msg: Extract<WsServerMessage, { type: "game:started" }>) => {
       setGameState(msg.state);
@@ -101,6 +119,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       setGameState(null);
       setGameResult(null);
       clearRoomSession();
+      navigate("/");
     };
     const onError = (msg: Extract<WsServerMessage, { type: "error" }>) => {
       setErrorMsg(msg.message);
@@ -123,62 +142,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       wsClient.off("room:left", onRoomLeft);
       wsClient.off("error", onError);
     };
-  }, [clearRoomSession]);
-
-  // ページロード時のセッション再接続
-  useEffect(() => {
-    if (reconnectAttempted.current) return;
-    reconnectAttempted.current = true;
-
-    const sessionToken = localStorage.getItem(STORAGE_KEYS.sessionToken);
-    const savedRoomCode = localStorage.getItem(STORAGE_KEYS.roomCode);
-    if (!sessionToken || !savedRoomCode) return;
-
-    // WebSocket接続してsession:reconnectを送信
-    wsClient.connect(savedRoomCode, sessionToken);
-
-    const reqId = crypto.randomUUID();
-    // 接続完立後に送信するため少し待つ
-    const attemptReconnect = () => {
-      wsClient
-        .request<{
-          room: RoomInfo;
-          playerId: string;
-          gameState: unknown | null;
-          gameResult: GameResult | null;
-        }>({ type: "session:reconnect", reqId, sessionToken })
-        .then((data) => {
-          setRoom(data.room);
-          setPlayerId(data.playerId);
-          setGameState(data.gameState ?? null);
-          setGameResult(data.gameResult ?? null);
-          saveRoomSession(savedRoomCode, data.playerId);
-        })
-        .catch((err: unknown) => {
-          wsClient.disconnect();
-          clearRoomSession();
-          console.warn("[RoomContext] セッション再接続に失敗しました:", err);
-        });
-    };
-
-    // wsClientが接続されるまで待機（最大2秒）
-    if (wsClient.connected) {
-      attemptReconnect();
-    } else {
-      let waited = 0;
-      const interval = setInterval(() => {
-        waited += 100;
-        if (wsClient.connected) {
-          clearInterval(interval);
-          attemptReconnect();
-        } else if (waited >= 2000) {
-          clearInterval(interval);
-          wsClient.disconnect();
-          clearRoomSession();
-        }
-      }, 100);
-    }
-  }, [saveRoomSession, clearRoomSession]);
+  }, [clearRoomSession, navigate]);
 
   const createRoom = useCallback((playerName: string, gameId: string) => {
     const sessionToken = getSessionToken();
@@ -187,11 +151,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     wsClient
       .createRoom({ playerName, gameId, sessionToken })
       .then(({ code, playerId: pid }) => {
-        localStorage.setItem(STORAGE_KEYS.roomCode, code);
         setPlayerId(pid);
         saveRoomSession(code, pid);
         // WebSocket接続（セッションは既にDO側で作成済み）
         wsClient.connect(code, sessionToken);
+        // navigate は room:updated 受信後に行う（ロビーでロード中モーダルを表示したままにする）
+        pendingNavigateRef.current = code;
       })
       .catch((err: unknown) => {
         setIsCreatingRoom(false);
@@ -204,7 +169,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
               : "ルーム作成に失敗しました";
         setErrorMsg(msg);
       });
-  }, [saveRoomSession]);
+  }, [saveRoomSession, navigate]);
 
   const joinRoom = useCallback((roomCode: string, playerName: string) => {
     const sessionToken = getSessionToken();
@@ -223,9 +188,13 @@ export function RoomProvider({ children }: { children: ReactNode }) {
           sessionToken,
         })
         .then((data) => {
-          setPlayerId(data.playerId);
-          setRoom(data.room);
+          const alreadyOnPage = window.location.pathname === `/room/${roomCode}`;
+          flushSync(() => {
+            setPlayerId(data.playerId);
+            setRoom(data.room);
+          });
           saveRoomSession(roomCode, data.playerId);
+          navigate(`/room/${roomCode}`, { replace: alreadyOnPage });
         })
         .catch((err: unknown) => {
           wsClient.disconnect();
@@ -255,7 +224,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         }
       }, 100);
     }
-  }, [saveRoomSession]);
+  }, [saveRoomSession, navigate]);
 
   // ルーム作成者のplayerId設定（room:updatedで初回取得時）
   useEffect(() => {
@@ -265,15 +234,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     }
   }, [room, playerId, saveRoomSession]);
 
-  const startGame = useCallback(() => {
-    wsClient.send({ type: "game:start" });
-  }, []);
-
-  const sendMove = useCallback((move: unknown) => {
-    wsClient.send({ type: "game:move", move });
-  }, []);
-
-  const leaveRoom = useCallback(() => {
+  /** ナビゲートなしでルーム状態をクリア（useBlocker の proceed 前に呼ぶ用） */
+  const proceedLeave = useCallback(() => {
     wsClient.send({ type: "room:leave" });
     wsClient.disconnect();
     setRoom(null);
@@ -284,6 +246,83 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setCreatingGameId(null);
     clearRoomSession();
   }, [clearRoomSession]);
+
+  /** ルームを退出して / へ戻る */
+  const leaveRoom = useCallback(() => {
+    proceedLeave();
+    navigate("/");
+  }, [proceedLeave, navigate]);
+
+  /**
+   * /room/:code ページがマウントされた際に呼ぶ。
+   * localStorage のセッショントークンで再接続を試み、
+   * 失敗した場合は joinRoom にフォールバックする。
+   */
+  const connectToRoom = useCallback(
+    (code: string, pName: string) => {
+      const sessionToken = localStorage.getItem(STORAGE_KEYS.sessionToken);
+
+      const doJoin = () => joinRoom(code, pName);
+
+      if (!sessionToken) {
+        doJoin();
+        return;
+      }
+
+      // セッション再接続を試みる
+      wsClient.connect(code, sessionToken);
+
+      const reqId = crypto.randomUUID();
+      const attemptReconnect = () => {
+        wsClient
+          .request<{
+            room: RoomInfo;
+            playerId: string;
+            gameState: unknown | null;
+            gameResult: GameResult | null;
+          }>({ type: "session:reconnect", reqId, sessionToken })
+          .then((data) => {
+            setRoom(data.room);
+            setPlayerId(data.playerId);
+            setGameState(data.gameState ?? null);
+            setGameResult(data.gameResult ?? null);
+            saveRoomSession(code, data.playerId);
+          })
+          .catch(() => {
+            wsClient.disconnect();
+            clearRoomSession();
+            doJoin();
+          });
+      };
+
+      if (wsClient.connected) {
+        attemptReconnect();
+      } else {
+        let waited = 0;
+        const interval = setInterval(() => {
+          waited += 100;
+          if (wsClient.connected) {
+            clearInterval(interval);
+            attemptReconnect();
+          } else if (waited >= 2000) {
+            clearInterval(interval);
+            wsClient.disconnect();
+            clearRoomSession();
+            doJoin();
+          }
+        }, 100);
+      }
+    },
+    [saveRoomSession, clearRoomSession, joinRoom],
+  );
+
+  const startGame = useCallback(() => {
+    wsClient.send({ type: "game:start" });
+  }, []);
+
+  const sendMove = useCallback((move: unknown) => {
+    wsClient.send({ type: "game:move", move });
+  }, []);
 
   const clearError = useCallback(() => setErrorMsg(null), []);
 
@@ -301,9 +340,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         creatingGameId,
         createRoom,
         joinRoom,
+        leaveRoom,
+        proceedLeave,
+        connectToRoom,
         startGame,
         sendMove,
-        leaveRoom,
         clearError,
       }}
     >

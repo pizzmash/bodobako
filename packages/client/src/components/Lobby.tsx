@@ -1,6 +1,7 @@
 import { getAllGames } from "@bodobako/shared";
 import { useEffect, useState } from "react";
 import { useRoom } from "../context/RoomContext";
+import { NameEntryModal } from "./NameEntryModal";
 
 const games = getAllGames();
 
@@ -191,7 +192,9 @@ export function Lobby() {
   };
 
   return (
-    <div style={styles.container}>
+    <>
+      {!playerName && <NameEntryModal />}
+      <div style={styles.container}>
       {/* 装飾的な背景グラデーション */}
       <div style={styles.bgDecoration1} />
       <div style={styles.bgDecoration2} />
@@ -308,6 +311,7 @@ export function Lobby() {
 
       <div style={{ height: 48 }} />
     </div>
+    </>
   );
 }
 

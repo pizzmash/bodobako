@@ -1,33 +1,51 @@
+import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { AppHeader } from "./components/AppHeader";
-import { GameView } from "./components/GameView";
 import { Lobby } from "./components/Lobby";
-import { NameEntryModal } from "./components/NameEntryModal";
 import { Room } from "./components/Room";
+import { RoomPage } from "./components/RoomPage";
 import { RoomProvider, useRoom } from "./context/RoomContext";
 
-function AppContent() {
-  const { room, playerName, isCreatingRoom } = useRoom();
+/**
+ * Lobby を常時マウントするレイアウトコンテンツ。
+ * ルート遷移でアンマウントされないため、入場アニメーションが再実行されない。
+ */
+function LayoutContent() {
+  const { room, isCreatingRoom } = useRoom();
+  const isPlaying =
+    room != null &&
+    (room.status === "playing" || room.status === "finished");
 
   return (
     <>
-      <AppHeader />
-      {room && room.status !== "waiting" ? (
-        <GameView />
-      ) : (
-        <>
-          <Lobby />
-          {(isCreatingRoom || (room && room.status === "waiting")) && <Room />}
-        </>
-      )}
-      {!playerName && !room && !isCreatingRoom && <NameEntryModal />}
+      {/* Lobby は常時マウント。ゲーム中は非表示 */}
+      {!isPlaying && <Lobby />}
+      {/* / ルートでのルーム作成中ローディングモーダル */}
+      {isCreatingRoom && <Room />}
+      {/* /room/:code のオーバーレイ */}
+      <Outlet />
     </>
   );
 }
 
-export default function App() {
+function Layout() {
   return (
     <RoomProvider>
-      <AppContent />
+      <AppHeader />
+      <LayoutContent />
     </RoomProvider>
   );
+}
+
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    children: [
+      { index: true, element: null },
+      { path: "/room/:code", element: <RoomPage /> },
+    ],
+  },
+]);
+
+export default function App() {
+  return <RouterProvider router={router} />;
 }
