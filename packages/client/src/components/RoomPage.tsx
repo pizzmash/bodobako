@@ -35,8 +35,12 @@ export function RoomPage() {
     connectToRoom(code, playerName);
   }, [code, playerName, room, connectToRoom]);
 
-  // ブラウザの戻る/前に進む をブロックして確認ダイアログを挟む
-  const blocker = useBlocker(() => !!room || isCreatingRoom);
+  // ブラウザの「戻る/進む」（POP ナビゲーション）のみブロックして確認ダイアログを挟む。
+  // leaveRoom() や navigate() による PUSH/REPLACE は素通りさせる。
+  const blocker = useBlocker(
+    ({ historyAction }) =>
+      historyAction === "POP" && (!!room || isCreatingRoom),
+  );
 
   useEffect(() => {
     if (blocker.state !== "blocked") return;
