@@ -2,6 +2,7 @@ import { getAllGames } from "@bodobako/shared";
 import { useEffect, useState } from "react";
 import { useRoom } from "../context/RoomContext";
 import { NameEntryModal } from "./NameEntryModal";
+import { Room } from "./Room";
 
 const games = getAllGames();
 
@@ -169,7 +170,7 @@ function useInjectStyles() {
 
 export function Lobby() {
   useInjectStyles();
-  const { playerName, createRoom, joinRoom, errorMsg, clearError } = useRoom();
+  const { playerName, createRoom, joinRoom, errorMsg, clearError, isCreatingRoom } = useRoom();
   const [roomCode, setRoomCode] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -194,6 +195,7 @@ export function Lobby() {
   return (
     <>
       {!playerName && <NameEntryModal />}
+      {isCreatingRoom && <Room />}
       <div style={styles.container}>
       {/* 装飾的な背景グラデーション */}
       <div style={styles.bgDecoration1} />

@@ -4,6 +4,7 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useRef,
     useState,
     type ReactNode,
 } from "react";
@@ -67,6 +68,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [creatingGameId, setCreatingGameId] = useState<string | null>(null);
+  /** createRoom 後、room:updated を受け取ったら navigate するためのコード */
+  const pendingNavigateRef = useRef<string | null>(null);
 
   const setPlayerName = useCallback((name: string) => {
     setPlayerNameState(name);
@@ -89,6 +92,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       setRoom(msg.room);
       setIsCreatingRoom(false);
       setCreatingGameId(null);
+      // createRoom 後の room:updated を受け取ったタイミングで navigate（ロビーでロード表示後に遷移）
+      if (pendingNavigateRef.current === msg.room.code) {
+        pendingNavigateRef.current = null;
+        navigate(`/room/${msg.room.code}`);
+      }
     };
     const onGameStarted = (msg: Extract<WsServerMessage, { type: "game:started" }>) => {
       setGameState(msg.state);
@@ -142,7 +150,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         saveRoomSession(code, pid);
         // WebSocket接続（セッションは既にDO側で作成済み）
         wsClient.connect(code, sessionToken);
-        navigate(`/room/${code}`);
+        // navigate は room:updated 受信後に行う（ロビーでロード中モーダルを表示したままにする）
+        pendingNavigateRef.current = code;
       })
       .catch((err: unknown) => {
         setIsCreatingRoom(false);
