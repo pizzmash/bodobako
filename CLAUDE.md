@@ -9,7 +9,7 @@
 - **バックエンド:** Hono 4 + Cloudflare Workers + Durable Objects
 - **パッケージ管理:** npm workspaces（モノレポ）
 - **スタイリング:** インライン CSS-in-JS（CSSフレームワークなし）
-- **ルーティング:** React Router v7（`react-router-dom`）。`BrowserRouter` + `Routes` による2ルート構成（`/` と `/room/:code`）
+- **ルーティング:** React Router v7（`react-router-dom`）。`createBrowserRouter` + `RouterProvider` による2ルート構成（`/` と `/room/:code`）
 
 ## ディレクトリ構成
 
@@ -111,7 +111,7 @@ URL が source of truth。`RoomContext` の `createRoom` / `joinRoom` が成功�
 
 ### 状態管理
 
-`RoomContext`（React Context API）で `useRoom()` フックから利用。ネイティブWebSocketのイベントでサーバーと同期。`BrowserRouter` の内側に `RoomProvider` を配置することで `useNavigate()` を直接利用できる。
+`RoomContext`（React Context API）で `useRoom()` フックから利用。ネイティブWebSocketのイベントでサーバーと同期。`createBrowserRouter` のレイアウトルート（`Layout` コンポーネント）の内側に `RoomProvider` を配置することで `useNavigate()` を直接利用できる。
 
 **`RoomContext` が公開する主な関数：**
 
