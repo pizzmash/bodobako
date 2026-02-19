@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { useRoom } from "../context/RoomContext";
 import { GameView } from "./GameView";
+import { Lobby } from "./Lobby";
 import { NameEntryModal } from "./NameEntryModal";
 import { Room } from "./Room";
 
@@ -59,11 +60,6 @@ export function RoomPage() {
     return <GameView />;
   }
 
-  // 待機室 or ルーム作成中ローディング
-  if (isCreatingRoom || (room && room.status === "waiting")) {
-    return <Room />;
-  }
-
   // エラー
   if (errorMsg) {
     return (
@@ -101,20 +97,12 @@ export function RoomPage() {
     );
   }
 
-  // 接続中（reconnect / join の待機）
+  // 待機室 or ルーム作成中 → Lobby を背景に残して Room モーダルをオーバーレイ
+  // 接続中（まだ room も isCreatingRoom も false）も Lobby を表示して待機
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        fontFamily: "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif",
-        color: "#888",
-        fontSize: 16,
-      }}
-    >
-      接続中...
-    </div>
+    <>
+      <Lobby />
+      {(isCreatingRoom || (room && room.status === "waiting")) && <Room />}
+    </>
   );
 }
