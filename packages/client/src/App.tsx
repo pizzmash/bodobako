@@ -1,15 +1,37 @@
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { AppHeader } from "./components/AppHeader";
 import { Lobby } from "./components/Lobby";
+import { Room } from "./components/Room";
 import { RoomPage } from "./components/RoomPage";
-import { RoomProvider } from "./context/RoomContext";
+import { RoomProvider, useRoom } from "./context/RoomContext";
 
-/** RoomProvider（useNavigate を使う）をルーターの内側に置くためのレイアウトルート */
+/**
+ * Lobby を常時マウントするレイアウトコンテンツ。
+ * ルート遷移でアンマウントされないため、入場アニメーションが再実行されない。
+ */
+function LayoutContent() {
+  const { room, isCreatingRoom } = useRoom();
+  const isPlaying =
+    room != null &&
+    (room.status === "playing" || room.status === "finished");
+
+  return (
+    <>
+      {/* Lobby は常時マウント。ゲーム中は非表示 */}
+      {!isPlaying && <Lobby />}
+      {/* / ルートでのルーム作成中ローディングモーダル */}
+      {isCreatingRoom && <Room />}
+      {/* /room/:code のオーバーレイ */}
+      <Outlet />
+    </>
+  );
+}
+
 function Layout() {
   return (
     <RoomProvider>
       <AppHeader />
-      <Outlet />
+      <LayoutContent />
     </RoomProvider>
   );
 }
@@ -18,7 +40,7 @@ const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: "/", element: <Lobby /> },
+      { index: true, element: null },
       { path: "/room/:code", element: <RoomPage /> },
     ],
   },

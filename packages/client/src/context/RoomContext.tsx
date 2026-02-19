@@ -46,6 +46,8 @@ interface RoomContextValue {
   proceedLeave: () => void;
   /** URL の :code を元にセッション再接続 → 失敗時は joinRoom にフォールバック */
   connectToRoom: (code: string, playerName: string) => void;
+  /** leaveRoom() 呼び出し時に true になる。useBlocker でのブロックをスキップするために使用 */
+  skipBlockerRef: React.RefObject<boolean>;
   startGame: () => void;
   sendMove: (move: unknown) => void;
   clearError: () => void;
@@ -71,6 +73,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [creatingGameId, setCreatingGameId] = useState<string | null>(null);
   /** createRoom 後、room:updated を受け取ったら navigate するためのコード */
   const pendingNavigateRef = useRef<string | null>(null);
+  /** leaveRoom() 呼び出し時に true。useBlocker のスキップフラグ */
+  const skipBlockerRef = useRef<boolean>(false);
 
   const setPlayerName = useCallback((name: string) => {
     setPlayerNameState(name);
@@ -249,6 +253,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
 
   /** ルームを退出して / へ戻る */
   const leaveRoom = useCallback(() => {
+    skipBlockerRef.current = true;
     proceedLeave();
     navigate("/");
   }, [proceedLeave, navigate]);
@@ -343,6 +348,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         leaveRoom,
         proceedLeave,
         connectToRoom,
+        skipBlockerRef,
         startGame,
         sendMove,
         clearError,

@@ -2,18 +2,17 @@ import { useEffect, useRef } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { useRoom } from "../context/RoomContext";
 import { GameView } from "./GameView";
-import { Lobby } from "./Lobby";
 import { NameEntryModal } from "./NameEntryModal";
 import { Room } from "./Room";
 
 /**
- * /room/:code に対応するページコンポーネント。
+ * /room/:code に対応するオーバーレイコンポーネント。
+ * Lobby は Layout 側で常時マウントされているため、ここでは Room/GameView のみ返す。
  *
- * - playerName 未設定 → NameEntryModal をオーバーレイ表示（入力後に自動接続）
- * - 接続中 → "接続中..." ローディング表示
- * - room.status === "waiting" or isCreatingRoom → Room（待機室）
+ * - playerName 未設定 → NameEntryModal（Lobby内でも表示されるが、ブロックアウト防止のためここでも返す）
+ * - room.status === "waiting" → Room（待機室モーダル、Lobby を背景にオーバーレイ）
  * - room.status === "playing" | "finished" → GameView
- * - ブラウザ戻る/前に進む → 確認ダイアログで leaveRoom を挟む
+ * - ブラウザ戻る/先に進む → skipBlockerRef が false なら確認ダイアログ
  */
 export function RoomPage() {
   const { code } = useParams<{ code: string }>();
@@ -60,17 +59,26 @@ export function RoomPage() {
     return <GameView />;
   }
 
-  // エラー
+  // 待機室 → Room モーダルのみ（Lobby は Layout 側で常時表示中）
+  if (room?.status === "waiting") {
+    return <Room />;
+  }
+
+  // エラー → Lobby の上に fixed でオーバーレイ
   if (errorMsg) {
     return (
       <div
         style={{
+          position: "fixed",
+          inset: 0,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          height: "100vh",
           gap: 16,
+          background: "rgba(255,255,255,0.9)",
+          backdropFilter: "blur(4px)",
+          zIndex: 2000,
           fontFamily: "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif",
         }}
       >
@@ -97,12 +105,6 @@ export function RoomPage() {
     );
   }
 
-  // 待機室 or ルーム作成中 → Lobby を背景に残して Room モーダルをオーバーレイ
-  // 接続中（まだ room も isCreatingRoom も false）も Lobby を表示して待機
-  return (
-    <>
-      <Lobby />
-      {(isCreatingRoom || (room && room.status === "waiting")) && <Room />}
-    </>
-  );
+  // 接続中: Lobby が背景に表示されるので null を返す
+  return null;
 }
