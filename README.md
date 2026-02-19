@@ -8,7 +8,7 @@
 | レイヤー       | 技術                                          |
 | -------------- | --------------------------------------------- |
 | 言語           | TypeScript 5.7 (strict mode)                  |
-| フロントエンド | React 19 + Vite 6                             |
+| フロントエンド | React 19 + Vite 6 + React Router v7           |
 | バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects |
 | 通信           | ネイティブ WebSocket（reqIdベースプロトコル） |
 | モジュール     | ES Modules                                    |
@@ -41,10 +41,11 @@ bodobako/
 │           ├── lib/
 │           │   └── socket.ts         # WebSocket クライアント（再接続付き）
 │           ├── context/
-│           │   └── RoomContext.tsx   # WS 接続 & 状態管理
-│           ├── components/
-│           │   ├── Lobby.tsx         # ロビー（ゲーム選択・ルーム作成/参加）
-│           │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
+          │   └── RoomContext.tsx   # WS 接続 & 状態管理 & navigate 統合
+          ├── components/
+          │   ├── Lobby.tsx         # ロビー（ゲーム選択・ルーム作成/参加）
+          │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
+          │   ├── RoomPage.tsx      # /room/:code ページ（接続・遷移制御）
 │           │   └── GameView.tsx      # ゲームコンポーネントの振り分け
 │           └── games/
 │               └── <game-id>/    # 各ゲームの UI コンポーネント
@@ -84,22 +85,19 @@ bodobako/
 ### 画面遷移
 
 ```
-NameEntryModal（名前入力）
-  │
-  ▼
-Lobby（ロビー）
-  │  ルーム作成（HTTP POST）or 参加（WS + room:join）
-  ▼
-Room（待機画面）
-  │  ホストがゲーム開始
-  ▼
-GameView（ゲーム画面）
-  │  ゲーム終了 → 結果表示 → リマッチ or ロビーへ
-  ▼
-Lobby or GameView
+/  →  Lobby（NameEntryModal オーバーレイ付き）
+        │  ルーム作成（HTTP POST）or 参加（WS + room:join）
+        ▼
+/room/:code  →  待機画面（Room）
+        │  ホストがゲーム開始
+        ▼
+/room/:code  →  ゲーム画面（GameView） → 結果表示 → ロビーへ
 ```
 
-ルーターは使わず、`RoomContext` の状態（`playerName` の有無 → `room` の有無 → `room.status`）に応じたコンポーネントの出し分けで画面遷移を実現している。
+URL が source of truth。`createRoom` / `joinRoom` 成功時に `navigate('/room/:code')`、`leaveRoom` 時に `navigate('/')` を呼ぶ。ブラウザの戻るボタンは `useBlocker` で制御し確認ダイアログを表示する。
+
+`/room/:code` への直接アクセス・リロード時は `RoomPage` が `session:reconnect` を試み、失敗時は `joinRoom` にフォールバックする。
+`playerName` 未設定時は `NameEntryModal` をその場で表示し、入力後に自動接続する。
 
 ### WebSocket プロトコル
 
@@ -193,6 +191,8 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 #    出力ディレクトリ: packages/client/dist
 #    環境変数: VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
 ```
+
+> **SPA ルーティング注意**: `packages/client/public/_redirects` に `/* /index.html 200` を記述済み。Cloudflare Pages での `/room/:code` 直アクセス・リロード時の 404 を防ぐ。
 
 ## 新しいゲームの追加方法
 

@@ -9,7 +9,7 @@
 - **バックエンド:** Hono 4 + Cloudflare Workers + Durable Objects
 - **パッケージ管理:** npm workspaces（モノレポ）
 - **スタイリング:** インライン CSS-in-JS（CSSフレームワークなし）
-- **ルーティング:** React Router不使用。`RoomContext` の状態に基づく条件レンダリング
+- **ルーティング:** React Router v7（`react-router-dom`）。`BrowserRouter` + `Routes` による2ルート構成（`/` と `/room/:code`）
 
 ## ディレクトリ構成
 
@@ -26,8 +26,8 @@ packages/
 │   └── wrangler.toml
 └── client/        # React + Vite フロントエンド
     └── src/
-        ├── context/       # RoomContext.tsx（グローバル状態管理）
-        ├── components/    # Lobby, Room, GameView, AppHeader, NameEntryModal, GameResultCard
+        ├── context/       # RoomContext.tsx（グローバル状態管理・navigate統合）
+        ├── components/    # Lobby, Room, RoomPage, GameView, AppHeader, NameEntryModal, GameResultCard
         ├── games/         # ゲームごとのUIコンポーネント（othello/, aiuebattle/）
         └── lib/           # socket.ts（ネイティブWebSocketシングルトン）
 ```
@@ -97,18 +97,35 @@ const def2 = getGameDefinition(someRuntimeId);
 ### 画面遷移
 
 ```
-NameEntryModal → Lobby → Room（モーダル） → GameView → GameResultCard
+/  →  Lobby（NameEntryModal オーバーレイ付き）
+        │  ルーム作成 or 参加
+        ▼
+/room/:code  →  RoomPage（接続中 → Room待機室 → GameView → GameResultCard）
 ```
 
-状態ベース: `playerName` の有無 → `room` の有無 → `room.status`（waiting/playing/finished）
+URL が source of truth。`RoomContext` の `createRoom` / `joinRoom` が成功時に `navigate('/room/:code')` を呼ぶ。`leaveRoom` は `navigate('/')` を呼ぶ。
+
+- `/room/:code` に直接アクセス → `RoomPage` がセッション再接続を試み、失敗時は `joinRoom` にフォールバック
+- `playerName` 未設定時はどちらのルートでも `NameEntryModal` をオーバーレイ表示
+- ブラウザ戻るボタンは `useBlocker` で制御し確認ダイアログを挟む
 
 ### 状態管理
 
-`RoomContext`（React Context API）で `useRoom()` フックから利用。ネイティブWebSocketのイベントでサーバーと同期。
+`RoomContext`（React Context API）で `useRoom()` フックから利用。ネイティブWebSocketのイベントでサーバーと同期。`BrowserRouter` の内側に `RoomProvider` を配置することで `useNavigate()` を直接利用できる。
+
+**`RoomContext` が公開する主な関数：**
+
+- `createRoom(playerName, gameId)` — HTTP POST → WS 接続 → `navigate('/room/:code')`
+- `joinRoom(roomCode, playerName)` — WS + room:join → `navigate('/room/:code')`（既にそのページなら `replace: true`）
+- `leaveRoom()` — WS 切断 + 状態クリア + `navigate('/')`
+- `proceedLeave()` — WS 切断 + 状態クリアのみ（`navigate` なし）。`useBlocker` の `proceed()` と組み合わせて使う
+- `connectToRoom(code, playerName)` — `/room/:code` マウント時に呼ぶ。`session:reconnect` → 失敗時 `joinRoom` にフォールバック
 
 ### セッション管理
 
 クライアントは `crypto.randomUUID()` で生成したセッショントークンを `localStorage` に保持。WS切断時、DO Alarmsで30秒後に自動削除。同じトークンで再接続すれば進行中のゲームに復帰できる。
+
+React Router 導入後は **URL の `:code` が source of truth**。`localStorage.roomCode` は補助的な役割に格下げ（`sessionToken` は引き続き localStorage で管理）。`/room/:code` にアクセスすると `RoomPage` が `connectToRoom(code, playerName)` を呼び、sessionToken と URL の code で自動復帰を試みる。
 
 ## 実装済みゲーム
 
@@ -138,6 +155,8 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 # 出力ディレクトリ: packages/client/dist
 # 環境変数: VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
 ```
+
+> **SPA ルーティング注意**: `packages/client/public/_redirects` に `/* /index.html 200` を記述済み。Cloudflare Pages での `/room/:code` 直アクセス・リロード時の 404 を防ぐ。
 
 ## コーディング規約
 
