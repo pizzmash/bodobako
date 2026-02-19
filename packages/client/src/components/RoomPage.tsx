@@ -25,7 +25,9 @@ export function RoomPage() {
     errorMsg,
     clearError,
   } = useRoom();
-  const connectAttempted = useRef(false);
+  // マウント時点で room が既にセットされていれば接続済みとみなす
+  // （joinRoom 等で room がセットされた後に RoomPage がマウントされるケースに対応）
+  const connectAttempted = useRef(room !== null);
   const navigate = useNavigate();
 
   // playerName が確定し、まだ接続していなければ接続を試みる（1回のみ）
