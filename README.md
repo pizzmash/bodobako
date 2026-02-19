@@ -258,10 +258,26 @@ export const myGameDefinition: GameDefinition<MyGameState, MyGameMove> = {
 
 ### 2. ゲームレジストリへの登録 (shared)
 
-`packages/shared/src/games/index.ts` にゲームを追加する。
+`packages/shared/src/games/index.ts` にゲームを追加する。registry への登録に加え、**`GameId` 型と `GameDefinitionMap` インターフェースにも追加する**（型安全なアクセスのために必要）。
 
 ```typescript
 import { myGameDefinition } from "./mygame/index.js";
+import type { MyGameState, MyGameMove } from "./mygame/types.js";
+
+// GameId リテラル型に追加
+export type GameId =
+  | "othello"
+  | "aiuebattle"
+  | "citychase"
+  | "sonic-restaurant"
+  | "mygame";
+
+// GameDefinitionMap に追加
+export interface GameDefinitionMap {
+  // ... 既存エントリ
+  mygame: GameDefinition<MyGameState, MyGameMove>;
+}
+
 registry.set(myGameDefinition.id, myGameDefinition);
 ```
 
@@ -308,8 +324,8 @@ case "mygame":
 
 - [ ] `types.ts` でゲーム状態と手の型を定義した
 - [ ] `logic.ts` でルール（初期化・検証・適用・勝敗判定）を実装した
-- [ ] `definition.ts` で `GameDefinition` を実装した
-- [ ] `games/index.ts` のレジストリに登録した
+- [ ] `definition.ts` で `GameDefinition` を実装した（`parseMove` を含む）
+- [ ] `games/index.ts` のレジストリに登録し、`GameId` 型と `GameDefinitionMap` インターフェースにも追加した
 - [ ] クライアント側のボードコンポーネントを作成した
 - [ ] `GameView.tsx` に分岐を追加した
 - [ ] 必要に応じて `shared/src/index.ts` に型の export を追加した

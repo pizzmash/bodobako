@@ -53,10 +53,12 @@ npm run update-readme  # README のゲーム一覧を更新
 `reqId` ベースのリクエスト/レスポンス方式を採用。
 
 **Client → Server（`WsClientMessage`型）:**
+
 - `room:join` / `session:reconnect` — reqId付き、ackで応答
 - `room:leave` / `game:start` / `game:move` — 応答なし
 
 **Server → Client（`WsServerMessage`型）:**
+
 - `ack` — reqIdに対応する応答（ok/error）
 - `room:updated` / `game:started` / `game:stateUpdated` / `game:ended` / `room:left` / `error`
 
@@ -67,7 +69,8 @@ npm run update-readme  # README のゲーム一覧を更新
 すべてのゲームは `GameDefinition<TState, TMove>` を実装する：
 
 - `createInitialState(playerIds)` - 初期状態生成
-- `validateMove(state, move, playerId)` - 手の妥当性検証
+- `parseMove?(raw)` - rawデータをTMove型にパース。構造が不正な場合はnullを返す（任意）
+- `validateMove(state, move, playerId)` - 手の妥当性検証（moveはTMove型）
 - `applyMove(state, move, playerId)` - 手の適用
 - `getStatus(state)` - `"playing"` | `"finished"`
 - `getRanking(state)` - 順位リスト（1位から順）or null（引き分け）
@@ -75,6 +78,21 @@ npm run update-readme  # README のゲーム一覧を更新
 - `getPlayerView?(state, playerId)` - プレイヤーごとの視界制御（任意）
 
 ゲームロジックはWorkerから完全に分離されている。RoomDOは定義のメソッドを呼ぶだけ。
+
+**moveの処理フロー（RoomDO）**: `parseMove` → `validateMove` → `applyMove` の順で呼ばれる。`parseMove` が null を返すと即座に拒否。型ガードロジックは `parseMove` に、ゲームルール検証は `validateMove` に分離する。
+
+### ゲームレジストリの型安全アクセス
+
+`packages/shared/src/games/index.ts` に `GameId` リテラル型と `GameDefinitionMap` インターフェースを定義している。`getGameDefinition` はオーバーロードにより、**ゲームIDがコンパイル時に既知**の場合は具体的な型付き定義を返す：
+
+```typescript
+// IDがリテラル型なら GameDefinition<OthelloState, OthelloMove> が返る
+const def = getGameDefinition("othello");
+// IDが動的 string なら後方互換で GameDefinition | undefined が返る
+const def2 = getGameDefinition(someRuntimeId);
+```
+
+新しいゲームを追加したら `GameId` 型と `GameDefinitionMap` インターフェースへの追加も忘れずに行う。
 
 ### 画面遷移
 
@@ -102,7 +120,7 @@ NameEntryModal → Lobby → Room（モーダル） → GameView → GameResultC
 ## 新しいゲームの追加手順
 
 1. `packages/shared/src/games/<game>/` に `types.ts`, `logic.ts`, `definition.ts` を作成
-2. `packages/shared/src/games/index.ts` のレジストリに登録
+2. `packages/shared/src/games/index.ts` のレジストリに登録し、`GameId` 型と `GameDefinitionMap` インターフェースにも追加
 3. `packages/shared/src/index.ts` から export
 4. `packages/client/src/games/<game>/` に UI コンポーネント作成
 5. `packages/client/src/components/GameView.tsx` に case を追加
