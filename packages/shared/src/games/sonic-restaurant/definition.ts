@@ -67,65 +67,48 @@ export const sonicRestaurantGame: GameDefinition<
     };
   },
 
+  parseMove(raw: unknown): SonicRestaurantMove | null {
+    if (typeof raw !== "object" || raw === null) return null;
+    const m = raw as Record<string, unknown>;
+    if (typeof m.type !== "string") return null;
+    if (m.type === "countdown-complete") {
+      return { type: "countdown-complete" };
+    }
+    if (m.type === "play-card") {
+      if (typeof m.card !== "string") return null;
+      if (typeof m.handIndex !== "number" || !Number.isInteger(m.handIndex)) return null;
+      return { type: "play-card", card: m.card as Card, handIndex: m.handIndex };
+    }
+    return null;
+  },
+
   validateMove(
     state: SonicRestaurantState,
-    move: unknown,
+    move: SonicRestaurantMove,
     playerId: string
   ): boolean {
-    // 型ガード: move が SonicRestaurantMove の基本構造を持つか確認
-    if (typeof move !== "object" || move === null) return false;
-    const m = move as Record<string, unknown>;
-    if (typeof m.type !== "string") return false;
-
-    // カウントダウン完了の処理
-    if (m.type === "countdown-complete") {
-      // カウントダウンフェーズの間のみ有効
+    if (move.type === "countdown-complete") {
       return state.phase === "countdown";
     }
 
-    // play-card の場合は追加フィールドを確認
-    if (m.type !== "play-card") return false;
-    if (typeof m.card !== "string") return false;
-    if (typeof m.handIndex !== "number") return false;
+    // play-card
+    if (state.phase === "countdown") return false;
 
-    // カウントダウン中は通常の手は出せない
-    if (state.phase === "countdown") {
-      return false;
-    }
-
-    // プレイヤーの手札を取得
     const hand = state.hands[playerId];
-    if (!hand) {
-      return false;
-    }
+    if (!hand) return false;
+    if (move.handIndex < 0 || move.handIndex >= hand.length) return false;
+    if (hand[move.handIndex] !== move.card) return false;
+    if (state.finishedOrder.includes(playerId)) return false;
 
-    // handIndex が有効な範囲内か確認
-    if (m.handIndex < 0 || m.handIndex >= hand.length) {
-      return false;
-    }
-
-    // 指定されたインデックスのカードが m.card と一致するか確認
-    if (hand[m.handIndex] !== m.card) {
-      return false;
-    }
-
-    // 既に上がっているプレイヤーは手を出せない
-    if (state.finishedOrder.includes(playerId)) {
-      return false;
-    }
-
-    // 「とりけし」カードは常に出せる
-    if (m.card === "とりけし") {
-      return true;
-    }
+    if (move.card === "とりけし") return true;
 
     // 通常カードは現在ノードの子として存在するか確認
     // JSONシリアライズ後の復元時にMapがオブジェクトになる場合があるため両方に対応
     const children = state.currentNode.children;
     if (children instanceof Map) {
-      return children.has(m.card as Card);
+      return children.has(move.card);
     } else {
-      return m.card in children;
+      return move.card in children;
     }
   },
 

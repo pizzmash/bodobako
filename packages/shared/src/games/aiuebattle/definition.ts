@@ -32,37 +32,49 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
     };
   },
 
-  validateMove(state: AiueBattleState, move: unknown, playerId: string): boolean {
-    // 型ガード: move が AiueBattleMove の基本構造を持つか確認
-    if (typeof move !== "object" || move === null) return false;
-    const m = move as Record<string, unknown>;
-    if (typeof m.type !== "string") return false;
+  parseMove(raw: unknown): AiueBattleMove | null {
+    if (typeof raw !== "object" || raw === null) return null;
+    const m = raw as Record<string, unknown>;
+    if (typeof m.type !== "string") return null;
+    switch (m.type) {
+      case "select-topic":
+        if (typeof m.topic !== "string") return null;
+        return { type: "select-topic", topic: m.topic };
+      case "submit-word":
+        if (!Array.isArray(m.word)) return null;
+        if (!m.word.every((c: unknown) => typeof c === "string")) return null;
+        return { type: "submit-word", word: m.word as string[] };
+      case "attack":
+        if (typeof m.charIndex !== "number" || !Number.isInteger(m.charIndex)) return null;
+        return { type: "attack", charIndex: m.charIndex };
+      default:
+        return null;
+    }
+  },
 
+  validateMove(state: AiueBattleState, move: AiueBattleMove, playerId: string): boolean {
     if (state.finished) return false;
     if (!state.playerIds.includes(playerId)) return false;
 
     switch (state.phase) {
       case "topic-select": {
-        if (m.type !== "select-topic") return false;
-        if (typeof m.topic !== "string") return false;
+        if (move.type !== "select-topic") return false;
         if (playerId !== state.topicSelectorId) return false;
-        return m.topic.trim().length > 0;
+        return move.topic.trim().length > 0;
       }
 
       case "word-input": {
-        if (m.type !== "submit-word") return false;
-        if (!Array.isArray(m.word)) return false;
+        if (move.type !== "submit-word") return false;
         if (state.submittedPlayers.includes(playerId)) return false;
-        return isValidWord(m.word as string[]);
+        return isValidWord(move.word);
       }
 
       case "battle": {
-        if (m.type !== "attack") return false;
-        if (typeof m.charIndex !== "number") return false;
+        if (move.type !== "attack") return false;
         if (state.playerIds[state.currentPlayerIndex] !== playerId) return false;
         if (state.eliminatedPlayers.includes(playerId)) return false;
-        if (m.charIndex < 0 || m.charIndex >= BOARD_CHARS.length) return false;
-        return !state.usedChars[m.charIndex];
+        if (move.charIndex < 0 || move.charIndex >= BOARD_CHARS.length) return false;
+        return !state.usedChars[move.charIndex];
       }
     }
   },

@@ -66,44 +66,81 @@ export const citychaseDefinition: GameDefinition<
     };
   },
 
+  parseMove(raw: unknown): CitychaseMove | null {
+    if (typeof raw !== "object" || raw === null) return null;
+    const m = raw as Record<string, unknown>;
+    if (typeof m.type !== "string") return null;
+
+    const parsePos = (v: unknown): { row: number; col: number } | null => {
+      if (typeof v !== "object" || v === null) return null;
+      const p = v as Record<string, unknown>;
+      if (typeof p.row !== "number" || typeof p.col !== "number") return null;
+      if (!Number.isInteger(p.row) || !Number.isInteger(p.col)) return null;
+      return { row: p.row, col: p.col };
+    };
+
+    switch (m.type) {
+      case "assign-criminal":
+        if (typeof m.targetId !== "string") return null;
+        return { type: "assign-criminal", targetId: m.targetId };
+      case "place-helicopter": {
+        const pos = parsePos(m.pos);
+        if (!pos) return null;
+        return { type: "place-helicopter", pos };
+      }
+      case "place-criminal": {
+        const pos = parsePos(m.pos);
+        if (!pos) return null;
+        return { type: "place-criminal", pos };
+      }
+      case "move-helicopter": {
+        if (typeof m.helicopterIndex !== "number" || !Number.isInteger(m.helicopterIndex)) return null;
+        const pos = parsePos(m.pos);
+        if (!pos) return null;
+        return { type: "move-helicopter", helicopterIndex: m.helicopterIndex, pos };
+      }
+      case "search-building": {
+        if (typeof m.helicopterIndex !== "number" || !Number.isInteger(m.helicopterIndex)) return null;
+        const pos = parsePos(m.pos);
+        if (!pos) return null;
+        return { type: "search-building", helicopterIndex: m.helicopterIndex, pos };
+      }
+      case "move-criminal": {
+        const pos = parsePos(m.pos);
+        if (!pos) return null;
+        return { type: "move-criminal", pos };
+      }
+      default:
+        return null;
+    }
+  },
+
   validateMove(
     state: CitychaseState,
-    move: unknown,
+    move: CitychaseMove,
     playerId: string
   ): boolean {
-    // 型ガード: move が CitychaseMove の基本構造を持つか確認
-    if (typeof move !== "object" || move === null) return false;
-    const m = move as Record<string, unknown>;
-    if (typeof m.type !== "string") return false;
-
     switch (state.phase) {
       case "role-select": {
-        if (m.type !== "assign-criminal") return false;
+        if (move.type !== "assign-criminal") return false;
         if (playerId !== state.hostId) return false;
-        if (typeof m.targetId !== "string") return false;
-        if (!state.playerIds.includes(m.targetId)) return false;
+        if (!state.playerIds.includes(move.targetId)) return false;
         return true;
       }
 
       case "police-setup": {
-        if (m.type !== "place-helicopter") return false;
+        if (move.type !== "place-helicopter") return false;
         const currentPlayerId = this.getCurrentPlayerId(state);
         if (playerId !== currentPlayerId) return false;
-        if (typeof m.pos !== "object" || m.pos === null) return false;
-        const pos = m.pos as Record<string, unknown>;
-        if (typeof pos.row !== "number" || typeof pos.col !== "number") return false;
-        if (!isValidIntersectionPos(m.pos as { row: number; col: number })) return false;
-        if (isOccupiedIntersection(state.helicopters, m.pos as { row: number; col: number })) return false;
+        if (!isValidIntersectionPos(move.pos)) return false;
+        if (isOccupiedIntersection(state.helicopters, move.pos)) return false;
         return true;
       }
 
       case "criminal-setup": {
-        if (m.type !== "place-criminal") return false;
+        if (move.type !== "place-criminal") return false;
         if (playerId !== state.criminalId) return false;
-        if (typeof m.pos !== "object" || m.pos === null) return false;
-        const posCC = m.pos as Record<string, unknown>;
-        if (typeof posCC.row !== "number" || typeof posCC.col !== "number") return false;
-        if (!isValidBuildingPos(m.pos as { row: number; col: number })) return false;
+        if (!isValidBuildingPos(move.pos)) return false;
         return true;
       }
 
@@ -111,39 +148,22 @@ export const citychaseDefinition: GameDefinition<
         const currentPlayerId = this.getCurrentPlayerId(state);
         if (playerId !== currentPlayerId) return false;
 
-        if (m.type === "move-helicopter") {
-          if (typeof m.helicopterIndex !== "number") return false;
-          if (m.helicopterIndex !== state.currentHelicopterIndex)
-            return false;
-          const heli = state.helicopters[m.helicopterIndex];
+        if (move.type === "move-helicopter") {
+          if (move.helicopterIndex !== state.currentHelicopterIndex) return false;
+          const heli = state.helicopters[move.helicopterIndex];
           if (!heli) return false;
-          if (typeof m.pos !== "object" || m.pos === null) return false;
-          const posMH = m.pos as Record<string, unknown>;
-          if (typeof posMH.row !== "number" || typeof posMH.col !== "number") return false;
-          if (!isValidIntersectionPos(m.pos as { row: number; col: number })) return false;
-          if (!isAdjacentIntersection(heli, m.pos as { row: number; col: number })) return false;
-          if (
-            isOccupiedIntersection(
-              state.helicopters,
-              m.pos as { row: number; col: number },
-              m.helicopterIndex
-            )
-          )
-            return false;
+          if (!isValidIntersectionPos(move.pos)) return false;
+          if (!isAdjacentIntersection(heli, move.pos)) return false;
+          if (isOccupiedIntersection(state.helicopters, move.pos, move.helicopterIndex)) return false;
           return true;
         }
 
-        if (m.type === "search-building") {
-          if (typeof m.helicopterIndex !== "number") return false;
-          if (m.helicopterIndex !== state.currentHelicopterIndex)
-            return false;
-          const heli = state.helicopters[m.helicopterIndex];
+        if (move.type === "search-building") {
+          if (move.helicopterIndex !== state.currentHelicopterIndex) return false;
+          const heli = state.helicopters[move.helicopterIndex];
           if (!heli) return false;
-          if (typeof m.pos !== "object" || m.pos === null) return false;
-          const posSB = m.pos as Record<string, unknown>;
-          if (typeof posSB.row !== "number" || typeof posSB.col !== "number") return false;
-          if (!isValidBuildingPos(m.pos as { row: number; col: number })) return false;
-          if (!isBuildingSurroundingIntersection(m.pos as { row: number; col: number }, heli)) return false;
+          if (!isValidBuildingPos(move.pos)) return false;
+          if (!isBuildingSurroundingIntersection(move.pos, heli)) return false;
           return true;
         }
 
@@ -151,16 +171,12 @@ export const citychaseDefinition: GameDefinition<
       }
 
       case "criminal-turn": {
-        if (m.type !== "move-criminal") return false;
+        if (move.type !== "move-criminal") return false;
         if (playerId !== state.criminalId) return false;
         if (!state.criminalPos) return false;
-        if (typeof m.pos !== "object" || m.pos === null) return false;
-        const posCT = m.pos as Record<string, unknown>;
-        if (typeof posCT.row !== "number" || typeof posCT.col !== "number") return false;
-        if (!isValidBuildingPos(m.pos as { row: number; col: number })) return false;
-        if (!isAdjacentBuilding(state.criminalPos, m.pos as { row: number; col: number })) return false;
-        // 痕跡があるビルには移動不可
-        if (posKey(m.pos as { row: number; col: number }) in state.traces) return false;
+        if (!isValidBuildingPos(move.pos)) return false;
+        if (!isAdjacentBuilding(state.criminalPos, move.pos)) return false;
+        if (posKey(move.pos) in state.traces) return false;
         return true;
       }
 

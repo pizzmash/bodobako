@@ -8,6 +8,8 @@ export interface GameDefinition<TState = unknown, TMove = unknown> {
   maxPlayers: number;
 
   createInitialState(playerIds: string[], hostId?: string): TState;
+  /** rawデータをTMove型にパース。構造が不正な場合はnullを返す。 */
+  parseMove?(raw: unknown): TMove | null;
   validateMove(state: TState, move: TMove, playerId: string): boolean;
   applyMove(state: TState, move: TMove, playerId: string): TState;
   getStatus(state: TState): GameStatus;

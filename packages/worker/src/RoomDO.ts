@@ -476,12 +476,19 @@ export class RoomDO implements DurableObject {
     const def = getGameDefinition(this.room.gameId);
     if (!def) return;
 
-    if (!def.validateMove(this.room.gameState, move, playerId)) {
+    // parseMove が定義されていればパース＆型チェックを行う
+    const parsedMove = def.parseMove ? def.parseMove(move) : move;
+    if (parsedMove === null) {
       ws.send(JSON.stringify({ type: "error", message: "無効な手です" } satisfies WsServerMessage));
       return;
     }
 
-    const newState = def.applyMove(this.room.gameState, move, playerId);
+    if (!def.validateMove(this.room.gameState, parsedMove, playerId)) {
+      ws.send(JSON.stringify({ type: "error", message: "無効な手です" } satisfies WsServerMessage));
+      return;
+    }
+
+    const newState = def.applyMove(this.room.gameState, parsedMove, playerId);
     this.room.gameState = newState;
 
     const status = def.getStatus(newState);

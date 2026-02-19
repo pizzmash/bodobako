@@ -25,25 +25,26 @@ export const othelloDefinition: GameDefinition<OthelloState, OthelloMove> = {
     };
   },
 
-  validateMove(state: OthelloState, move: unknown, playerId: string): boolean {
-    // 型ガード: move が OthelloMove の形であるか確認
-    if (typeof move !== "object" || move === null) return false;
-    const m = move as Record<string, unknown>;
-    if (typeof m.pass !== "undefined" && typeof m.pass !== "boolean") return false;
-    if (typeof m.row !== "undefined" && typeof m.row !== "number") return false;
-    if (typeof m.col !== "undefined" && typeof m.col !== "number") return false;
-    if (!m.pass && (typeof m.row !== "number" || typeof m.col !== "number")) return false;
-    const typedMove = move as OthelloMove;
+  parseMove(raw: unknown): OthelloMove | null {
+    if (typeof raw !== "object" || raw === null) return null;
+    const m = raw as Record<string, unknown>;
+    if (m.pass === true) return { pass: true, row: 0, col: 0 };
+    if (typeof m.row !== "number" || typeof m.col !== "number") return null;
+    if (!Number.isInteger(m.row) || !Number.isInteger(m.col)) return null;
+    if (m.row < 0 || m.row >= 8 || m.col < 0 || m.col >= 8) return null;
+    return { row: m.row, col: m.col };
+  },
 
+  validateMove(state: OthelloState, move: OthelloMove, playerId: string): boolean {
     const playerIndex = state.playerIds.indexOf(playerId);
     if (playerIndex === -1 || playerIndex !== state.currentPlayerIndex) return false;
     if (state.finished) return false;
 
-    if (typedMove.pass) {
+    if (move.pass) {
       return getValidMoves(state.board, playerIndex).length === 0;
     }
 
-    return isValidMove(state.board, typedMove.row, typedMove.col, playerIndex);
+    return isValidMove(state.board, move.row, move.col, playerIndex);
   },
 
   applyMove(state: OthelloState, move: OthelloMove, playerId: string): OthelloState {
