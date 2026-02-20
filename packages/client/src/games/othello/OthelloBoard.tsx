@@ -74,6 +74,7 @@ export function OthelloBoard() {
               return (
                 <div
                   key={col}
+                  data-valid={isValid}
                   style={{
                     ...styles.cell,
                     cursor: isValid ? "pointer" : "default",
