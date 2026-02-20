@@ -9,6 +9,11 @@
   "scripts": {
     "dev": "npm run dev --workspace=packages/worker & npm run dev --workspace=packages/client & wait",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/worker && npm run build --workspace=packages/client",
-    "update-readme": "tsx scripts/update-readme.ts"
+    "update-readme": "tsx scripts/update-readme.ts",
+    "test": "npm run test --workspace=packages/shared && npm run test --workspace=packages/client && npm run test --workspace=packages/worker",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }

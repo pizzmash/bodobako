@@ -38,6 +38,8 @@ packages/
 npm run dev          # wrangler dev (8787) + Vite (5173) 同時起動
 npm run build        # shared → worker → client の順にビルド
 npm run update-readme  # README のゲーム一覧を更新
+npm test             # ユニット・統合テスト（shared + client + worker）
+npm run test:e2e     # E2E テスト（Playwright、dev サーバーを自動起動）
 ```
 
 ## アーキテクチャ
@@ -157,6 +159,40 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 ```
 
 > **SPA ルーティング注意**: `packages/client/public/_redirects` に `/* /index.html 200` を記述済み。Cloudflare Pages での `/room/:code` 直アクセス・リロード時の 404 を防ぐ。
+
+## テスト構成
+
+### ユニット・統合テスト（Vitest）
+
+各パッケージに独立した `vitest.config.ts` を持ち、`npm test` でまとめて実行される。
+
+| パッケージ | 環境 | テスト対象 |
+| --- | --- | --- |
+| `packages/shared` | Node（デフォルト） | ゲームロジック・`GameDefinition` 実装（ゲームごとに `__tests__/logic.test.ts` と `__tests__/definition.test.ts`） |
+| `packages/client` | happy-dom | `socket.ts`（WebSocketシングルトン）・`RoomContext`（状態管理・WSイベント） |
+| `packages/worker` | `@cloudflare/vitest-pool-workers` | HTTP API（`POST /rooms`・`GET /rooms/:code/ws`）・RoomDO WebSocket ハンドラ |
+
+**client テストの注意点:**
+- `vi.stubGlobal("WebSocket", MockWebSocket)` でネイティブWS をモック
+- `vi.mock("../../lib/socket", ...)` で wsClient シングルトンを差し替え
+- `RoomContext` のテストは `<MemoryRouter>` でラップして `useNavigate()` を有効化
+- `import.meta.env.VITE_API_URL` は `vitest.config.ts` の `test.env` で注入
+
+**worker テストの注意点:**
+- `isolatedStorage: false`（WebSocket Hibernation API がリクエストコンテキスト外でハンドラを呼ぶため）
+- `SELF.fetch()` で Workers ランタイム上の実際の HTTP リクエストを送信
+- `res.webSocket!.accept()` で WS 接続を確立し、メッセージキュー（`createMsgQueue`）で受信を管理
+
+### E2E テスト（Playwright）
+
+`playwright.config.ts` が `npm run dev` を自動起動してからテストを実行する。テストファイルは `e2e/tests/` に配置。
+
+| ファイル | 内容 |
+| --- | --- |
+| `lobby.spec.ts` | 名前入力モーダル・ゲーム一覧・localStorage 復元 |
+| `room-flow.spec.ts` | ルーム作成・コード参加・退出・直接アクセス |
+| `game-othello.spec.ts` | 2タブで対戦開始・手を打つ |
+| `reconnect.spec.ts` | リロード後の sessionToken 再接続 |
 
 ## コーディング規約
 

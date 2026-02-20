@@ -174,6 +174,28 @@ npm run dev
 npm run build   # shared → worker → client の順にビルド
 ```
 
+### テスト
+
+```bash
+# ユニット・統合テスト（全パッケージ）
+npm test
+
+# E2E テスト（開発サーバーが自動起動）
+npm run test:e2e
+```
+
+| コマンド           | 対象                     | ツール     |
+| ------------------ | ------------------------ | ---------- |
+| `npm test`         | shared / client / worker | Vitest     |
+| `npm run test:e2e` | ブラウザ E2E             | Playwright |
+
+**テスト構成:**
+
+- **shared** — 4ゲーム（Othello / AiueBattle / Citychase / SonicRestaurant）それぞれのロジック・定義層ユニットテスト
+- **client** — WebSocketクライアント（`socket.ts`）と `RoomContext` の統合テスト。`happy-dom` + `@testing-library/react` 使用
+- **worker** — Cloudflare Workers ランタイム上で HTTP API と Durable Object の WebSocket メッセージハンドラをテスト
+- **e2e** — ロビー操作・ルーム作成参加退出・オセロゲームプレイ・再接続の Playwright シナリオ
+
 ### 環境変数
 
 | 変数           | デフォルト（dev）       | 説明                         |
