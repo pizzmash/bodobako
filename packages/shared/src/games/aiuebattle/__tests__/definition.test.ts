@@ -320,19 +320,34 @@ describe("getStatus", () => {
 });
 
 describe("getRanking", () => {
-  it("winnerIdがnullならnullを返す", () => {
+  it("finishedでなければnullを返す", () => {
     const state = aiuebattleDefinition.createInitialState([P1, P2]);
     expect(aiuebattleDefinition.getRanking(state)).toBeNull();
   });
 
-  it("winnerIdがあれば勝者を1位にしたリストを返す", () => {
+  it("生き残り1人が勝者として1位になる", () => {
     const state: AiueBattleState = {
       ...aiuebattleDefinition.createInitialState([P1, P2]),
-      winnerId: P2,
+      finished: true,
+      eliminatedPlayers: [P1],
+      eliminationOrder: [P1],
     };
     const ranking = aiuebattleDefinition.getRanking(state);
     expect(ranking![0]).toBe(P2);
     expect(ranking).toContain(P1);
+  });
+
+  it("全員同時脱落ではeliminationOrderの末尾が1位になる", () => {
+    // p1が攻撃、p1がeliminationOrderの末尾（processAttackが移動する）
+    const state: AiueBattleState = {
+      ...aiuebattleDefinition.createInitialState([P1, P2]),
+      finished: true,
+      eliminatedPlayers: [P1, P2],
+      eliminationOrder: [P2, P1], // p1(攻撃者)が末尾
+    };
+    const ranking = aiuebattleDefinition.getRanking(state);
+    expect(ranking![0]).toBe(P1);
+    expect(ranking![1]).toBe(P2);
   });
 });
 

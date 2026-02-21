@@ -99,11 +99,17 @@ export function processAttack(
 
   const active = state.playerIds.filter((id) => !newEliminated.includes(id));
   let finished = false;
-  let winnerId: string | null = null;
 
   if (active.length <= 1) {
     finished = true;
-    winnerId = active.length === 1 ? active[0] : attackerId;
+    if (active.length === 0) {
+      // 全員同時脱落: 攻撃者を eliminationOrder の末尾に移動（勝者として符号化）
+      const attackerIdx = newEliminationOrder.indexOf(attackerId);
+      if (attackerIdx !== -1) {
+        newEliminationOrder.splice(attackerIdx, 1);
+        newEliminationOrder.push(attackerId);
+      }
+    }
   }
 
   const newState: AiueBattleState = {
@@ -116,7 +122,6 @@ export function processAttack(
     lastAttackChar: char,
     lastAttackPlayerId: attackerId,
     finished,
-    winnerId,
   };
 
   if (finished) {

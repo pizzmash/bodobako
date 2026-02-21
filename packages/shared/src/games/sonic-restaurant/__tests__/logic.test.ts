@@ -120,7 +120,6 @@ function makeSimpleState(
     lastCompletedMenu: null,
     finishedOrder: [],
     finished: false,
-    winnerId: null,
   };
 }
 
