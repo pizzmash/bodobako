@@ -41,11 +41,11 @@ bodobako/
 │           ├── lib/
 │           │   └── socket.ts         # WebSocket クライアント（再接続付き）
 │           ├── context/
-          │   └── RoomContext.tsx   # WS 接続 & 状態管理 & navigate 統合
-          ├── components/
-          │   ├── Lobby.tsx         # ロビー（ゲーム選択・ルーム作成/参加）
-          │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
-          │   ├── RoomPage.tsx      # /room/:code ページ（接続・遷移制御）
+│           │   └── RoomContext.tsx   # WS 接続 & 状態管理 & navigate 統合
+│           ├── components/
+|           │   ├── Lobby.tsx         # ロビー（ゲーム選択・ルーム作成/参加）
+|           │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
+|           │   ├── RoomPage.tsx      # /room/:code ページ（接続・遷移制御）
 │           │   └── GameView.tsx      # ゲームコンポーネントの振り分け
 │           └── games/
 │               └── <game-id>/    # 各ゲームの UI コンポーネント
@@ -61,14 +61,14 @@ bodobako/
 ```
 ┌──────────┐ HTTP (POST)  ┌──────────────────┐
 │  Client  │─────────────►│  Worker (Hono)   │
-│ (React)  │ WS upgrade   │  ルーター/プロキシ │
+│ (React)  │ WS upgrade   │ ルーター/プロキシ │
 │          │─────────────►└────────┬─────────┘
 │          │                       │ stub.fetch()
 │          │              ┌────────▼─────────┐
 │          │◄────────────►│    RoomDO        │
 └────┬─────┘  WebSocket   │  WS・ゲーム状態   │
-     │      (upgrade経由)  └────────┬─────────┘
-     │  import               import │
+     │      (upgrade経由) └────────┬─────────┘
+     │  import              import │
      └──────────────┬──────────────┘
                     ▼
              ┌──────────┐
@@ -191,7 +191,7 @@ npm run test:e2e
 
 **テスト構成:**
 
-- **shared** — 4ゲーム（Othello / AiueBattle / Citychase / SonicRestaurant）それぞれのロジック・定義層ユニットテスト
+- **shared** — 各ゲームそれぞれのロジック・定義層ユニットテスト
 - **client** — WebSocketクライアント（`socket.ts`）と `RoomContext` の統合テスト。`happy-dom` + `@testing-library/react` 使用
 - **worker** — Cloudflare Workers ランタイム上で HTTP API と Durable Object の WebSocket メッセージハンドラをテスト
 - **e2e** — ロビー操作・ルーム作成参加退出・オセロゲームプレイ・再接続の Playwright シナリオ
