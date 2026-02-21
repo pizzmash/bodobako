@@ -147,7 +147,6 @@ class BodobakoWs {
     sessionToken: string;
   }): Promise<{ code: string; playerId: string }> {
     // iOS bfcache復元直後などにネットワークレベルで失敗する場合があるため最大3回リトライする
-    let lastError: unknown;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const res = await fetch(`${API_BASE}/rooms`, {
@@ -161,14 +160,14 @@ class BodobakoWs {
         }
         return res.json() as Promise<{ code: string; playerId: string }>;
       } catch (err) {
-        lastError = err;
         // TypeError はネットワークレベルの失敗（"Load failed" 等）→ リトライ
-        // それ以外（HTTPエラー等）は即座に throw
+        // それ以外（HTTPエラー等）または最終試行なら即座に throw
         if (!(err instanceof TypeError) || attempt >= 2) throw err;
         await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
       }
     }
-    throw lastError;
+    // ループは必ず return か throw で終わるが TypeScript の制御フロー解析のために必要
+    throw new Error("ルーム作成に失敗しました");
   }
 
   // -------------------------------------------------------------------------

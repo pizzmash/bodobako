@@ -89,7 +89,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
 
   // iOS bfcache（バック・フォワードキャッシュ）からの復元時に古いWS状態をリセットする。
   // bfcache復元後はネットワークスタックが完全に再初期化される前にfetchが失敗する場合があるため、
-  // ロビーにいるとき（room = null）は wsClient を切断してスタレートをクリアする。
+  // ロビーにいるとき（room = null）は wsClient を切断して state をクリアする。
   useEffect(() => {
     const handlePageShow = (ev: PageTransitionEvent) => {
       if (!ev.persisted) return;
