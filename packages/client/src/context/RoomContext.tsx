@@ -87,6 +87,22 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEYS.playerId);
   }, []);
 
+  // iOS bfcache（バック・フォワードキャッシュ）からの復元時に古いWS状態をリセットする。
+  // bfcache復元後はネットワークスタックが完全に再初期化される前にfetchが失敗する場合があるため、
+  // ロビーにいるとき（room = null）は wsClient を切断して state をクリアする。
+  useEffect(() => {
+    const handlePageShow = (ev: PageTransitionEvent) => {
+      if (!ev.persisted) return;
+      // ルームに入っている状態でbfcache復元された場合はRoomPageのconnectToRoomに任せる
+      // ロビーにいる場合は古い再接続ループを止める
+      if (!room) {
+        wsClient.disconnect();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [room]);
+
   // サーバーからのpushイベント購読
   useEffect(() => {
     const onRoomUpdated = (msg: Extract<WsServerMessage, { type: "room:updated" }>) => {

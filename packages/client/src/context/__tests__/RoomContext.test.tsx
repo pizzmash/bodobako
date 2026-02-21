@@ -538,6 +538,54 @@ describe("connectToRoom", () => {
   });
 });
 
+describe("bfcache (pageshow) 復元", () => {
+  // happy-dom では PageTransitionEvent の persisted オプションが未サポートのため
+  // Object.assign でプロパティを付与したイベントを使用する
+  function makePageShowEvent(persisted: boolean): Event {
+    return Object.assign(new Event("pageshow"), { persisted });
+  }
+
+  it("pageshow(persisted=true)かつroom=nullのときwsClient.disconnectが呼ばれる", async () => {
+    await renderRoomProvider();
+
+    act(() => {
+      window.dispatchEvent(makePageShowEvent(true));
+    });
+
+    expect(mockWsClient.disconnect).toHaveBeenCalled();
+  });
+
+  it("pageshow(persisted=false)のときwsClient.disconnectは呼ばれない", async () => {
+    await renderRoomProvider();
+
+    act(() => {
+      window.dispatchEvent(makePageShowEvent(false));
+    });
+
+    expect(mockWsClient.disconnect).not.toHaveBeenCalled();
+  });
+
+  it("pageshow(persisted=true)かつroomが設定済みのときwsClient.disconnectは呼ばれない", async () => {
+    const { getContext } = await renderRoomProvider();
+
+    // room を設定する
+    act(() => {
+      simulateServerEvent("room:updated", {
+        type: "room:updated",
+        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+      });
+    });
+
+    vi.clearAllMocks(); // room 設定前の呼び出しをリセット
+
+    act(() => {
+      window.dispatchEvent(makePageShowEvent(true));
+    });
+
+    expect(mockWsClient.disconnect).not.toHaveBeenCalled();
+  });
+});
+
 describe("creatingGameId", () => {
   it("createRoom中はcreatingGameIdにgameIdが設定される", async () => {
     let resolveCreate: ((v: unknown) => void) | null = null;

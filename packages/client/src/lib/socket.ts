@@ -45,6 +45,7 @@ class BodobakoWs {
   // -------------------------------------------------------------------------
 
   connect(roomCode: string, sessionToken: string): void {
+    this.clearReconnectTimer();
     this.roomCode = roomCode;
     this.sessionToken = sessionToken;
     this.manualClose = false;
@@ -145,16 +146,30 @@ class BodobakoWs {
     gameId: string;
     sessionToken: string;
   }): Promise<{ code: string; playerId: string }> {
-    const res = await fetch(`${API_BASE}/rooms`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(opts),
-    });
-    if (!res.ok) {
-      const err = (await res.json()) as { error: string };
-      throw new Error(err.error ?? "ルーム作成に失敗しました");
+    // iOS bfcache復元直後などにネットワークレベルで失敗する場合があるため最大3回リトライする
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(`${API_BASE}/rooms`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(opts),
+        });
+        if (!res.ok) {
+          const err = (await res.json()) as { error: string };
+          throw new Error(err.error ?? "ルーム作成に失敗しました");
+        }
+        return res.json() as Promise<{ code: string; playerId: string }>;
+      } catch (err) {
+        // TypeError はネットワークレベルの失敗（"Load failed" 等）→ リトライ
+        // それ以外（HTTPエラー等）は即座に throw
+        if (!(err instanceof TypeError)) throw err;
+        // TypeError でも最終試行で失敗した場合は日本語メッセージにラップして throw
+        if (attempt >= 2) throw new Error("ルーム作成に失敗しました", { cause: err });
+        await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+      }
     }
-    return res.json() as Promise<{ code: string; playerId: string }>;
+    // ループは必ず return か throw で終わるが TypeScript の制御フロー解析のために必要
+    throw new Error("ルーム作成に失敗しました");
   }
 
   // -------------------------------------------------------------------------
@@ -163,6 +178,19 @@ class BodobakoWs {
 
   private openWs(): void {
     if (!this.roomCode || !this.sessionToken) return;
+    // 既存のWSを閉じてから新しい接続を作成（leakと多重接続を防ぐ）
+    if (this.ws) {
+      const old = this.ws;
+      old.onopen = null;
+      old.onmessage = null;
+      old.onclose = null;
+      old.onerror = null;
+      try { old.close(); } catch { /* ignore */ }
+      this.ws = null;
+      // 古いWSに紐づくpendingリクエストを破棄（新しいWS上では解決されないため）
+      this.pending.forEach(({ reject }) => reject("切断されました"));
+      this.pending.clear();
+    }
     const url = `${toWsUrl(API_BASE)}/rooms/${this.roomCode}/ws?sessionToken=${encodeURIComponent(this.sessionToken)}`;
     const ws = new WebSocket(url);
     this.ws = ws;

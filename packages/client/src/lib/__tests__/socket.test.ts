@@ -108,6 +108,41 @@ describe("connect", () => {
   it("未接続状態ではconnected=false", () => {
     expect(wsClient.connected).toBe(false);
   });
+
+  it("接続中に再度 connect() を呼ぶと古い WS が閉じられる", () => {
+    wsClient.connect("ABCD", "token");
+    const firstWs = latestMockWs!;
+
+    wsClient.connect("XYZW", "new-token");
+
+    // 古い WS が close() されている
+    expect(firstWs.readyState).toBe(MockWebSocket.CLOSED);
+    // 新しい WS が作られている
+    expect(latestMockWs).not.toBe(firstWs);
+    expect(latestMockWs!.url).toContain("/rooms/XYZW/ws");
+  });
+
+  it("再接続タイマーが発火する前に connect() を呼ぶとタイマーがキャンセルされる", async () => {
+    vi.useFakeTimers();
+    try {
+      wsClient.connect("ABCD", "token");
+      const firstWs = latestMockWs!;
+
+      // 意図しない切断 → 再接続タイマーが設定される（まだ発火しない）
+      firstWs.simulateClose(1001);
+
+      // タイマーが発火する前に別の部屋へ connect()
+      wsClient.connect("XYZW", "new-token");
+      const secondWs = latestMockWs!;
+      expect(secondWs).not.toBe(firstWs);
+
+      // 時間を十分進めても余分な WS は作成されない（古いタイマーがキャンセル済み）
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(latestMockWs).toBe(secondWs);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("disconnect", () => {
@@ -335,5 +370,72 @@ describe("createRoom (HTTP API)", () => {
     await expect(
       wsClient.createRoom({ playerName: "Alice", gameId: "invalid", sessionToken: "token" })
     ).rejects.toThrow("ゲームが見つかりません");
+  });
+
+  it("fetchがTypeErrorで失敗した場合にリトライして成功する", async () => {
+    vi.useFakeTimers();
+    try {
+      const mockFetch = vi.fn()
+        .mockRejectedValueOnce(new TypeError("Load failed"))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ code: "RETRY", playerId: "p-retry" }),
+        });
+      vi.stubGlobal("fetch", mockFetch);
+
+      const promise = wsClient.createRoom({
+        playerName: "Alice",
+        gameId: "othello",
+        sessionToken: "token",
+      });
+
+      // 1回目の失敗 → 600ms後にリトライ
+      const assertion = expect(promise).resolves.toEqual({ code: "RETRY", playerId: "p-retry" });
+      await vi.advanceTimersByTimeAsync(2000);
+      await assertion;
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("3回連続してTypeErrorで失敗した場合はrejectされる", async () => {
+    vi.useFakeTimers();
+    try {
+      const mockFetch = vi.fn().mockRejectedValue(new TypeError("Load failed"));
+      vi.stubGlobal("fetch", mockFetch);
+
+      const promise = wsClient.createRoom({
+        playerName: "Alice",
+        gameId: "othello",
+        sessionToken: "token",
+      });
+
+      // 600ms + 1200ms の待機後に3回目が throw → 計1800ms
+      // TypeError は日本語メッセージにラップされる
+      const assertion = expect(promise).rejects.toThrow("ルーム作成に失敗しました");
+      await vi.advanceTimersByTimeAsync(3000);
+      await assertion;
+
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("HTTPエラー（ok: false）の場合はリトライせずに即座に失敗する", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: "不明なゲームID: xxx" }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await expect(
+      wsClient.createRoom({ playerName: "Alice", gameId: "xxx", sessionToken: "token" })
+    ).rejects.toThrow("不明なゲームID: xxx");
+
+    // リトライなし（1回だけ呼ばれる）
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
