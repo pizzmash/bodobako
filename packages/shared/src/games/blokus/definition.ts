@@ -3,9 +3,6 @@
 // ---------------------------------------------------------------------------
 
 import type { GameDefinition, GameStatus } from "../../types/game.js";
-import { PIECES } from "./pieces.js";
-import type { BlokusMove, BlokusState } from "./types.js";
-import { BOARD_SIZE, NUM_COLORS, NUM_PIECES } from "./types.js";
 import {
   applyMove,
   canPlace,
@@ -13,12 +10,15 @@ import {
   createInitialState,
   getCurrentPlayerId,
 } from "./logic.js";
+import { PIECES } from "./pieces.js";
+import type { BlokusMove, BlokusState } from "./types.js";
+import { BOARD_SIZE, NUM_PIECES } from "./types.js";
 
 export const blokusDefinition: GameDefinition<BlokusState, BlokusMove> = {
   id: "blokus",
   name: "ブロックス",
   description:
-    "20×20 の盤面にピースを角で繋げて配置する陣取りゲーム（2〜4人）",
+    "20×20 の盤面にピースを角で繋げて配置する陣取りゲーム",
   minPlayers: 2,
   maxPlayers: 4,
 
