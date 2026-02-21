@@ -25,6 +25,17 @@ export { CARD_COUNTS, MENUS } from "./games/sonic-restaurant/types.js";
 export type {
     Card, CompletedMenu, MenuTreeNode, SonicRestaurantMove, SonicRestaurantState
 } from "./games/sonic-restaurant/types.js";
+export { blocksDefinition } from "./games/blocks/index.js";
+export {
+    boardToGrid, canPlace, computePlayerRemainingCells,
+    getValidPlacements, PIECES, TOTAL_VARIANTS
+} from "./games/blocks/index.js";
+export { BOARD_SIZE as BLOCKS_BOARD_SIZE, NUM_COLORS, NUM_PIECES, START_CORNERS } from "./games/blocks/types.js";
+export type {
+    BlocksMove, BlocksState, ColorBoards, ColorOwner,
+    PieceDefinition, PieceVariant, RemainingPieces
+} from "./games/blocks/types.js";
+export type { Placement } from "./games/blocks/logic.js";
 export type { GameDefinition, GameStatus } from "./types/game.js";
 export type {
     GameResult, WsAckError, WsAckSuccess, WsClientMessage, WsServerMessage

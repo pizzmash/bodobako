@@ -1,6 +1,8 @@
 import type { GameDefinition } from "../types/game.js";
 import { aiuebattleDefinition } from "./aiuebattle/index.js";
 import type { AiueBattleMove, AiueBattleState } from "./aiuebattle/types.js";
+import { blocksDefinition } from "./blocks/index.js";
+import type { BlocksMove, BlocksState } from "./blocks/types.js";
 import { citychaseDefinition } from "./citychase/index.js";
 import type { CitychaseMove, CitychaseState } from "./citychase/types.js";
 import { othelloDefinition } from "./othello/index.js";
@@ -9,7 +11,7 @@ import { sonicRestaurantGame } from "./sonic-restaurant/index.js";
 import type { SonicRestaurantMove, SonicRestaurantState } from "./sonic-restaurant/types.js";
 
 /** 登録済みゲームIDのリテラル型 */
-export type GameId = "othello" | "aiuebattle" | "citychase" | "sonic-restaurant";
+export type GameId = "othello" | "aiuebattle" | "citychase" | "sonic-restaurant" | "blocks";
 
 /** ゲームID → 具体的な GameDefinition 型のマッピング */
 export interface GameDefinitionMap {
@@ -17,6 +19,7 @@ export interface GameDefinitionMap {
   "aiuebattle": GameDefinition<AiueBattleState, AiueBattleMove>;
   "citychase": GameDefinition<CitychaseState, CitychaseMove>;
   "sonic-restaurant": GameDefinition<SonicRestaurantState, SonicRestaurantMove>;
+  "blocks": GameDefinition<BlocksState, BlocksMove>;
 }
 
 const registry = new Map<string, GameDefinition>();
@@ -25,6 +28,7 @@ registry.set(othelloDefinition.id, othelloDefinition);
 registry.set(aiuebattleDefinition.id, aiuebattleDefinition);
 registry.set(citychaseDefinition.id, citychaseDefinition);
 registry.set(sonicRestaurantGame.id, sonicRestaurantGame);
+registry.set(blocksDefinition.id, blocksDefinition);
 
 /**
  * 既知のゲームID（リテラル型）に対してはゲーム固有の型付き定義を返す。
