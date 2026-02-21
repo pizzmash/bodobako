@@ -32,7 +32,7 @@ const NANA_HAND_FOOTER_HEIGHT_DESKTOP = 143;
 const NANA_HAND_FOOTER_HEIGHT_MOBILE = 121;
 const NANA_PLAYER_BAR_HEIGHT_MOBILE = 132;
 const NANA_TAB_HEIGHT_MOBILE = 52;
-const PLAYER_COLORS = ["#0496ff", "#ff5c8d", "#ffbc42", "#06d6a0", "#9d4edd", "#ec4899"];
+const PLAYER_COLORS = ["#0496ff", "#ff5c8d", "#22c55e", "#06d6a0", "#9d4edd", "#ec4899"];
 
 function withAlpha(hexColor: string, alpha: number): string {
   const hex = hexColor.replace("#", "");
@@ -908,7 +908,7 @@ export function NanaBoard() {
   const myMinId = myActiveCards[0]?.id;
   const myMaxId = myActiveCards[myActiveCards.length - 1]?.id;
   const currentPlayerName = getName(state.playerIds[state.currentPlayerIndex]);
-  const opponents = state.playerIds.filter((pid) => pid !== playerId);
+  const playerList = state.playerIds;
   const myColor = getPlayerColor(playerId);
 
   // ── ムーブ送信 ────────────────────────────────────────────────────
@@ -1279,7 +1279,7 @@ export function NanaBoard() {
                 プレイヤー
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {opponents.map((pid) => (
+                {playerList.map((pid) => (
                   <OpponentArea
                     key={pid}
                     pid={pid}
@@ -1481,7 +1481,7 @@ export function NanaBoard() {
         }}
       >
         <div style={{ display: "flex", gap: 8, width: "max-content" }}>
-          {opponents.map((pid) => (
+          {playerList.map((pid) => (
             <OpponentArea
               key={pid}
               pid={pid}
