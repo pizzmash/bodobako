@@ -2,6 +2,7 @@ import { useRoom } from "../context/RoomContext";
 import { AiueBattleBoard } from "../games/aiuebattle/AiueBattleBoard";
 import { BlokusBoard } from "../games/blokus/BlokusBoard";
 import { CitychaseBoard } from "../games/citychase/CitychaseBoard";
+import { NanaBoard } from "../games/nana/NanaBoard";
 import { OthelloBoard } from "../games/othello/OthelloBoard";
 import { SonicRestaurantBoard } from "../games/sonic-restaurant/SonicRestaurantBoard";
 
@@ -20,6 +21,8 @@ export function GameView() {
       return <SonicRestaurantBoard />;
     case "blokus":
       return <BlokusBoard />;
+    case "nana":
+      return <NanaBoard />;
     default:
       return <div>未対応のゲーム: {room.gameId}</div>;
   }
