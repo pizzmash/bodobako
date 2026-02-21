@@ -4,7 +4,7 @@ export { BOARD_CHARS, TOPIC_LIST, WORD_LENGTH } from "./games/aiuebattle/types.j
 export type { AiueBattleMove, AiueBattleState } from "./games/aiuebattle/types.js";
 export {
     PIECES, TOTAL_VARIANTS, blokusDefinition, boardToGrid, canPlace, computePlayerRemainingCells,
-    getValidPlacements
+    computeRemainingCells, getCurrentPlayerId, getValidPlacements
 } from "./games/blokus/index.js";
 export type { Placement } from "./games/blokus/logic.js";
 export { BOARD_SIZE as BLOKUS_BOARD_SIZE, NUM_COLORS, NUM_PIECES, START_CORNERS } from "./games/blokus/types.js";

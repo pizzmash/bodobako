@@ -1,0 +1,57 @@
+/* ---------------------------------------------------------------------------
+   ブロックス UI — CSS（アニメーション・ホバー・レスポンシブ）
+   --------------------------------------------------------------------------- */
+
+/* ---- 手番ドットのパルスアニメーション ---- */
+@keyframes blk-turn-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.55;
+  }
+}
+
+.blk-turn-dot {
+  animation: blk-turn-pulse 1.4s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* ---- 有効配置セルのホバー ---- */
+.blk-cell-valid:hover {
+  filter: brightness(1.3);
+}
+
+/* ---- ピースパレットアイテム ---- */
+.blk-palette-item {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.blk-palette-item:not(:disabled):hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  z-index: 1;
+}
+
+.blk-palette-item.blk-palette-selected {
+  transform: scale(1.06);
+}
+
+/* ---- ボードの外側コンテナ ---- */
+.blk-board-outer {
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+/* ---- モバイル: ボードスケール調整 ---- */
+@media (max-width: 620px) {
+  .blk-board-scale-wrap {
+    overflow: hidden;
+    width: 100%;
+  }
+}
