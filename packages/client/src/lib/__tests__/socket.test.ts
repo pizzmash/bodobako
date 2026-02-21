@@ -413,7 +413,8 @@ describe("createRoom (HTTP API)", () => {
       });
 
       // 600ms + 1200ms の待機後に3回目が throw → 計1800ms
-      const assertion = expect(promise).rejects.toBeInstanceOf(TypeError);
+      // TypeError は日本語メッセージにラップされる
+      const assertion = expect(promise).rejects.toThrow("ルーム作成に失敗しました");
       await vi.advanceTimersByTimeAsync(3000);
       await assertion;
 

@@ -161,8 +161,10 @@ class BodobakoWs {
         return res.json() as Promise<{ code: string; playerId: string }>;
       } catch (err) {
         // TypeError はネットワークレベルの失敗（"Load failed" 等）→ リトライ
-        // それ以外（HTTPエラー等）または最終試行なら即座に throw
-        if (!(err instanceof TypeError) || attempt >= 2) throw err;
+        // それ以外（HTTPエラー等）は即座に throw
+        if (!(err instanceof TypeError)) throw err;
+        // TypeError でも最終試行で失敗した場合は日本語メッセージにラップして throw
+        if (attempt >= 2) throw new Error("ルーム作成に失敗しました", { cause: err });
         await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
       }
     }
@@ -185,6 +187,9 @@ class BodobakoWs {
       old.onerror = null;
       try { old.close(); } catch { /* ignore */ }
       this.ws = null;
+      // 古いWSに紐づくpendingリクエストを破棄（新しいWS上では解決されないため）
+      this.pending.forEach(({ reject }) => reject("切断されました"));
+      this.pending.clear();
     }
     const url = `${toWsUrl(API_BASE)}/rooms/${this.roomCode}/ws?sessionToken=${encodeURIComponent(this.sessionToken)}`;
     const ws = new WebSocket(url);
