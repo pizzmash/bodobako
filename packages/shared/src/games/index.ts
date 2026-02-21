@@ -5,13 +5,15 @@ import { blokusDefinition } from "./blokus/index.js";
 import type { BlokusMove, BlokusState } from "./blokus/types.js";
 import { citychaseDefinition } from "./citychase/index.js";
 import type { CitychaseMove, CitychaseState } from "./citychase/types.js";
+import { nanaDefinition } from "./nana/index.js";
+import type { NanaMove, NanaState } from "./nana/types.js";
 import { othelloDefinition } from "./othello/index.js";
 import type { OthelloMove, OthelloState } from "./othello/types.js";
 import { sonicRestaurantGame } from "./sonic-restaurant/index.js";
 import type { SonicRestaurantMove, SonicRestaurantState } from "./sonic-restaurant/types.js";
 
 /** 登録済みゲームIDのリテラル型 */
-export type GameId = "othello" | "aiuebattle" | "citychase" | "sonic-restaurant" | "blokus";
+export type GameId = "othello" | "aiuebattle" | "citychase" | "sonic-restaurant" | "blokus" | "nana";
 
 /** ゲームID → 具体的な GameDefinition 型のマッピング */
 export interface GameDefinitionMap {
@@ -20,6 +22,7 @@ export interface GameDefinitionMap {
   "citychase": GameDefinition<CitychaseState, CitychaseMove>;
   "sonic-restaurant": GameDefinition<SonicRestaurantState, SonicRestaurantMove>;
   "blokus": GameDefinition<BlokusState, BlokusMove>;
+  "nana": GameDefinition<NanaState, NanaMove>;
 }
 
 const registry = new Map<string, GameDefinition>();
@@ -29,6 +32,7 @@ registry.set(aiuebattleDefinition.id, aiuebattleDefinition);
 registry.set(citychaseDefinition.id, citychaseDefinition);
 registry.set(sonicRestaurantGame.id, sonicRestaurantGame);
 registry.set(blokusDefinition.id, blokusDefinition);
+registry.set(nanaDefinition.id, nanaDefinition);
 
 /**
  * 既知のゲームID（リテラル型）に対してはゲーム固有の型付き定義を返す。

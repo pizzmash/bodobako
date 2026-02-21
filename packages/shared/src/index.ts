@@ -24,6 +24,9 @@ export type {
     SearchResult
 } from "./games/citychase/types.js";
 export { getAllGames, getGameDefinition } from "./games/index.js";
+export { nanaDefinition } from "./games/nana/index.js";
+export { checkWinCondition, createDeck, getActiveHandCard } from "./games/nana/logic.js";
+export type { NanaCard, NanaCardView, NanaMove, NanaState, NanaStateView } from "./games/nana/types.js";
 export type { GameDefinitionMap, GameId } from "./games/index.js";
 export { othelloDefinition } from "./games/othello/index.js";
 export { countDiscs, getValidMoves } from "./games/othello/logic.js";

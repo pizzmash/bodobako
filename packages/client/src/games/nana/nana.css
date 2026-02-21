@@ -1,0 +1,105 @@
+/* ナナ ゲームボード CSS */
+
+/* 場札: ホバー時に浮き上がる（自分のターン時のみ適用） */
+.nana-field-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.nana-field-card.clickable:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(244, 157, 37, 0.35) !important;
+}
+
+/* MIN/MAX ボタン */
+.nana-minmax-btn {
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.nana-minmax-btn:hover:not(:disabled) {
+  background: rgba(244, 157, 37, 0.15) !important;
+  border-color: #f49d25 !important;
+  transform: translateY(-1px);
+}
+.nana-minmax-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.nana-minmax-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 手札カード: MIN/MAX ホバー */
+.nana-hand-card {
+  transition: transform 0.15s ease;
+}
+.nana-hand-card.clickable:hover {
+  transform: translateY(-6px);
+}
+
+/* カード公開アニメーション */
+@keyframes nana-reveal {
+  0%   { transform: rotateY(90deg) scale(0.8); opacity: 0; }
+  60%  { transform: rotateY(-10deg) scale(1.05); opacity: 1; }
+  100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+.nana-card-revealed {
+  animation: nana-reveal 0.3s ease-out;
+  transform-origin: center;
+}
+
+/* セット取得バナー */
+@keyframes nana-set-acquired {
+  0%   { transform: scale(0.7) translateY(10px); opacity: 0; }
+  60%  { transform: scale(1.1) translateY(-4px); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.nana-set-acquired {
+  animation: nana-set-acquired 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ゲームログのフェードイン */
+@keyframes nana-log-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.nana-log-entry {
+  animation: nana-log-in 0.2s ease-out;
+}
+
+/* 操作ガイドバナー */
+@keyframes nana-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+.nana-guide-banner {
+  animation: nana-bounce 2s ease-in-out infinite;
+}
+
+/* モバイル下部ナビ */
+.nana-bottom-nav-btn {
+  transition: background 0.15s, color 0.15s;
+}
+.nana-bottom-nav-btn:hover {
+  background: rgba(244, 157, 37, 0.08) !important;
+}
+
+/* 現在プレイヤーのドット（Blokus風パルス） */
+@keyframes nana-turn-dot-pulse {
+  0% {
+    box-shadow: 0 0 0 0 currentColor;
+    transform: scale(1);
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+    transform: scale(1.07);
+    opacity: 0.9;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.nana-player-dot.active {
+  animation: nana-turn-dot-pulse 1.6s ease-in-out infinite;
+}
