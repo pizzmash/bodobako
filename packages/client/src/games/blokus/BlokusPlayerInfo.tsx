@@ -5,8 +5,8 @@
  */
 
 import type { BlokusState, RoomInfo } from "@bodobako/shared";
-import { PIECES, computeRemainingCells, getCurrentPlayerId } from "@bodobako/shared";
-import { BLOKUS_COLORS } from "./constants";
+import { computeRemainingCells, getCurrentPlayerId } from "@bodobako/shared";
+import { BLOKUS_COLORS, SURFACE, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 import "./blokus.css";
 
 interface BlokusPlayerInfoProps {
@@ -20,26 +20,14 @@ export function BlokusPlayerInfo({ state, playerId, room }: BlokusPlayerInfoProp
 
   return (
     <div style={styles.container}>
-      {room.players.map((player, playerIndex) => {
+      {room.players.map((player) => {
         const isMe = player.id === playerId;
         const isCurrentTurn = !state.finished && player.id === currentTurnPlayerId;
 
-        // このプレイヤーが担当する色インデックス一覧
-        const ownedColors = ([0, 1, 2, 3] as const).filter((c) => {
-          if (state.colorOwner[c] === playerIndex) return true;
-          // 3人戦フリーカラー: 現在担当しているプレイヤー
-          if (
-            state.colorOwner[c] === -1 &&
-            state.currentColorIndex === c &&
-            state.freeColorNextPlayer === playerIndex
-          )
-            return true;
-          return false;
-        });
+        // state.playerIds の順序が colorOwner のインデックス基準なので、そちらで引く
+        const playerIndex = state.playerIds.indexOf(player.id);
 
-        // 2人戦: colorOwner が [0,1,0,1] → フリーカラーなしで正しく取得できる
-        // 3人戦: color3 (free) は currentColorIndex===3 の時だけ表示
-        // それ以外の時は自分が担当しているものだけ表示
+        // 自担当色のみ表示（フリーカラーはパレットに表示するのでここでは出さない）
         const displayColors = ([0, 1, 2, 3] as const).filter(
           (c) => state.colorOwner[c] === playerIndex,
         );
@@ -53,16 +41,29 @@ export function BlokusPlayerInfo({ state, playerId, room }: BlokusPlayerInfoProp
 
         const isEliminated = displayColors.length > 0 && displayColors.every((c) => state.eliminated[c]);
 
+        // 自分のカード背景: 担当色ベース（1色=そのままtint、2色=グラデーション）
+        let cardBg = "rgba(255,255,255,0.88)";
+        if (isMe && displayColors.length >= 1) {
+          const fills = displayColors.map((c) => BLOKUS_COLORS[c].fill);
+          cardBg = fills.length === 1
+            ? `${fills[0]}16`
+            : `linear-gradient(135deg, ${fills[0]}1c 0%, ${fills[1]}1c 100%)`;
+        }
+
         return (
           <div
             key={player.id}
+            className="blk-player-card"
             style={{
               ...styles.card,
               border: isCurrentTurn
-                ? `2px solid ${BLOKUS_COLORS[state.currentColorIndex].fill}`
-                : "2px solid transparent",
-              opacity: isEliminated ? 0.4 : 1,
-              background: isMe ? "#eff6ff" : "#fff",
+                ? `1.5px solid ${BLOKUS_COLORS[state.currentColorIndex].fill}`
+                : `1.5px solid ${SURFACE_BORDER}`,
+              boxShadow: isCurrentTurn
+                ? `0 0 12px ${BLOKUS_COLORS[state.currentColorIndex].fill}55, 0 2px 8px rgba(0,0,0,0.08)`
+                : "0 2px 8px rgba(100,120,180,0.1), 0 1px 3px rgba(0,0,0,0.05)",
+              opacity: isEliminated ? 0.35 : 1,
+              background: cardBg,
             }}
           >
             {/* 手番パルスドット */}
@@ -76,50 +77,37 @@ export function BlokusPlayerInfo({ state, playerId, room }: BlokusPlayerInfoProp
               />
             )}
 
-            {/* 色スウォッチ */}
-            <div style={styles.swatches}>
-              {displayColors.map((c) => (
-                <div
-                  key={c}
-                  style={{
-                    ...styles.swatch,
-                    background: BLOKUS_COLORS[c].fill,
-                    outline:
-                      state.currentColorIndex === c && isCurrentTurn
-                        ? "2px solid #111"
-                        : "none",
-                    outlineOffset: "1px",
-                    opacity: state.eliminated[c] ? 0.4 : 1,
-                  }}
-                />
-              ))}
-              {/* 3人戦フリーカラー表示 */}
-              {state.colorOwner[3] === -1 && (
-                <div
-                  title="フリーカラー（3人で共有）"
-                  style={{
-                    ...styles.swatch,
-                    background: BLOKUS_COLORS[3].fill,
-                    outline:
-                      state.currentColorIndex === 3 && isCurrentTurn
-                        ? "2px solid #111"
-                        : "1px dashed rgba(0,0,0,0.3)",
-                    outlineOffset: "1px",
-                    opacity: state.eliminated[3] ? 0.4 : 0.7,
-                  }}
-                />
-              )}
-            </div>
-
             {/* 名前 + スコア */}
             <div style={styles.nameArea}>
               <span style={styles.name}>
                 {player.name}
                 {isMe && <span style={styles.meLabel}> (あなた)</span>}
               </span>
-              <span style={styles.score}>
-                {remainingPerColor.map((rc) => `${rc.remaining}マス`).join(" / ")}
-              </span>
+              {/* 色ごとの残りマス数 */}
+              <div style={styles.scoreRow}>
+                {remainingPerColor.map((rc) => {
+                  const accentColor = BLOKUS_COLORS[rc.colorIndex].fill;
+                  return (
+                    <span
+                      key={rc.colorIndex}
+                      style={{
+                        ...styles.scoreItem,
+                        opacity: rc.isEliminated ? 0.35 : 1,
+                      }}
+                    >
+                      <span
+                        style={{
+                          ...styles.scoreDot,
+                          background: accentColor,
+                        }}
+                      />
+                      <span style={styles.scoreNum}>
+                        {rc.remaining}マス
+                      </span>
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
@@ -140,12 +128,13 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     display: "flex",
     alignItems: "center",
-    gap: "0.45rem",
-    padding: "0.4rem 0.7rem",
-    borderRadius: 10,
-    boxShadow: "0 1px 4px rgba(0,0,0,0.09)",
+    gap: "0.5rem",
+    padding: "0.45rem 0.8rem",
+    borderRadius: 12,
+    backdropFilter: "blur(12px)",
     minWidth: 130,
-    transition: "border-color 0.2s, opacity 0.3s",
+    transition: "border-color 0.2s, opacity 0.3s, box-shadow 0.2s",
+    boxShadow: "0 2px 8px rgba(100,120,180,0.1), 0 1px 3px rgba(0,0,0,0.05)",
   },
   turnDot: {
     width: 8,
@@ -153,38 +142,45 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "50%",
     flexShrink: 0,
   },
-  swatches: {
-    display: "flex",
-    gap: 3,
-    flexShrink: 0,
-  },
-  swatch: {
-    width: 16,
-    height: 16,
-    borderRadius: 3,
-    flexShrink: 0,
-  },
   nameArea: {
     display: "flex",
     flexDirection: "column",
-    gap: 1,
+    gap: 2,
     minWidth: 0,
   },
   name: {
     fontSize: "0.82rem",
     fontWeight: 600,
-    color: "#111",
+    color: TEXT_PRIMARY,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   meLabel: {
-    fontSize: "0.72rem",
-    color: "#6b7280",
+    fontSize: "0.7rem",
+    color: TEXT_MUTED,
     fontWeight: 400,
   },
-  score: {
-    fontSize: "0.72rem",
-    color: "#6b7280",
+  scoreRow: {
+    display: "flex",
+    gap: "0.4rem",
+    flexWrap: "wrap" as const,
+    alignItems: "center",
+  },
+  scoreItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 3,
+  },
+  scoreDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+    flexShrink: 0,
+    display: "inline-block",
+  },
+  scoreNum: {
+    fontSize: "0.7rem",
+    color: TEXT_MUTED,
   },
 };

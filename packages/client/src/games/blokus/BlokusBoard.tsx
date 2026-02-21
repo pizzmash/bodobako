@@ -20,7 +20,8 @@ import { BlokusMainBoard } from "./BlokusMainBoard";
 import { BlokusPieceControls } from "./BlokusPieceControls";
 import { BlokusPiecePalette } from "./BlokusPiecePalette";
 import { BlokusPlayerInfo } from "./BlokusPlayerInfo";
-import { BLOKUS_COLORS, BOARD_PX, FONT } from "./constants";
+import { BlokusLogo } from "./BlokusLogo";
+import { BLOKUS_COLORS, BOARD_PX, BG_GRADIENT, FONT, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 import { useBlokusInteraction } from "./hooks/useBlokusInteraction";
 import "./blokus.css";
 
@@ -123,6 +124,19 @@ function BlokusBoardContent({
   const currentColorIndex = state.currentColorIndex;
   const isMyTurn = interaction.isMyTurn;
 
+  // 自分が担当する色インデックス（2人戦は2色、4人戦は1色、3人戦は手番によって1〜2色）
+  const myPlayerIndex = state.playerIds.indexOf(playerId);
+  const myColorIndices = useMemo(
+    () =>
+      ([0, 1, 2, 3] as const).filter((c) => {
+        if (state.colorOwner[c] === myPlayerIndex) return true;
+        // 3人戦フリーカラー: 常時パレットに表示する
+        if (state.colorOwner[c] === -1) return true;
+        return false;
+      }),
+    [state, myPlayerIndex],
+  );
+
   // 手番メッセージ
   const turnPlayerId = getCurrentPlayerId(state);
   const turnPlayerName = room.players.find((p) => p.id === turnPlayerId)?.name ?? "相手";
@@ -131,23 +145,31 @@ function BlokusBoardContent({
     : isMyTurn
       ? `あなたの番です（${BLOKUS_COLORS[currentColorIndex].label}）`
       : `${turnPlayerName} の番です`;
+  const turnColor = BLOKUS_COLORS[currentColorIndex].fill;
 
   // ボードの実効高さ（スケール後）
   const scaledBoardH = BOARD_PX * boardScale;
 
   return (
     <div style={{ ...styles.container, fontFamily: FONT }}>
+      {/* ロゴ */}
+      <BlokusLogo size="lg" />
+
       {/* プレイヤー情報 */}
       <BlokusPlayerInfo state={state} playerId={playerId} room={room} />
 
       {/* 手番メッセージ */}
       {turnMessage && (
         <div
+          className={isMyTurn ? "blk-turn-banner-glow" : undefined}
           style={{
             ...styles.turnBanner,
-            color: BLOKUS_COLORS[currentColorIndex].fill,
+            color: turnColor,
+            background: `${turnColor}14`,
+            border: `1px solid ${turnColor}33`,
           }}
         >
+          {isMyTurn && <span style={styles.turnArrow}>▶</span>}
           {turnMessage}
         </div>
       )}
@@ -194,6 +216,7 @@ function BlokusBoardContent({
               ghostCells={interaction.ghostCells}
               isGhostValid={interaction.isGhostValid}
               isMyTurn={isMyTurn}
+              activeColorIndex={currentColorIndex}
               onCellClick={interaction.handleBoardClick}
               onCellHover={(r, c) => interaction.setHoverCell({ row: r, col: c })}
               onBoardLeave={interaction.handleBoardLeave}
@@ -221,7 +244,8 @@ function BlokusBoardContent({
           />
           <BlokusPiecePalette
             state={state}
-            colorIndex={currentColorIndex}
+            myColorIndices={myColorIndices}
+            activeColorIndex={currentColorIndex}
             selectedPieceId={interaction.selectedPieceId}
             isMyTurn={isMyTurn}
             onSelectPiece={interaction.handleSelectPiece}
@@ -259,12 +283,22 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     alignItems: "center",
     minHeight: "100vh",
-    background: "#f3f4f6",
+    background: BG_GRADIENT,
     padding: "0.75rem 0.5rem",
     gap: "0.65rem",
   },
   turnBanner: {
-    fontSize: "1.05rem",
+    fontSize: "0.95rem",
     fontWeight: 700,
+    padding: "0.35rem 1rem",
+    borderRadius: 24,
+    letterSpacing: "0.03em",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.4rem",
+  },
+  turnArrow: {
+    fontSize: "0.7rem",
+    opacity: 0.8,
   },
 };
