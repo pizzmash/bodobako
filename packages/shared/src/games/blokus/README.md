@@ -6,11 +6,11 @@
 
 | ファイル | 役割 |
 |---|---|
-| `types.ts` | 型定義・定数（`BlocksState`, `BlocksMove`, `PieceDefinition` 等） |
+| `types.ts` | 型定義・定数（`BlokusState`, `BlokusMove`, `PieceDefinition` 等） |
 | `pieces.ts` | 21ピースの正規形定義 & 回転×反転バリアント自動生成 |
 | `bitboard.ts` | 400bit ビットボード演算ユーティリティ |
 | `logic.ts` | ゲームロジック（配置判定・手番進行・スコア計算） |
-| `definition.ts` | `GameDefinition<BlocksState, BlocksMove>` 実装 |
+| `definition.ts` | `GameDefinition<BlokusState, BlokusMove>` 実装 |
 | `index.ts` | バレルファイル |
 
 ## ビットボード設計

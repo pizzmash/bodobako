@@ -13,7 +13,7 @@ import {
   hasAnyValidMove,
 } from "../logic.js";
 import { PIECES } from "../pieces.js";
-import type { BlocksState } from "../types.js";
+import type { BlokusState } from "../types.js";
 import { BOARD_SIZE } from "../types.js";
 
 // ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ import { BOARD_SIZE } from "../types.js";
 
 const ALL_PIECES_MASK = (1 << PIECES.length) - 1;
 
-function makeState(overrides: Partial<BlocksState> = {}): BlocksState {
+function makeState(overrides: Partial<BlokusState> = {}): BlokusState {
   return {
     boards: ["0", "0", "0", "0"],
     remainingPieces: [ALL_PIECES_MASK, ALL_PIECES_MASK, ALL_PIECES_MASK, ALL_PIECES_MASK],

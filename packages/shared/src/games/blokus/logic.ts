@@ -13,7 +13,7 @@ import {
   toHex,
 } from "./bitboard.js";
 import { PIECES } from "./pieces.js";
-import type { BlocksState, ColorBoards } from "./types.js";
+import type { BlokusState, ColorBoards } from "./types.js";
 import { BOARD_SIZE, NUM_COLORS, START_CORNERS } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -24,7 +24,7 @@ import { BOARD_SIZE, NUM_COLORS, START_CORNERS } from "./types.js";
  * 指定した色のピースを (row, col) 中心に配置できるか判定する。
  */
 export function canPlace(
-  state: BlocksState,
+  state: BlokusState,
   colorIndex: number,
   pieceId: number,
   variantIndex: number,
@@ -84,7 +84,7 @@ function getAllOccupied(boards: ColorBoards): bigint {
  * 計算コストが高いため、全探索をできるだけ早く打ち切る。
  */
 export function hasAnyValidMove(
-  state: BlocksState,
+  state: BlokusState,
   colorIndex: number,
 ): boolean {
   const remaining = state.remainingPieces[colorIndex];
@@ -184,7 +184,7 @@ export interface Placement {
  * UIのプレビュー・ハイライト用。
  */
 export function getValidPlacements(
-  state: BlocksState,
+  state: BlokusState,
   colorIndex: number,
   pieceId: number,
 ): Placement[] {
@@ -260,7 +260,7 @@ export function getValidPlacements(
  * 全色 eliminated になったら finished = true。
  * 新しい state を返す（イミュータブル）。
  */
-export function advanceColor(state: BlocksState): BlocksState {
+export function advanceColor(state: BlokusState): BlokusState {
   const eliminated = [...state.eliminated] as [boolean, boolean, boolean, boolean];
   let nextColor = state.currentColorIndex;
   let freeColorNextPlayer = state.freeColorNextPlayer;
@@ -272,7 +272,7 @@ export function advanceColor(state: BlocksState): BlocksState {
     if (eliminated[nextColor]) continue;
 
     // この色に有効手があるかチェック
-    const testState: BlocksState = {
+    const testState: BlokusState = {
       ...state,
       currentColorIndex: nextColor,
       eliminated,
@@ -312,7 +312,7 @@ export function advanceColor(state: BlocksState): BlocksState {
 // ---------------------------------------------------------------------------
 
 /** 指定色の残存マス数（少ないほど良い） */
-export function computeRemainingCells(state: BlocksState, colorIndex: number): number {
+export function computeRemainingCells(state: BlokusState, colorIndex: number): number {
   const remaining = state.remainingPieces[colorIndex];
   let total = 0;
   for (let pid = 0; pid < PIECES.length; pid++) {
@@ -324,7 +324,7 @@ export function computeRemainingCells(state: BlocksState, colorIndex: number): n
 }
 
 /** 指定プレイヤーの残存マス数（2人戦では2色合算） */
-export function computePlayerRemainingCells(state: BlocksState, playerIndex: number): number {
+export function computePlayerRemainingCells(state: BlokusState, playerIndex: number): number {
   let total = 0;
   for (let c = 0; c < NUM_COLORS; c++) {
     if (state.colorOwner[c] === playerIndex) {
@@ -342,7 +342,7 @@ export function computePlayerRemainingCells(state: BlocksState, playerIndex: num
  * 4色のビットボードから 20×20 の数値グリッドを生成。
  * 0 = 空, 1〜4 = 色1〜4
  */
-export function boardToGrid(state: BlocksState): number[][] {
+export function boardToGrid(state: BlokusState): number[][] {
   const boards = state.boards.map(toBigInt);
   const grid: number[][] = Array.from({ length: BOARD_SIZE }, () =>
     new Array(BOARD_SIZE).fill(0),
@@ -374,7 +374,7 @@ const ALL_PIECES_MASK = (1 << PIECES.length) - 1; // 2097151
 /**
  * プレイヤー数に応じた初期状態を生成。
  */
-export function createInitialState(playerIds: string[]): BlocksState {
+export function createInitialState(playerIds: string[]): BlokusState {
   const n = playerIds.length;
 
   let colorOwner: [number, number, number, number];
@@ -411,13 +411,13 @@ export function createInitialState(playerIds: string[]): BlocksState {
  * バリデーションは呼び出し側で済ませていること前提。
  */
 export function applyMove(
-  state: BlocksState,
+  state: BlokusState,
   colorIndex: number,
   pieceId: number,
   variantIndex: number,
   row: number,
   col: number,
-): BlocksState {
+): BlokusState {
   const piece = PIECES[pieceId];
   const variant = piece.variants[variantIndex];
   const pieceBB = pieceToBitboard(variant.cells, row, col)!;
@@ -434,7 +434,7 @@ export function applyMove(
   const newHasPlacedFirst = [...state.hasPlacedFirst] as [boolean, boolean, boolean, boolean];
   newHasPlacedFirst[colorIndex] = true;
 
-  const newState: BlocksState = {
+  const newState: BlokusState = {
     ...state,
     boards: newBoards,
     remainingPieces: newRemaining,
@@ -453,7 +453,7 @@ export function applyMove(
  * 現在手番のプレイヤーIDを返す。
  * フリーカラーの場合は freeColorNextPlayer で決まるプレイヤー。
  */
-export function getCurrentPlayerId(state: BlocksState): string {
+export function getCurrentPlayerId(state: BlokusState): string {
   const owner = state.colorOwner[state.currentColorIndex];
   if (owner === -1) {
     // フリーカラー（3人戦）

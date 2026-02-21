@@ -65,7 +65,7 @@ export type RemainingPieces = [number, number, number, number];
  */
 export type ColorOwner = [number, number, number, number];
 
-export interface BlocksState {
+export interface BlokusState {
   /** 色ごとの盤面ビットボード（hex 文字列） */
   boards: ColorBoards;
   /** 色ごとの残存ピースビットマスク */
@@ -89,7 +89,7 @@ export interface BlocksState {
   finished: boolean;
 }
 
-export interface BlocksMove {
+export interface BlokusMove {
   /** ピースID (0-20) */
   pieceId: number;
   /** バリアントインデックス */

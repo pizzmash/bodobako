@@ -4,7 +4,7 @@
 
 import type { GameDefinition, GameStatus } from "../../types/game.js";
 import { PIECES } from "./pieces.js";
-import type { BlocksMove, BlocksState } from "./types.js";
+import type { BlokusMove, BlokusState } from "./types.js";
 import { BOARD_SIZE, NUM_COLORS, NUM_PIECES } from "./types.js";
 import {
   applyMove,
@@ -14,19 +14,19 @@ import {
   getCurrentPlayerId,
 } from "./logic.js";
 
-export const blocksDefinition: GameDefinition<BlocksState, BlocksMove> = {
-  id: "blocks",
+export const blokusDefinition: GameDefinition<BlokusState, BlokusMove> = {
+  id: "blokus",
   name: "ブロックス",
   description:
     "20×20 の盤面にピースを角で繋げて配置する陣取りゲーム（2〜4人）",
   minPlayers: 2,
   maxPlayers: 4,
 
-  createInitialState(playerIds: string[]): BlocksState {
+  createInitialState(playerIds: string[]): BlokusState {
     return createInitialState(playerIds);
   },
 
-  parseMove(raw: unknown): BlocksMove | null {
+  parseMove(raw: unknown): BlokusMove | null {
     if (typeof raw !== "object" || raw === null) return null;
     const m = raw as Record<string, unknown>;
 
@@ -58,8 +58,8 @@ export const blocksDefinition: GameDefinition<BlocksState, BlocksMove> = {
   },
 
   validateMove(
-    state: BlocksState,
-    move: BlocksMove,
+    state: BlokusState,
+    move: BlokusMove,
     playerId: string,
   ): boolean {
     // 手番チェック
@@ -79,10 +79,10 @@ export const blocksDefinition: GameDefinition<BlocksState, BlocksMove> = {
   },
 
   applyMove(
-    state: BlocksState,
-    move: BlocksMove,
+    state: BlokusState,
+    move: BlokusMove,
     _playerId: string,
-  ): BlocksState {
+  ): BlokusState {
     const colorIndex = state.currentColorIndex;
     return applyMove(
       state,
@@ -94,11 +94,11 @@ export const blocksDefinition: GameDefinition<BlocksState, BlocksMove> = {
     );
   },
 
-  getStatus(state: BlocksState): GameStatus {
+  getStatus(state: BlokusState): GameStatus {
     return state.finished ? "finished" : "playing";
   },
 
-  getRanking(state: BlocksState): string[] | null {
+  getRanking(state: BlokusState): string[] | null {
     if (!state.finished) return null;
 
     // 各プレイヤーの残存マス数を計算
@@ -117,7 +117,7 @@ export const blocksDefinition: GameDefinition<BlocksState, BlocksMove> = {
     return scores.map((s) => s.playerId);
   },
 
-  getCurrentPlayerId(state: BlocksState): string {
+  getCurrentPlayerId(state: BlokusState): string {
     return getCurrentPlayerId(state);
   },
 };

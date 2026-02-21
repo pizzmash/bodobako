@@ -25,17 +25,17 @@ export { CARD_COUNTS, MENUS } from "./games/sonic-restaurant/types.js";
 export type {
     Card, CompletedMenu, MenuTreeNode, SonicRestaurantMove, SonicRestaurantState
 } from "./games/sonic-restaurant/types.js";
-export { blocksDefinition } from "./games/blocks/index.js";
+export { blokusDefinition } from "./games/blokus/index.js";
 export {
     boardToGrid, canPlace, computePlayerRemainingCells,
     getValidPlacements, PIECES, TOTAL_VARIANTS
-} from "./games/blocks/index.js";
-export { BOARD_SIZE as BLOCKS_BOARD_SIZE, NUM_COLORS, NUM_PIECES, START_CORNERS } from "./games/blocks/types.js";
+} from "./games/blokus/index.js";
+export { BOARD_SIZE as BLOKUS_BOARD_SIZE, NUM_COLORS, NUM_PIECES, START_CORNERS } from "./games/blokus/types.js";
 export type {
-    BlocksMove, BlocksState, ColorBoards, ColorOwner,
+    BlokusMove, BlokusState, ColorBoards, ColorOwner,
     PieceDefinition, PieceVariant, RemainingPieces
-} from "./games/blocks/types.js";
-export type { Placement } from "./games/blocks/logic.js";
+} from "./games/blokus/types.js";
+export type { Placement } from "./games/blokus/logic.js";
 export type { GameDefinition, GameStatus } from "./types/game.js";
 export type {
     GameResult, WsAckError, WsAckSuccess, WsClientMessage, WsServerMessage
