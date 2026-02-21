@@ -1,0 +1,113 @@
+/* ---------------------------------------------------------------------------
+   ブロックス UI — CSS（アニメーション・ホバー・レスポンシブ）
+   --------------------------------------------------------------------------- */
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600&display=swap');
+
+/* ---- ロゴレターのブロック nub エフェクト ---- */
+.blk-logo-letter {
+  transition: transform 0.15s ease;
+}
+.blk-logo-letter::after {
+  content: '';
+  position: absolute;
+  width: 0.22em;
+  height: 0.22em;
+  background: currentColor;
+  border-radius: 0.04em;
+  opacity: 0.85;
+}
+.blk-logo-b::after  { bottom: -0.08em; right:  0.28em; }
+.blk-logo-l::after  { top:    0;        left:  -0.18em; }
+.blk-logo-o::after  { top:   -0.08em;   left:  50%; transform: translateX(-50%); }
+.blk-logo-k::after  { bottom: 0.28em;   left:  -0.12em; }
+.blk-logo-u::after  { bottom:-0.08em;   left:   0.22em; }
+.blk-logo-s::after  { top:    0.28em;   right: -0.12em; }
+
+/* ---- 手番ドットのパルスアニメーション ---- */
+@keyframes blk-turn-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.7;
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+
+.blk-turn-dot {
+  animation: blk-turn-pulse 1.6s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* ---- ターンバナーのグロー ---- */
+@keyframes blk-banner-glow {
+  0%, 100% { text-shadow: 0 0 8px currentColor;  opacity: 1;    }
+  50%       { text-shadow: 0 0 18px currentColor; opacity: 0.82; }
+}
+.blk-turn-banner-glow {
+  animation: blk-banner-glow 2s ease-in-out infinite;
+}
+
+/* ---- 有効配置セルのホバー ---- */
+.blk-cell-valid:hover {
+  filter: brightness(1.25);
+}
+
+/* ---- ピースパレットアイテム ---- */
+.blk-palette-item {
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    border-color 0.14s ease;
+}
+
+.blk-palette-item:not(:disabled):hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 16px rgba(100,120,180,0.25);
+  z-index: 2;
+}
+
+.blk-palette-item.blk-palette-selected {
+  transform: scale(1.07);
+  box-shadow: 0 2px 10px rgba(100,120,180,0.2);
+}
+
+/* ---- コントロールボタン ---- */
+.blk-ctrl-btn {
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+.blk-ctrl-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(100,120,180,0.22);
+}
+.blk-ctrl-btn:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* ---- ボードの外側コンテナ ---- */
+.blk-board-outer {
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+/* ---- プレイヤーカードのホバー ---- */
+.blk-player-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease;
+}
+.blk-player-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(100,120,180,0.18);
+}
+
+/* ---- モバイル: ボードスケール調整 ---- */
+@media (max-width: 620px) {
+  .blk-board-scale-wrap {
+    overflow: hidden;
+    width: 100%;
+  }
+}
