@@ -28,7 +28,6 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
       eliminatedPlayers: [],
       eliminationOrder: [],
       finished: false,
-      winnerId: null,
     };
   },
 
@@ -133,13 +132,18 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
   },
 
   getRanking(state: AiueBattleState): string[] | null {
-    if (!state.winnerId) return null;
-    // 勝者を1位として返す（他のプレイヤーは敗者として同順位）
-    const ranking = [state.winnerId];
-    state.playerIds.forEach((id) => {
-      if (id !== state.winnerId) ranking.push(id);
-    });
-    return ranking;
+    if (!state.finished) return null;
+    const active = state.playerIds.filter(
+      (id) => !state.eliminatedPlayers.includes(id)
+    );
+    if (active.length === 1) {
+      // 通常終了: 生き残り1人が勝者、脱落順の逆が続く
+      return [active[0], ...[...state.eliminationOrder].reverse()];
+    }
+    // 全員同時脱落: eliminationOrder の末尾が勝者（processAttack で移動済み）
+    const elimOrder = [...state.eliminationOrder];
+    const winner = elimOrder.pop()!;
+    return [winner, ...elimOrder.reverse()];
   },
 
   getCurrentPlayerId(state: AiueBattleState): string {

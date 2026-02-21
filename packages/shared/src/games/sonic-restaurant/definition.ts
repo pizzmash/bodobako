@@ -63,7 +63,6 @@ export const sonicRestaurantGame: GameDefinition<
       lastCompletedMenu: null,
       finishedOrder: [],
       finished: false,
-      winnerId: null,
     };
   },
 

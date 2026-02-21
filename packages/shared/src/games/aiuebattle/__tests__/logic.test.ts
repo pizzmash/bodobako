@@ -36,7 +36,6 @@ function makeState(
     eliminatedPlayers: [],
     eliminationOrder: [],
     finished: false,
-    winnerId: null,
     ...overrides,
   };
 }
@@ -279,7 +278,8 @@ describe("processAttack", () => {
     const state = makeState(["p1", "p2"], words, { currentPlayerIndex: 0 });
     const newState = processAttack(state, AH_INDEX, "p1"); // p2を脱落させる
     expect(newState.finished).toBe(true);
-    expect(newState.winnerId).toBe("p1");
+    expect(newState.eliminatedPlayers).not.toContain("p1");
+    expect(newState.eliminatedPlayers).toContain("p2");
   });
 
   it("全員脱落したら攻撃者が勝者", () => {
@@ -293,8 +293,8 @@ describe("processAttack", () => {
     const state = makeState(["p1", "p2"], words, { currentPlayerIndex: 0 });
     const newState = processAttack(state, AH_INDEX, "p1");
     expect(newState.finished).toBe(true);
-    // active=0なので attackerIdが勝者
-    expect(newState.winnerId).toBe("p1");
+    // active=0なので attackerId(p1)が eliminationOrder の末尾に移動
+    expect(newState.eliminationOrder.at(-1)).toBe("p1");
   });
 
   it("ゲーム終了時に未公開文字が'end'になる", () => {

@@ -79,9 +79,6 @@ export interface SonicRestaurantState {
 
   /** ゲーム終了フラグ */
   finished: boolean;
-
-  /** 勝者のプレイヤーID（1位） */
-  winnerId: string | null;
 }
 
 /**

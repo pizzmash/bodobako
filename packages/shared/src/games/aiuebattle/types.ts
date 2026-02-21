@@ -50,7 +50,6 @@ export interface AiueBattleState {
   eliminatedPlayers: string[];
   eliminationOrder: string[];
   finished: boolean;
-  winnerId: string | null;
 }
 
 export type AiueBattleMove =

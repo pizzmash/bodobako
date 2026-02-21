@@ -19,7 +19,6 @@ function makePlayingState(hands: Record<string, Card[]>): SonicRestaurantState {
     lastCompletedMenu: null,
     finishedOrder: [],
     finished: false,
-    winnerId: null,
   };
 }
 
