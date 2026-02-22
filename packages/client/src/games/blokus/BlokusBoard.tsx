@@ -121,6 +121,11 @@ function BlokusBoardContent({
 
   const grid = useMemo(() => boardToGrid(state), [state]);
 
+  const lastMoveCells = useMemo(
+    () => new Set((state.lastMove?.cells ?? []).map(([r, c]) => `${r},${c}`)),
+    [state.lastMove],
+  );
+
   const currentColorIndex = state.currentColorIndex;
   const isMyTurn = interaction.isMyTurn;
 
@@ -217,6 +222,7 @@ function BlokusBoardContent({
               isGhostValid={interaction.isGhostValid}
               isMyTurn={isMyTurn}
               activeColorIndex={currentColorIndex}
+              lastMoveCells={lastMoveCells}
               onCellClick={interaction.handleBoardClick}
               onCellHover={(r, c) => interaction.setHoverCell({ row: r, col: c })}
               onBoardLeave={interaction.handleBoardLeave}

@@ -87,6 +87,8 @@ export interface BlokusState {
   eliminated: [boolean, boolean, boolean, boolean];
   /** ゲーム終了フラグ */
   finished: boolean;
+  /** 直近配置されたピースのセル（絶対座標 [row, col][]）と色インデックス */
+  lastMove?: { colorIndex: number; cells: readonly (readonly [number, number])[] };
 }
 
 export interface BlokusMove {

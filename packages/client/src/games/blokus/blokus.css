@@ -104,6 +104,27 @@
   box-shadow: 0 6px 24px rgba(100,120,180,0.18);
 }
 
+/* ---- 直近配置ピースのぴかぴかアニメーション ---- */
+@keyframes blk-last-piece-shine {
+  0%, 100% {
+    background: rgba(255, 255, 255, 0.52);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.95);
+  }
+  50% {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.15);
+  }
+}
+
+.blk-cell-last-piece {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  animation: blk-last-piece-shine 0.65s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* ---- モバイル: ボードスケール調整 ---- */
 @media (max-width: 620px) {
   .blk-board-scale-wrap {

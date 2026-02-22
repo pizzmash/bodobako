@@ -434,11 +434,15 @@ export function applyMove(
   const newHasPlacedFirst = [...state.hasPlacedFirst] as [boolean, boolean, boolean, boolean];
   newHasPlacedFirst[colorIndex] = true;
 
+  // 直近配置ピースのセル座標（絶対座標）を記録
+  const lastMoveCells = variant.cells.map(([dr, dc]) => [row + dr, col + dc] as const);
+
   const newState: BlokusState = {
     ...state,
     boards: newBoards,
     remainingPieces: newRemaining,
     hasPlacedFirst: newHasPlacedFirst,
+    lastMove: { colorIndex, cells: lastMoveCells },
   };
 
   // 手番進行（自動スキップ含む）

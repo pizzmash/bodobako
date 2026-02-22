@@ -28,6 +28,7 @@ interface BlokusMainBoardProps {
   isGhostValid: boolean;
   isMyTurn: boolean;
   activeColorIndex: number;
+  lastMoveCells: Set<string>;
   onCellClick: (row: number, col: number) => void;
   onCellHover: (row: number, col: number) => void;
   onBoardLeave: () => void;
@@ -161,6 +162,7 @@ export function BlokusMainBoard({
   isGhostValid,
   isMyTurn,
   activeColorIndex,
+  lastMoveCells,
   onCellClick,
   onCellHover,
   onBoardLeave,
@@ -179,6 +181,8 @@ export function BlokusMainBoard({
             const isGhost = ghostCells.has(cellKey);
             const isValidCenter = validCenterSet.has(cellKey);
             const isPlaced = colorVal > 0;
+
+            const isLastMove = lastMoveCells.has(cellKey);
 
             const cornerColorIndex = CORNER_POSITIONS.findIndex(
               ([cr, cc]) => cr === row && cc === col,
@@ -239,6 +243,11 @@ export function BlokusMainBoard({
                 {/* 有効センタードット */}
                 {isValidCenter && !isGhost && selectedPieceId !== null && (
                   <div style={styles.validDot} />
+                )}
+
+                {/* 直近配置ピースのぴかぴかオーバーレイ */}
+                {isLastMove && isPlaced && (
+                  <div className="blk-cell-last-piece" />
                 )}
 
                 {/* スタートコーナーマーカー */}
