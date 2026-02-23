@@ -11,6 +11,7 @@
 | フロントエンド | React 19 + Vite 6 + React Router v7           |
 | バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects |
 | 通信           | ネイティブ WebSocket（reqIdベースプロトコル） |
+| 認証           | Firebase Authentication（Google サインイン）  |
 | モジュール     | ES Modules                                    |
 | パッケージ管理 | npm workspaces (monorepo)                     |
 
@@ -31,22 +32,28 @@ bodobako/
 │   │
 │   ├── worker/          # Cloudflare Workers バックエンド
 │   │   ├── src/
-│   │   │   ├── index.ts      # Hono エントリ（HTTP API + WS upgrade）
-│   │   │   └── RoomDO.ts     # Durable Object（ルーム管理・WebSocket）
+│   │   │   ├── index.ts          # Hono エントリ（HTTP API + WS upgrade）
+│   │   │   ├── RoomDO.ts         # Durable Object（ルーム管理・WebSocket）
+│   │   │   ├── UserRegistry.ts   # DO（ユーザープロフィール・フレンドコード）
+│   │   │   └── lib/
+│   │   │       └── verifyFirebaseToken.ts  # Firebase JWT 検証（jose）
 │   │   └── wrangler.toml
 │   │
 │   └── client/          # フロントエンド
 │       └── src/
 │           ├── main.tsx              # エントリーポイント
 │           ├── lib/
-│           │   └── socket.ts         # WebSocket クライアント（再接続付き）
+│           │   ├── socket.ts         # WebSocket クライアント（再接続付き）
+│           │   └── firebase.ts       # Firebase app / auth 初期化
 │           ├── context/
+│           │   ├── AuthContext.tsx   # Firebase 認証状態・アプリ表示名管理
 │           │   └── RoomContext.tsx   # WS 接続 & 状態管理 & navigate 統合
 │           ├── components/
 |           │   ├── Lobby.tsx         # ロビー（ゲーム選択・ルーム作成/参加）
 |           │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
 |           │   ├── RoomPage.tsx      # /room/:code ページ（接続・遷移制御）
-│           │   └── GameView.tsx      # ゲームコンポーネントの振り分け
+│           │   ├── GameView.tsx      # ゲームコンポーネントの振り分け
+│           │   └── Sidebar.tsx       # 認証 UI・表示名編集・フレンドコード
 │           └── games/
 │               └── <game-id>/    # 各ゲームの UI コンポーネント
 │
@@ -79,8 +86,8 @@ bodobako/
 ```
 
 - **shared**: ゲームルール（ロジック）と型定義を持つ。サーバーとクライアントの両方から参照される
-- **worker**: ルーム管理とゲーム進行を担当。Durable Objects で状態を永続化する
-- **client**: UI の描画とユーザー操作の送信を担当。shared の型とユーティリティを使って盤面を表示する
+- **worker**: ルーム管理とゲーム進行を担当。Durable Objects で状態を永続化する。`UserRegistry` DO でログイン済みユーザーのプロフィールとフレンドコードを管理する
+- **client**: UI の描画とユーザー操作の送信を担当。Firebase Authentication（Google サインイン）によるオプションログインに対応。ログインしなくても従来通りプレイ可能
 
 ### 画面遷移
 
@@ -166,7 +173,7 @@ npm run dev
 - **Vite dev server** (クライアント): `http://localhost:5173`
 - **wrangler dev** (Worker): `http://localhost:8787`
 
-クライアントの `VITE_API_URL=http://localhost:8787` により Worker に接続する（`.env.development` で設定済み）。
+クライアントの `VITE_API_URL=http://localhost:8787` により Worker に接続する。`.env.development.example` をコピーして `.env.development` を作成し、Firebase の設定値を入力すること。
 
 ### ビルド
 
@@ -198,9 +205,22 @@ npm run test:e2e
 
 ### 環境変数
 
-| 変数           | デフォルト（dev）       | 説明                         |
-| -------------- | ----------------------- | ---------------------------- |
-| `VITE_API_URL` | `http://localhost:8787` | Worker の URL（HTTP/WS共用） |
+**クライアント（`.env.development` / Cloudflare Pages の環境変数）:**
+
+| 変数                       | デフォルト（dev）                      | 説明                         |
+| -------------------------- | -------------------------------------- | ---------------------------- |
+| `VITE_API_URL`             | `http://localhost:8787`                | Worker の URL（HTTP/WS共用） |
+| `VITE_FIREBASE_API_KEY`    | —                                      | Firebase API キー            |
+| `VITE_FIREBASE_AUTH_DOMAIN`| `<project-id>.firebaseapp.com`         | Firebase Auth ドメイン       |
+| `VITE_FIREBASE_PROJECT_ID` | —                                      | Firebase プロジェクト ID     |
+
+`.env.development.example` をコピーして `.env.development` を作成し、Firebase コンソールから値を設定する。
+
+**Worker（`wrangler.toml` の `[vars]`）:**
+
+| 変数                    | 説明                         |
+| ----------------------- | ---------------------------- |
+| `FIREBASE_PROJECT_ID`   | Firebase プロジェクト ID（JWT 検証に使用） |
 
 ## デプロイ（Cloudflare）
 
@@ -211,8 +231,19 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 # 2. フロントエンドをCloudflare Pagesにデプロイ
 #    ビルドコマンド: npm run build
 #    出力ディレクトリ: packages/client/dist
-#    環境変数: VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
+#    環境変数（Cloudflare Pages の設定画面で入力）:
+#      VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
+#      VITE_FIREBASE_API_KEY=...
+#      VITE_FIREBASE_AUTH_DOMAIN=...
+#      VITE_FIREBASE_PROJECT_ID=...
 ```
+
+**Firebase コンソールの事前設定（初回のみ）:**
+
+1. [Firebase コンソール](https://console.firebase.google.com/) でプロジェクトを作成
+2. Authentication > Sign-in method > Google を有効化
+3. 「Authorized domains」に本番ドメイン（Cloudflare Pages の URL）を追加
+4. プロジェクト設定 > マイアプリ > SDK の設定と構成 から config を取得
 
 > **SPA ルーティング注意**: `packages/client/public/_redirects` に `/* /index.html 200` を記述済み。Cloudflare Pages での `/room/:code` 直アクセス・リロード時の 404 を防ぐ。
 

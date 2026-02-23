@@ -10,6 +10,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 import { wsClient } from "../lib/socket";
 
 const STORAGE_KEYS = {
@@ -59,6 +60,10 @@ export function useRoom() {
 
 export function RoomProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const { idToken, appDisplayName } = useAuth();
+  const idTokenRef = useRef<string | null>(null);
+  useEffect(() => { idTokenRef.current = idToken; }, [idToken]);
+
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [playerName, setPlayerNameState] = useState(
@@ -76,6 +81,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setPlayerNameState(name);
     localStorage.setItem(STORAGE_KEYS.playerName, name);
   }, []);
+
+  // ログイン済みユーザーの appDisplayName を playerName に同期する。
+  // localStorage に古い名前があってもログイン後は常に appDisplayName を優先する。
+  useEffect(() => {
+    if (appDisplayName) setPlayerName(appDisplayName);
+  }, [appDisplayName, setPlayerName]);
 
   const saveRoomSession = useCallback((roomCode: string, pid: string) => {
     localStorage.setItem(STORAGE_KEYS.roomCode, roomCode);
@@ -165,7 +176,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setIsCreatingRoom(true);
     setCreatingGameId(gameId);
     wsClient
-      .createRoom({ playerName, gameId, sessionToken })
+      .createRoom({ playerName, gameId, sessionToken, idToken: idTokenRef.current ?? undefined })
       .then(({ code, playerId: pid }) => {
         setPlayerId(pid);
         saveRoomSession(code, pid);
@@ -202,6 +213,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
           roomCode,
           playerName,
           sessionToken,
+          idToken: idTokenRef.current ?? undefined,
         })
         .then((data) => {
           const alreadyOnPage = window.location.pathname === `/room/${roomCode}`;

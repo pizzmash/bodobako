@@ -6,6 +6,7 @@ import type {
   WsServerMessage,
 } from "@bodobako/shared";
 import { getGameDefinition } from "@bodobako/shared";
+import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
 
 const DISCONNECT_GRACE_MS = 30_000;
 
@@ -24,6 +25,7 @@ function parseClientMessage(raw: unknown): WsClientMessage | null {
     case "room:join":
       if (typeof msg.reqId !== "string" || typeof msg.roomCode !== "string" ||
           typeof msg.playerName !== "string" || typeof msg.sessionToken !== "string") return null;
+      if (msg.idToken !== undefined && typeof msg.idToken !== "string") return null;
       return msg as Extract<WsClientMessage, { type: "room:join" }>;
 
     case "session:reconnect":
@@ -59,14 +61,20 @@ interface RoomState {
   pendingRemovals: Record<string, number>;
 }
 
+interface RoomDOEnv {
+  FIREBASE_PROJECT_ID?: string;
+}
+
 export class RoomDO implements DurableObject {
   private state: DurableObjectState;
+  private env: RoomDOEnv;
   private room: RoomState | null = null;
   /** WebSocket -> playerId のマッピング（インメモリのみ、hibarnation復帰時に再構築） */
   private wsToPlayer = new Map<WebSocket, string>();
 
-  constructor(state: DurableObjectState) {
+  constructor(state: DurableObjectState, env: RoomDOEnv) {
     this.state = state;
+    this.env = env;
   }
 
   // ---------------------------------------------------------------------------
@@ -142,7 +150,7 @@ export class RoomDO implements DurableObject {
     }
 
     const b = body as Record<string, unknown>;
-    const { code, gameId, playerName, sessionToken } = b;
+    const { code, gameId, playerName, sessionToken, userId } = b;
 
     if (typeof code !== "string" || !code) {
       return Response.json({ error: "code は必須です" }, { status: 400 });
@@ -168,10 +176,13 @@ export class RoomDO implements DurableObject {
     }
 
     const playerId = crypto.randomUUID();
+    const player: Player = { id: playerId, name: trimmedPlayerName };
+    if (typeof userId === "string" && userId) player.userId = userId;
+
     this.room = {
       code,
       gameId,
-      players: [{ id: playerId, name: trimmedPlayerName }],
+      players: [player],
       hostId: playerId,
       status: "waiting",
       gameState: null,
@@ -368,8 +379,17 @@ export class RoomDO implements DurableObject {
       return;
     }
 
+    // idToken が提供された場合は Firebase で検証して userId を取得
+    let userId: string | undefined;
+    if (msg.idToken && this.env.FIREBASE_PROJECT_ID) {
+      const verified = await verifyFirebaseToken(msg.idToken, this.env.FIREBASE_PROJECT_ID);
+      if (verified) userId = verified.uid;
+    }
+
     const playerId = crypto.randomUUID();
-    this.room.players.push({ id: playerId, name: trimmedName });
+    const player: Player = { id: playerId, name: trimmedName };
+    if (userId) player.userId = userId;
+    this.room.players.push(player);
     this.room.sessions[sessionToken] = playerId;
     this.wsToPlayer.set(ws, playerId);
     await this.saveRoom();

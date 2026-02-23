@@ -1,5 +1,6 @@
 import { getGameDefinition } from "@bodobako/shared";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 
 const FONT = "'Poppins', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
@@ -10,6 +11,13 @@ const GameIcon = () => (
     <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#6366F1" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M2 17L12 22L22 17" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M2 12L12 17L22 12" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const PersonIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" />
   </svg>
 );
 
@@ -26,7 +34,7 @@ const INJECTED_STYLES = `
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-header-brand, .app-header-name, .app-header-inner {
+  .app-header-brand, .app-header-name, .app-header-inner, .app-header-menu-btn {
     animation: none !important;
     transition: none !important;
   }
@@ -50,6 +58,23 @@ const INJECTED_STYLES = `
   outline: 3px solid #6366F1;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.app-header-menu-btn {
+  transition: background .2s ease, box-shadow .2s ease, transform .15s ease;
+}
+.app-header-menu-btn:hover {
+  background: rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2) !important;
+  transform: translateY(-1px);
+}
+.app-header-menu-btn:focus {
+  outline: 3px solid #6366F1;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+.app-header-menu-btn:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 640px) {
@@ -84,9 +109,14 @@ function useInjectStyles() {
   }, []);
 }
 
-export function AppHeader() {
+interface AppHeaderProps {
+  onMenuClick: () => void;
+}
+
+export function AppHeader({ onMenuClick }: AppHeaderProps) {
   useInjectStyles();
   const { room, playerId, playerName, setPlayerName } = useRoom();
+  const { firebaseUser } = useAuth();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(playerName);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -95,8 +125,10 @@ export function AppHeader() {
   const myPlayer = room?.players.find((p) => p.id === playerId);
   const displayName = myPlayer?.name ?? playerName;
 
+  const canEdit = !room && !firebaseUser;
+
   const startEdit = () => {
-    if (room) return; // ルーム中は変更不可
+    if (!canEdit) return;
     setDraft(playerName);
     setEditing(true);
   };
@@ -120,8 +152,8 @@ export function AppHeader() {
     <header style={styles.header}>
       <div className="app-header-inner" style={styles.inner}>
         {/* Brand */}
-        <div 
-          className="app-header-brand" 
+        <div
+          className="app-header-brand"
           style={styles.brand}
           role="heading"
           aria-level={1}
@@ -148,21 +180,21 @@ export function AppHeader() {
           {/* Player name pill (always visible when name is set) */}
           {playerName && !editing && (
             <button
-              className={room ? "" : "app-header-name"}
+              className={canEdit ? "app-header-name" : ""}
               style={{
                 ...styles.playerPill,
-                cursor: room ? "default" : "pointer",
+                cursor: canEdit ? "pointer" : "default",
                 border: "none",
                 background: styles.playerPill.background,
               }}
               onClick={startEdit}
-              disabled={!!room}
-              title={room ? displayName : "クリックで名前を変更"}
-              aria-label={room ? `プレイヤー: ${displayName}` : `名前を変更: ${displayName}`}
+              disabled={!canEdit}
+              title={canEdit ? "クリックで名前を変更" : displayName}
+              aria-label={canEdit ? `名前を変更: ${displayName}` : `プレイヤー: ${displayName}`}
             >
               <span style={styles.playerDot} aria-hidden="true" />
               {displayName}
-              {!room && <span style={styles.editHint} aria-hidden="true">✎</span>}
+              {canEdit && <span style={styles.editHint} aria-hidden="true">✎</span>}
             </button>
           )}
 
@@ -180,6 +212,27 @@ export function AppHeader() {
               type="text"
             />
           )}
+
+          {/* メニューボタン */}
+          <button
+            className="app-header-menu-btn"
+            style={styles.menuBtn}
+            onClick={onMenuClick}
+            aria-label="アカウントメニューを開く"
+          >
+            {firebaseUser?.photoURL ? (
+              <img
+                src={firebaseUser.photoURL}
+                alt={firebaseUser.displayName ?? "アバター"}
+                style={styles.menuAvatar}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span style={styles.menuIcon}>
+                <PersonIcon />
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </header>
@@ -333,5 +386,36 @@ const styles: Record<string, React.CSSProperties> = {
     background: "rgba(255, 255, 255, 0.95)",
     backdropFilter: "blur(8px)",
     boxShadow: "0 0 0 4px rgba(99, 102, 241, 0.1)",
+  },
+
+  /* Menu button */
+  menuBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    border: "1.5px solid rgba(129, 140, 248, 0.3)",
+    background: "rgba(238, 242, 255, 0.8)",
+    backdropFilter: "blur(8px)",
+    color: "#6366F1",
+    cursor: "pointer",
+    padding: 0,
+    flexShrink: 0,
+    boxShadow: "0 2px 8px rgba(99, 102, 241, 0.08)",
+    overflow: "hidden",
+  },
+  menuAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    objectFit: "cover",
+    display: "block",
+  },
+  menuIcon: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 };

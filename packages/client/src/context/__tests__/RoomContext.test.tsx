@@ -51,6 +51,12 @@ vi.mock("../../lib/socket", () => ({
   API_BASE: "http://localhost:8787",
 }));
 
+// AuthContext をモック（Firebase 初期化を回避）
+vi.mock("../../context/AuthContext", () => ({
+  useAuth: () => ({ idToken: null }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 // -------------------------------------------------------------------------
 // サーバーイベントシミュレーター
 // -------------------------------------------------------------------------
