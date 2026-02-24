@@ -132,6 +132,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
   const [relationByUid, setRelationByUid] = useState<Record<string, FriendRelation>>({});
   const [activePopoverPlayerId, setActivePopoverPlayerId] = useState<string | null>(null);
   const [requestingUid, setRequestingUid] = useState<string | null>(null);
+  const [approvingUid, setApprovingUid] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -278,6 +279,49 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
     if (e.key === "Escape") setEditing(false);
   };
 
+  const refreshParticipantStatus = async (targetUid: string) => {
+    if (!idToken || !firebaseUser || !room) return;
+
+    try {
+      const [profileRes, followingRes, followersRes] = await Promise.all([
+        fetch(`${API_BASE}/users/${targetUid}/profile`),
+        fetch(`${API_BASE}/users/me/friends`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        }),
+        fetch(`${API_BASE}/users/me/followers`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        }),
+      ]);
+
+      if (profileRes.ok) {
+        const profile = await profileRes.json() as UserProfile;
+        setProfilesByUid((prev) => ({ ...prev, [targetUid]: profile }));
+      }
+
+      if (!followingRes.ok || !followersRes.ok) return;
+
+      const following = await followingRes.json() as Array<{ uid: string }>;
+      const followers = await followersRes.json() as Array<{ uid: string; isFollowing: boolean }>;
+
+      const followingSet = new Set(following.map((friend) => friend.uid));
+      const followerMap = new Map(followers.map((follower) => [follower.uid, follower.isFollowing]));
+
+      const followerIsFollowing = followerMap.get(targetUid);
+      const nextRelation: FriendRelation =
+        followerIsFollowing === true
+          ? "friend"
+          : followingSet.has(targetUid)
+            ? "outgoing"
+            : followerMap.has(targetUid)
+              ? "incoming"
+              : "none";
+
+      setRelationByUid((prev) => ({ ...prev, [targetUid]: nextRelation }));
+    } catch {
+      // ignore
+    }
+  };
+
   const sendFriendRequest = async (targetUid: string) => {
     if (!idToken || !targetUid) return;
     setRequestingUid(targetUid);
@@ -298,6 +342,44 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
     } finally {
       setRequestingUid(null);
     }
+  };
+
+  const approveFriendRequest = async (targetUid: string) => {
+    if (!idToken || !targetUid) return;
+    setApprovingUid(targetUid);
+    setRequestError(null);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/friend-requests/${targetUid}/approve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        const err = await res.json() as { error?: string };
+        setRequestError(err.error ?? "承認に失敗しました");
+        return;
+      }
+      setRelationByUid((prev) => ({ ...prev, [targetUid]: "friend" }));
+    } catch {
+      setRequestError("承認に失敗しました");
+    } finally {
+      setApprovingUid(null);
+    }
+  };
+
+  const handleParticipantClick = (player: NonNullable<typeof room>["players"][number]) => {
+    setRequestError(null);
+    setActivePopoverPlayerId((prev) => {
+      const next = prev === player.id ? null : player.id;
+      if (
+        next &&
+        idToken &&
+        player.userId &&
+        player.userId !== firebaseUser?.uid
+      ) {
+        void refreshParticipantStatus(player.userId);
+      }
+      return next;
+    });
   };
 
   const renderParticipantAvatar = (player: NonNullable<typeof room>["players"][number]) => {
@@ -351,10 +433,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
                       key={player.id}
                       type="button"
                       style={styles.participantIconBtn}
-                      onClick={() => {
-                        setActivePopoverPlayerId((prev) => prev === player.id ? null : player.id);
-                        setRequestError(null);
-                      }}
+                      onClick={() => handleParticipantClick(player)}
                       aria-label={`${player.name} の情報を表示`}
                       title={player.name}
                     >
@@ -431,8 +510,11 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
               {renderParticipantAvatar(activePlayer)}
             </span>
             <div style={styles.participantPopoverTextWrap}>
-              <div style={styles.participantPopoverName}>
+              <div style={styles.participantPopoverNameRow}>
+                <div style={styles.participantPopoverName}>
                 {activeProfile?.displayName ?? activePlayer.name}
+                </div>
+                {activeRelation === "friend" && <span style={styles.participantFriendBadge}>フレンド</span>}
               </div>
             </div>
           </div>
@@ -450,13 +532,20 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
                 </button>
               )}
               {activeRelation === "outgoing" && (
-                <div style={styles.participantStatusText}>あなたから申請中です</div>
+                <div style={styles.participantStatusText}>フレンド申請中です</div>
               )}
               {activeRelation === "incoming" && (
-                <div style={styles.participantStatusText}>相手から申請が届いています</div>
-              )}
-              {activeRelation === "friend" && (
-                <div style={styles.participantFriendText}>フレンドです</div>
+                <div style={styles.participantIncomingRow}>
+                  <div style={{ ...styles.participantStatusText, flex: 1 }}>相手からフレンド申請が届いています</div>
+                  <button
+                    type="button"
+                    style={styles.participantApproveBtn}
+                    onClick={() => void approveFriendRequest(activeUid)}
+                    disabled={approvingUid === activeUid}
+                  >
+                    {approvingUid === activeUid ? "承認中..." : "承認"}
+                  </button>
+                </div>
               )}
               {requestError && <div style={styles.participantErrorText}>{requestError}</div>}
             </div>
@@ -637,6 +726,11 @@ const styles: Record<string, React.CSSProperties> = {
   participantPopoverTextWrap: {
     minWidth: 0,
   },
+  participantPopoverNameRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
   participantPopoverName: {
     fontSize: "0.9rem",
     fontWeight: 700,
@@ -669,13 +763,33 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 10,
     padding: "8px 10px",
   },
-  participantFriendText: {
-    fontSize: "0.82rem",
+  participantFriendBadge: {
+    fontSize: "0.72rem",
     fontWeight: 700,
     color: "#166534",
     background: "#ecfdf5",
+    border: "1px solid #86efac",
+    borderRadius: 999,
+    padding: "2px 8px",
+    lineHeight: 1.4,
+    flexShrink: 0,
+  },
+  participantIncomingRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  participantApproveBtn: {
+    minHeight: 34,
     borderRadius: 10,
-    padding: "8px 10px",
+    border: "none",
+    background: "#4F46E5",
+    color: "#fff",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    padding: "7px 10px",
+    cursor: "pointer",
+    flexShrink: 0,
   },
   participantErrorText: {
     fontSize: "0.78rem",
