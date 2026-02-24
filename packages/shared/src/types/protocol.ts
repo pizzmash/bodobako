@@ -8,8 +8,8 @@ export interface GameResult {
 // --- ネイティブWebSocket用プロトコル型（Workers/DO向け） ---
 
 export type WsClientMessage =
-  | { type: "room:create"; reqId: string; playerName: string; gameId: string; sessionToken: string }
-  | { type: "room:join"; reqId: string; roomCode: string; playerName: string; sessionToken: string }
+  | { type: "room:create"; reqId: string; playerName: string; gameId: string; sessionToken: string; idToken?: string }
+  | { type: "room:join"; reqId: string; roomCode: string; playerName: string; sessionToken: string; idToken?: string }
   | { type: "session:reconnect"; reqId: string; sessionToken: string }
   | { type: "room:leave" }
   | { type: "game:start" }

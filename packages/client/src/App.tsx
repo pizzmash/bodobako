@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { AppHeader } from "./components/AppHeader";
 import { Lobby } from "./components/Lobby";
 import { Room } from "./components/Room";
 import { RoomPage } from "./components/RoomPage";
+import { Sidebar } from "./components/Sidebar";
+import { AuthProvider } from "./context/AuthContext";
 import { RoomProvider, useRoom } from "./context/RoomContext";
 
 /**
@@ -28,11 +31,16 @@ function LayoutContent() {
 }
 
 function Layout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <RoomProvider>
-      <AppHeader />
-      <LayoutContent />
-    </RoomProvider>
+    <AuthProvider>
+      <RoomProvider>
+        <AppHeader onMenuClick={() => setIsSidebarOpen(true)} />
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <LayoutContent />
+      </RoomProvider>
+    </AuthProvider>
   );
 }
 

@@ -11,6 +11,17 @@ class_name = "RoomDO"
 name = "REGISTRY"
 class_name = "RoomRegistry"
 
+[[durable_objects.bindings]]
+name = "USER_REGISTRY"
+class_name = "UserRegistry"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomDO", "RoomRegistry"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["UserRegistry"]
+
+[vars]
+FIREBASE_PROJECT_ID = "bodobako-1c07a"

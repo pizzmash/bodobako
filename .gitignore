@@ -4,5 +4,6 @@ dist/
 tmp
 .claude/
 .wrangler/
+packages/client/.env.development
 packages/client/.env.production
 test-results/

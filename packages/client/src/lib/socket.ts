@@ -145,6 +145,7 @@ class BodobakoWs {
     playerName: string;
     gameId: string;
     sessionToken: string;
+    idToken?: string;
   }): Promise<{ code: string; playerId: string }> {
     // iOS bfcache復元直後などにネットワークレベルで失敗する場合があるため最大3回リトライする
     for (let attempt = 0; attempt < 3; attempt++) {

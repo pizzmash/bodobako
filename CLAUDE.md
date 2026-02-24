@@ -7,6 +7,7 @@
 - **言語:** TypeScript 5.7（strict mode）
 - **フロントエンド:** React 19 + Vite 6
 - **バックエンド:** Hono 4 + Cloudflare Workers + Durable Objects
+- **認証:** Firebase Authentication（Google サインイン）+ `jose` による Worker 側 JWT 検証
 - **パッケージ管理:** npm workspaces（モノレポ）
 - **スタイリング:** インライン CSS-in-JS（CSSフレームワークなし）
 - **ルーティング:** React Router v7（`react-router-dom`）。`createBrowserRouter` + `RouterProvider` による2ルート構成（`/` と `/room/:code`）
@@ -21,15 +22,18 @@ packages/
 │       └── games/     # ゲームごとのディレクトリ（othello/, aiuebattle/）
 ├── worker/        # Cloudflare Workers バックエンド
 │   ├── src/
-│   │   ├── index.ts   # Hono エントリ（HTTP API + WS upgrade）
-│   │   └── RoomDO.ts  # Durable Object（ルーム管理・WebSocket）
+│   │   ├── index.ts          # Hono エントリ（HTTP API + WS upgrade）
+│   │   ├── RoomDO.ts         # Durable Object（ルーム管理・WebSocket）
+│   │   ├── UserRegistry.ts   # DO（ユーザープロフィール・フレンドコード）
+│   │   └── lib/
+│   │       └── verifyFirebaseToken.ts  # Firebase JWT 検証（jose）
 │   └── wrangler.toml
 └── client/        # React + Vite フロントエンド
     └── src/
-        ├── context/       # RoomContext.tsx（グローバル状態管理・navigate統合）
-        ├── components/    # Lobby, Room, RoomPage, GameView, AppHeader, NameEntryModal, GameResultCard
+        ├── context/       # AuthContext.tsx（Firebase 認証）、RoomContext.tsx（WS状態管理）
+        ├── components/    # Lobby, Room, RoomPage, GameView, AppHeader, NameEntryModal, GameResultCard, Sidebar
         ├── games/         # ゲームごとのUIコンポーネント（othello/, aiuebattle/）
-        └── lib/           # socket.ts（ネイティブWebSocketシングルトン）
+        └── lib/           # socket.ts（ネイティブWebSocketシングルトン）、firebase.ts（Firebase初期化）
 ```
 
 ## 開発コマンド
@@ -46,9 +50,10 @@ npm run test:e2e     # E2E テスト（Playwright、dev サーバーを自動起
 
 ### バックエンド（Cloudflare Workers + Durable Objects）
 
-- **Workers（index.ts）**: Hono による HTTP API。ルーム作成（`POST /rooms`）とWebSocket upgrade（`GET /rooms/:code/ws`）を担当
-- **RoomDO**: Durable Object クラス。1ルーム = 1 DOインスタンス。WebSocket Hibernation APIで接続管理、DO Alarmsで切断タイマーを実装
+- **Workers（index.ts）**: Hono による HTTP API。ルーム作成（`POST /rooms`）とWebSocket upgrade（`GET /rooms/:code/ws`）、認証済みユーザー向けプロフィール API（`GET/PUT /users/me`）を担当
+- **RoomDO**: Durable Object クラス。1ルーム = 1 DOインスタンス。WebSocket Hibernation APIで接続管理、DO Alarmsで切断タイマーを実装。`idToken` が付いていれば `verifyFirebaseToken` で検証して `player.userId` を付与
 - **RoomRegistry**: SQLite-backed Durable Object（シングルインスタンス）。ルームコードの登録・重複確認・一覧管理を担当。KVの代替
+- **UserRegistry**: SQLite-backed Durable Object（シングルインスタンス）。ログイン済みユーザーのアプリ独自表示名とフレンドコード（8文字、ユニーク）を管理。`GET /users/:uid` / `POST /users`（内部 fetch）
 
 ### WebSocket通信プロトコル（ネイティブWS）
 
@@ -111,6 +116,14 @@ URL が source of truth。`RoomContext` の `createRoom` / `joinRoom` が成功�
 - `playerName` 未設定時はどちらのルートでも `NameEntryModal` をオーバーレイ表示
 - ブラウザ戻るボタンは `useBlocker` で制御し確認ダイアログを挟む
 
+### 認証（Firebase Authentication）
+
+- `AuthContext`（`packages/client/src/context/AuthContext.tsx`）が Firebase の `onIdTokenChanged` でサブスクライブし、ログイン状態・idToken・アプリ独自表示名・フレンドコードを管理する
+- ログイン後に `GET /users/me` でプロフィールを取得。404（未登録）の場合は Google 表示名をデフォルトとして `PUT /users/me` で自動登録
+- `AuthProvider` は `RoomProvider` の外側に配置（`RoomContext` が `useAuth()` を呼ぶため）
+- Worker 側では `verifyFirebaseToken`（`jose` 使用）で Firebase RS256 JWT を検証。Google JWKS URL からキーを自動取得する
+- ログインしなくても従来通りプレイ可能（認証はオプション）
+
 ### 状態管理
 
 `RoomContext`（React Context API）で `useRoom()` フックから利用。ネイティブWebSocketのイベントでサーバーと同期。`createBrowserRouter` のレイアウトルート（`Layout` コンポーネント）の内側に `RoomProvider` を配置することで `useNavigate()` を直接利用できる。
@@ -135,6 +148,8 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 - **Aiuebattle（あいうえバトル）** - 2-5人、ひらがなボードを使った単語推理ゲーム（3フェーズ: topic-select → word-input → battle）
 - **Citychase（シティチェイス）** - 2-4人、犯人と警察に分かれた非対称追跡ゲーム
 - **SonicRestaurant（音速飯点）** - 2-6人、中華料理カードを重ねるスピードゲーム
+- **Blokus（ブロックス）** - 2-4人、20×20盤面にピースを角で繋げて配置する陣取りゲーム
+- **Nana（ナナ）** - 2-5人、7をねらえ！3枚ペアの神経衰弱ゲーム
 
 ## 新しいゲームの追加手順
 
@@ -155,8 +170,18 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 # フロントエンドはCloudflare Pagesにデプロイ
 # ビルドコマンド: npm run build
 # 出力ディレクトリ: packages/client/dist
-# 環境変数: VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
+# 環境変数（Cloudflare Pages の設定画面で入力）:
+#   VITE_API_URL=https://bodobako-worker.YOUR_SUBDOMAIN.workers.dev
+#   VITE_FIREBASE_API_KEY=...
+#   VITE_FIREBASE_AUTH_DOMAIN=...
+#   VITE_FIREBASE_PROJECT_ID=...
 ```
+
+**Firebase コンソールの事前設定（初回のみ）:**
+1. Firebase コンソールでプロジェクトを作成
+2. Authentication > Sign-in method > Google を有効化
+3. 「Authorized domains」に本番ドメインを追加
+4. Firebase config を取得し、Cloudflare Pages と `.env.development` に設定
 
 > **SPA ルーティング注意**: `packages/client/public/_redirects` に `/* /index.html 200` を記述済み。Cloudflare Pages での `/room/:code` 直アクセス・リロード時の 404 を防ぐ。
 
@@ -177,6 +202,7 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 - `vi.mock("../../lib/socket", ...)` で wsClient シングルトンを差し替え
 - `RoomContext` のテストは `<MemoryRouter>` でラップして `useNavigate()` を有効化
 - `import.meta.env.VITE_API_URL` は `vitest.config.ts` の `test.env` で注入
+- `RoomContext.test.tsx` では `vi.mock("../../context/AuthContext", ...)` で Firebase 初期化を回避（テスト環境では env vars が空のため `auth/invalid-api-key` が発生する）
 
 **worker テストの注意点:**
 - `isolatedStorage: false`（WebSocket Hibernation API がリクエストコンテキスト外でハンドラを呼ぶため）
