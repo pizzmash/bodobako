@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 // -------------------------------------------------------------------------
 // ルーム作成・参加・退出フローテスト（2タブ使用）
@@ -30,7 +30,7 @@ test.describe("ルーム作成・参加フロー", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("オセロのルームを作成").click();
+    await pageA.getByLabel("オセロのルームを作成").click({ force: true });
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
 
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -42,7 +42,7 @@ test.describe("ルーム作成・参加フロー", () => {
 
     const codeInput = pageB.getByRole("textbox", { name: "ルームコード入力" });
     await codeInput.fill(code);
-    await pageB.getByRole("button", { name: "ルームに参加" }).click();
+    await pageB.getByRole("button", { name: "ルームに参加" }).click({ force: true });
 
     // タブ B が /room/:code に遷移する
     await expect(pageB).toHaveURL(`/room/${code}`);
@@ -93,6 +93,32 @@ test.describe("ルーム作成・参加フロー", () => {
 
     // 参加者側には招待ボタンが表示されない
     await expect(pageB.getByRole("button", { name: "フレンドを招待" })).toHaveCount(0);
+
+    await contextA.close();
+    await contextB.close();
+  });
+
+  test("ヘッダーに参加者アイコンが表示され、クリックで参加者情報が開く", async ({ browser }) => {
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await setupPlayer(pageA, "Alice");
+    await pageA.getByLabel("オセロのルームを作成").click();
+    await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
+
+    const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await setupPlayer(pageB, "Bob");
+    await pageB.getByRole("textbox", { name: "ルームコード入力" }).fill(code);
+    await pageB.getByRole("button", { name: "ルームに参加" }).click();
+    await expect(pageB).toHaveURL(`/room/${code}`);
+
+    await expect(pageA.getByRole("button", { name: "Alice の情報を表示" })).toBeVisible();
+    await expect(pageA.getByRole("button", { name: "Bob の情報を表示" })).toBeVisible();
+
+    await pageA.getByRole("button", { name: "Bob の情報を表示" }).click({ force: true });
+    await expect(pageA).toHaveURL(`/room/${code}`);
 
     await contextA.close();
     await contextB.close();
