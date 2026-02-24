@@ -1,8 +1,39 @@
 import { getAllGames, getGameDefinition } from "@bodobako/shared";
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
+import { API_BASE } from "../lib/socket";
 
 const FONT = "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
+
+interface Friend {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+}
+
+interface Follower extends Friend {
+  isFollowing: boolean;
+}
+
+function Avatar({ photoURL, displayName }: { photoURL?: string; displayName: string }) {
+  if (photoURL) {
+    return (
+      <img
+        src={photoURL}
+        alt={displayName}
+        referrerPolicy="no-referrer"
+        style={styles.inviteAvatar}
+      />
+    );
+  }
+
+  return (
+    <div style={styles.inviteAvatarFallback} aria-hidden="true">
+      {displayName[0]?.toUpperCase() ?? "?"}
+    </div>
+  );
+}
 
 /* ── Injected styles for modal animations ── */
 const INJECTED_STYLES = `
@@ -50,6 +81,15 @@ const INJECTED_STYLES = `
   background: #fee2e2 !important;
   color: #dc2626 !important;
 }
+.room-invite-search:focus {
+  outline: 3px solid #6366F1;
+  outline-offset: 2px;
+  border-color: #6366F1 !important;
+}
+.room-invite-item:hover {
+  background: #eef2ff !important;
+  border-color: #a5b4fc !important;
+}
 `;
 
 function useInjectStyles() {
@@ -69,6 +109,15 @@ function useInjectStyles() {
 export function Room() {
   useInjectStyles();
   const { room, playerId, startGame, leaveRoom, isCreatingRoom, creatingGameId } = useRoom();
+  const { idToken } = useAuth();
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(false);
+  const [friendSearch, setFriendSearch] = useState("");
+  const [selectedFriendUids, setSelectedFriendUids] = useState<string[]>([]);
+  const [isSendingInvites, setIsSendingInvites] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 
   // ローディング中はスピナー付きモーダルを表示
   if (isCreatingRoom && !room) {
@@ -109,9 +158,101 @@ export function Room() {
   const isHost = playerId === room.hostId;
   const canStart = isHost && room.players.length >= minPlayers;
 
+  const filteredFriends = useMemo(() => {
+    const query = friendSearch.trim().toLowerCase();
+    if (!query) return friends;
+    return friends.filter((friend) => friend.displayName.toLowerCase().includes(query));
+  }, [friends, friendSearch]);
+
+  const loadFriends = useCallback(async () => {
+    if (!idToken) {
+      setFriends([]);
+      return;
+    }
+    setIsLoadingFriends(true);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/followers`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (res.ok) {
+        const followers = await res.json() as Follower[];
+        const mutualFriends = followers
+          .filter((follower) => follower.isFollowing)
+          .map(({ uid, displayName, photoURL }) => ({ uid, displayName, photoURL }));
+        setFriends(mutualFriends);
+      } else {
+        setFriends([]);
+      }
+    } catch {
+      setFriends([]);
+    } finally {
+      setIsLoadingFriends(false);
+    }
+  }, [idToken]);
+
+  useEffect(() => {
+    if (!isInviteModalOpen) return;
+    void loadFriends();
+  }, [isInviteModalOpen, loadFriends]);
+
+  const toggleFriend = (uid: string) => {
+    setSelectedFriendUids((prev) => (prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]));
+  };
+
+  const selectAllFiltered = () => {
+    setSelectedFriendUids((prev) => {
+      const merged = new Set(prev);
+      for (const friend of filteredFriends) merged.add(friend.uid);
+      return Array.from(merged);
+    });
+  };
+
+  const clearSelection = () => setSelectedFriendUids([]);
+
+  const openInviteModal = () => {
+    setInviteError(null);
+    setInviteSuccess(null);
+    setFriendSearch("");
+    setSelectedFriendUids([]);
+    setIsInviteModalOpen(true);
+  };
+
+  const sendInvites = async () => {
+    if (!idToken || !room || selectedFriendUids.length === 0) return;
+    setIsSendingInvites(true);
+    setInviteError(null);
+    setInviteSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/rooms/${room.code}/invites`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ invitedUids: selectedFriendUids }),
+      });
+
+      const body = await res.json() as { created?: number; error?: string };
+      if (!res.ok) {
+        setInviteError(body.error ?? "招待の送信に失敗しました");
+        return;
+      }
+
+      setInviteSuccess(`${body.created ?? 0}人に招待を送りました`);
+      setSelectedFriendUids([]);
+      setFriendSearch("");
+    } catch {
+      setInviteError("招待の送信に失敗しました");
+    } finally {
+      setIsSendingInvites(false);
+    }
+  };
+
   return (
-    <div style={styles.backdrop}>
-      <div style={styles.modal}>
+    <>
+      <div style={styles.backdrop}>
+        <div style={styles.modal}>
         {/* Game name */}
         <div style={styles.gameName}>{gameName}</div>
 
@@ -141,35 +282,113 @@ export function Room() {
         </div>
 
         {/* Buttons */}
-        <div style={styles.buttons}>
-          {isHost ? (
+          <div style={styles.buttons}>
+            {isHost ? (
+              <>
+                <button
+                  className="room-start-btn"
+                  style={{
+                    ...styles.startBtn,
+                    opacity: canStart ? 1 : 0.5,
+                    cursor: canStart ? "pointer" : "not-allowed",
+                  }}
+                  onClick={startGame}
+                  disabled={!canStart}
+                >
+                  ゲーム開始
+                </button>
+                <button
+                  style={styles.inviteBtn}
+                  onClick={openInviteModal}
+                  disabled={!idToken}
+                >
+                  フレンドを招待
+                </button>
+              </>
+            ) : (
+              <div style={styles.waitingHost}>
+                ホストがゲームを開始するのを待っています...
+              </div>
+            )}
             <button
-              className="room-start-btn"
-              style={{
-                ...styles.startBtn,
-                opacity: canStart ? 1 : 0.5,
-                cursor: canStart ? "pointer" : "not-allowed",
-              }}
-              onClick={startGame}
-              disabled={!canStart}
+              className="room-leave-btn"
+              style={styles.leaveBtn}
+              onClick={leaveRoom}
             >
-              ゲーム開始
+              退出する
             </button>
-          ) : (
-            <div style={styles.waitingHost}>
-              ホストがゲームを開始するのを待っています...
-            </div>
-          )}
-          <button
-            className="room-leave-btn"
-            style={styles.leaveBtn}
-            onClick={leaveRoom}
-          >
-            退出する
-          </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {isInviteModalOpen && (
+        <div style={styles.inviteModalBackdrop}>
+          <div style={styles.inviteModal}>
+            <div style={styles.inviteModalHeader}>
+              <div>
+                <div style={styles.inviteModalTitle}>フレンドを招待</div>
+                <div style={styles.inviteModalSubtitle}>{selectedFriendUids.length}人選択中</div>
+              </div>
+              <button style={styles.inviteCloseBtn} onClick={() => setIsInviteModalOpen(false)}>閉じる</button>
+            </div>
+
+            <input
+              className="room-invite-search"
+              style={styles.inviteSearchInput}
+              placeholder="フレンド名 / コードで検索"
+              value={friendSearch}
+              onChange={(e) => setFriendSearch(e.target.value)}
+              type="search"
+            />
+
+            <div style={styles.inviteActionRow}>
+              <button style={styles.inviteActionBtn} onClick={selectAllFiltered} disabled={filteredFriends.length === 0}>表示中を全選択</button>
+              <button style={styles.inviteActionBtnSecondary} onClick={clearSelection} disabled={selectedFriendUids.length === 0}>選択解除</button>
+            </div>
+
+            <div style={styles.inviteFriendList}>
+              {isLoadingFriends ? (
+                <div style={styles.inviteInfoText}>フレンドを読み込み中です...</div>
+              ) : filteredFriends.length === 0 ? (
+                <div style={styles.inviteInfoText}>一致するフレンドがいません</div>
+              ) : (
+                filteredFriends.map((friend) => (
+                  <label key={friend.uid} className="room-invite-item" style={styles.inviteFriendItem}>
+                    <input
+                      type="checkbox"
+                      checked={selectedFriendUids.includes(friend.uid)}
+                      onChange={() => toggleFriend(friend.uid)}
+                      style={styles.inviteCheckbox}
+                    />
+                    <Avatar photoURL={friend.photoURL} displayName={friend.displayName} />
+                    <div style={styles.inviteFriendTextWrap}>
+                      <div style={styles.inviteFriendName}>{friend.displayName}</div>
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+
+            {inviteError && <div style={styles.inviteError}>{inviteError}</div>}
+            {inviteSuccess && <div style={styles.inviteSuccess}>{inviteSuccess}</div>}
+
+            <div style={styles.inviteFooter}>
+              <button
+                style={{
+                  ...styles.inviteSendBtn,
+                  opacity: selectedFriendUids.length > 0 && !isSendingInvites ? 1 : 0.5,
+                  cursor: selectedFriendUids.length > 0 && !isSendingInvites ? "pointer" : "not-allowed",
+                }}
+                onClick={() => void sendInvites()}
+                disabled={selectedFriendUids.length === 0 || isSendingInvites}
+              >
+                {isSendingInvites ? "送信中..." : "招待を送信"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -309,6 +528,206 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#718096",
     cursor: "pointer",
     transition: "background .15s ease, color .15s ease",
+  },
+  inviteBtn: {
+    width: "100%",
+    padding: "10px 0",
+    fontSize: "0.92rem",
+    fontWeight: 600,
+    borderRadius: 10,
+    border: "1px solid #c7d2fe",
+    background: "#eef2ff",
+    color: "#4338ca",
+    cursor: "pointer",
+    minHeight: 44,
+  },
+  inviteModalBackdrop: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 1200,
+    background: "rgba(15, 23, 42, 0.25)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  inviteModal: {
+    width: "min(620px, 100%)",
+    maxHeight: "min(760px, calc(100vh - 32px))",
+    background: "#fff",
+    borderRadius: 16,
+    border: "1px solid #dbeafe",
+    boxShadow: "0 24px 56px rgba(0,0,0,0.25)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    fontFamily: FONT,
+  },
+  inviteModalHeader: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "16px 16px 12px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  inviteModalTitle: {
+    fontSize: "1.05rem",
+    fontWeight: 700,
+    color: "#312e81",
+  },
+  inviteModalSubtitle: {
+    marginTop: 4,
+    fontSize: "0.82rem",
+    color: "#6366f1",
+    fontWeight: 600,
+  },
+  inviteCloseBtn: {
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    borderRadius: 10,
+    minHeight: 44,
+    padding: "10px 12px",
+    color: "#475569",
+    cursor: "pointer",
+  },
+  inviteSearchInput: {
+    margin: "12px 16px 0",
+    width: "calc(100% - 32px)",
+    borderRadius: 10,
+    border: "1.5px solid #cbd5e1",
+    minHeight: 44,
+    padding: "10px 12px",
+    boxSizing: "border-box",
+    fontSize: "0.92rem",
+  },
+  inviteActionRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    padding: "10px 16px",
+  },
+  inviteActionBtn: {
+    minHeight: 40,
+    borderRadius: 10,
+    border: "none",
+    background: "#e0e7ff",
+    color: "#4338ca",
+    padding: "8px 12px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  inviteActionBtnSecondary: {
+    minHeight: 40,
+    borderRadius: 10,
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    color: "#475569",
+    padding: "8px 12px",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  inviteFriendList: {
+    padding: "4px 16px 12px",
+    maxHeight: 320,
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  inviteFriendItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    border: "1px solid #e2e8f0",
+    borderRadius: 10,
+    padding: "10px 12px",
+    background: "#fff",
+    cursor: "pointer",
+  },
+  inviteCheckbox: {
+    width: 20,
+    height: 20,
+    margin: 0,
+    accentColor: "#6366f1",
+    flexShrink: 0,
+  },
+  inviteFriendTextWrap: {
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+  },
+  inviteAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "1px solid #cbd5e1",
+    flexShrink: 0,
+  },
+  inviteAvatarFallback: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    background: "#c7d2fe",
+    color: "#312e81",
+    fontWeight: 700,
+    fontSize: "0.82rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  inviteFriendName: {
+    fontSize: "0.9rem",
+    fontWeight: 700,
+    color: "#1e293b",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  inviteInfoText: {
+    textAlign: "center",
+    padding: "20px 8px",
+    color: "#64748b",
+    fontWeight: 600,
+    fontSize: "0.88rem",
+  },
+  inviteError: {
+    margin: "0 16px",
+    color: "#dc2626",
+    background: "#fef2f2",
+    border: "1px solid #fecaca",
+    borderRadius: 10,
+    padding: "8px 10px",
+    fontSize: "0.84rem",
+    fontWeight: 600,
+  },
+  inviteSuccess: {
+    margin: "0 16px",
+    color: "#166534",
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: 10,
+    padding: "8px 10px",
+    fontSize: "0.84rem",
+    fontWeight: 600,
+  },
+  inviteFooter: {
+    padding: "12px 16px 16px",
+    borderTop: "1px solid #e2e8f0",
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  inviteSendBtn: {
+    minHeight: 44,
+    borderRadius: 10,
+    border: "none",
+    background: "#4f46e5",
+    color: "#fff",
+    fontWeight: 700,
+    padding: "10px 16px",
   },
 };
 /* ── Loading spinner styles ── */

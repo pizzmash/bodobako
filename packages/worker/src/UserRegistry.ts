@@ -6,9 +6,18 @@ function generateFriendCode(): string {
   ).join("");
 }
 
+export function canInviteWithFriendRelations(
+  inviterFollowsInvited: boolean,
+  invitedFollowsInviter: boolean,
+): boolean {
+  return inviterFollowsInvited && invitedFollowsInviter;
+}
+
 export class UserRegistry implements DurableObject {
   private state: DurableObjectState;
   private db!: SqlStorage;
+  private static readonly INVITE_RETENTION_MS = 1000 * 60 * 60;
+  private static readonly INVITE_MAX_PER_USER = 200;
 
   constructor(state: DurableObjectState) {
     this.state = state;
@@ -36,7 +45,48 @@ export class UserRegistry implements DurableObject {
           PRIMARY KEY (owner_uid, friend_uid)
         )
       `);
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS invites (
+          invite_id TEXT PRIMARY KEY,
+          invited_uid TEXT NOT NULL,
+          inviter_uid TEXT NOT NULL,
+          inviter_name TEXT NOT NULL,
+          room_code TEXT NOT NULL,
+          game_id TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'unread',
+          created_at INTEGER NOT NULL,
+          read_at INTEGER
+        )
+      `);
+      this.db.exec("CREATE INDEX IF NOT EXISTS idx_invites_invited_uid_status_created ON invites(invited_uid, status, created_at DESC)");
+      this.db.exec("CREATE INDEX IF NOT EXISTS idx_invites_created_at ON invites(created_at)");
     });
+  }
+
+  private compactInvitesForUser(invitedUid: string, now: number): void {
+    const expireBefore = now - UserRegistry.INVITE_RETENTION_MS;
+
+    // 保存期限を過ぎた招待を削除
+    this.db.exec(
+      "DELETE FROM invites WHERE invited_uid = ? AND created_at < ?",
+      invitedUid,
+      expireBefore,
+    );
+
+    // ユーザーごとに最新N件だけ保持
+    this.db.exec(
+      `DELETE FROM invites
+       WHERE invited_uid = ?
+         AND invite_id IN (
+           SELECT invite_id FROM invites
+           WHERE invited_uid = ?
+           ORDER BY created_at DESC
+           LIMIT -1 OFFSET ?
+         )`,
+      invitedUid,
+      invitedUid,
+      UserRegistry.INVITE_MAX_PER_USER,
+    );
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -205,6 +255,152 @@ export class UserRegistry implements DurableObject {
         friendCode: friendRow.friend_code,
         photoURL: friendRow.photo_url,
       });
+    }
+
+    // POST /invites — 招待を一括作成（内部API）
+    if (url.pathname === "/invites" && request.method === "POST") {
+      let body: unknown;
+      try { body = await request.json(); } catch {
+        return Response.json({ error: "リクエストボディが不正です" }, { status: 400 });
+      }
+      if (typeof body !== "object" || body === null) {
+        return Response.json({ error: "リクエストボディが不正です" }, { status: 400 });
+      }
+
+      const { inviterUid, inviterName, roomCode, gameId, invitedUids } = body as Record<string, unknown>;
+      if (typeof inviterUid !== "string" || !inviterUid) {
+        return Response.json({ error: "inviterUid は必須です" }, { status: 400 });
+      }
+      if (typeof inviterName !== "string" || !inviterName.trim()) {
+        return Response.json({ error: "inviterName は必須です" }, { status: 400 });
+      }
+      if (typeof roomCode !== "string" || !roomCode.trim()) {
+        return Response.json({ error: "roomCode は必須です" }, { status: 400 });
+      }
+      if (typeof gameId !== "string" || !gameId.trim()) {
+        return Response.json({ error: "gameId は必須です" }, { status: 400 });
+      }
+      if (!Array.isArray(invitedUids)) {
+        return Response.json({ error: "invitedUids は配列で指定してください" }, { status: 400 });
+      }
+
+      const normalizedInvitedUids = Array.from(
+        new Set(
+          invitedUids
+            .filter((uid): uid is string => typeof uid === "string")
+            .map((uid) => uid.trim())
+            .filter((uid) => uid.length > 0 && uid !== inviterUid)
+        )
+      ).slice(0, 100);
+
+      let created = 0;
+      let skipped = 0;
+      const now = Date.now();
+
+      for (const invitedUid of normalizedInvitedUids) {
+        // inviter -> invited のフレンド関係
+        const forwardRelation = this.db.exec(
+          "SELECT 1 FROM friends WHERE owner_uid = ? AND friend_uid = ?",
+          inviterUid,
+          invitedUid
+        ).toArray()[0] ?? null;
+        // invited -> inviter のフレンド関係（相互フレンド判定）
+        const reverseRelation = this.db.exec(
+          "SELECT 1 FROM friends WHERE owner_uid = ? AND friend_uid = ?",
+          invitedUid,
+          inviterUid
+        ).toArray()[0] ?? null;
+
+        const canInvite = canInviteWithFriendRelations(Boolean(forwardRelation), Boolean(reverseRelation));
+        if (!canInvite) {
+          skipped++;
+          continue;
+        }
+
+        // 同じルームへの未読招待は最新1件に集約（重複防止）
+        this.db.exec(
+          `DELETE FROM invites
+           WHERE invited_uid = ? AND inviter_uid = ? AND room_code = ? AND status = 'unread'`,
+          invitedUid,
+          inviterUid,
+          roomCode.trim().toUpperCase(),
+        );
+
+        const inviteId = crypto.randomUUID();
+        this.db.exec(
+          `INSERT INTO invites (invite_id, invited_uid, inviter_uid, inviter_name, room_code, game_id, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'unread', ?)`,
+          inviteId,
+          invitedUid,
+          inviterUid,
+          inviterName.trim(),
+          roomCode.trim().toUpperCase(),
+          gameId.trim(),
+          now,
+        );
+
+        this.compactInvitesForUser(invitedUid, now);
+        created++;
+      }
+
+      return Response.json({ created, skipped });
+    }
+
+    // GET /invites/:uid — 招待一覧（既定: unread のみ）
+    const matchInvitesGet = url.pathname.match(/^\/invites\/([^/]+)$/);
+    if (matchInvitesGet && request.method === "GET") {
+      const uid = matchInvitesGet[1];
+      const status = url.searchParams.get("status") ?? "unread";
+      const rows = status === "all"
+        ? this.db.exec(
+          `SELECT invite_id, invited_uid, inviter_uid, inviter_name, room_code, game_id, status, created_at, read_at
+           FROM invites
+           WHERE invited_uid = ?
+           ORDER BY created_at DESC
+           LIMIT 50`,
+          uid
+        ).toArray()
+        : this.db.exec(
+          `SELECT invite_id, invited_uid, inviter_uid, inviter_name, room_code, game_id, status, created_at, read_at
+           FROM invites
+           WHERE invited_uid = ? AND status = 'unread'
+           ORDER BY created_at DESC
+           LIMIT 50`,
+          uid
+        ).toArray();
+
+      this.compactInvitesForUser(uid, Date.now());
+
+      return Response.json(rows.map((row) => ({
+        inviteId: row.invite_id,
+        invitedUid: row.invited_uid,
+        inviterUid: row.inviter_uid,
+        inviterName: row.inviter_name,
+        roomCode: row.room_code,
+        gameId: row.game_id,
+        status: row.status,
+        createdAt: row.created_at,
+        readAt: row.read_at ?? null,
+      })));
+    }
+
+    // POST /invites/:uid/:inviteId/read — 招待既読化
+    const matchInviteRead = url.pathname.match(/^\/invites\/([^/]+)\/([^/]+)\/read$/);
+    if (matchInviteRead && request.method === "POST") {
+      const uid = matchInviteRead[1];
+      const inviteId = matchInviteRead[2];
+      const now = Date.now();
+
+      this.db.exec(
+        `UPDATE invites
+         SET status = 'read', read_at = ?
+         WHERE invite_id = ? AND invited_uid = ?`,
+        now,
+        inviteId,
+        uid,
+      );
+      this.compactInvitesForUser(uid, now);
+      return Response.json({ ok: true });
     }
 
     // DELETE /friends/:ownerUid/:friendUid — フレンド削除

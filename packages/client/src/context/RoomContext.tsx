@@ -176,7 +176,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setIsCreatingRoom(true);
     setCreatingGameId(gameId);
     wsClient
-      .createRoom({ playerName, gameId, sessionToken, idToken: idTokenRef.current ?? undefined })
+      .createRoom({
+        playerName,
+        gameId,
+        sessionToken,
+        idToken: idTokenRef.current ?? undefined,
+      })
       .then(({ code, playerId: pid }) => {
         setPlayerId(pid);
         saveRoomSession(code, pid);

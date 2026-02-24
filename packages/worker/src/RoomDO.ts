@@ -93,6 +93,9 @@ export class RoomDO implements DurableObject {
     if (url.pathname === "/info" && request.method === "GET") {
       return this.handleInfo();
     }
+    if (url.pathname === "/invite-meta" && request.method === "GET") {
+      return this.handleInviteMeta(url);
+    }
 
     return new Response("Not found", { status: 404 });
   }
@@ -198,6 +201,27 @@ export class RoomDO implements DurableObject {
     await this.loadRoom();
     if (!this.room) return Response.json({ error: "ルームなし" }, { status: 404 });
     return Response.json(this.toAdminInfo());
+  }
+
+  private async handleInviteMeta(url: URL): Promise<Response> {
+    await this.loadRoom();
+    if (!this.room) return Response.json({ error: "ルームなし" }, { status: 404 });
+
+    const uid = (url.searchParams.get("uid") ?? "").trim();
+    if (!uid) return Response.json({ error: "uid は必須です" }, { status: 400 });
+
+    const inviter = this.room.players.find((player) => player.userId === uid);
+    if (!inviter) {
+      return Response.json({ error: "このルームの参加者ではありません" }, { status: 403 });
+    }
+
+    return Response.json({
+      code: this.room.code,
+      gameId: this.room.gameId,
+      status: this.room.status,
+      inviterName: inviter.name,
+      isHost: inviter.id === this.room.hostId,
+    });
   }
 
   // ---------------------------------------------------------------------------

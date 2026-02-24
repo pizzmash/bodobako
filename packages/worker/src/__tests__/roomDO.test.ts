@@ -327,6 +327,7 @@ describe("game:move", () => {
   });
 });
 
+
 describe("room:leave", () => {
   it("正常: room:leave で room:left が返る", async () => {
     const { code } = await createRoom();

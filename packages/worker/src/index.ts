@@ -75,7 +75,6 @@ app.post("/rooms", async (c) => {
 
   const trimmedPlayerName = playerName.trim();
   const trimmedGameId = gameId.trim();
-
   // idToken が提供された場合は Firebase で検証して userId を取得
   let userId: string | undefined;
   if (typeof idToken === "string" && idToken) {
@@ -269,6 +268,128 @@ app.get("/users/me/friends", async (c) => {
   return c.json(await res.json());
 });
 
+// 招待一覧取得（既定: unread）
+app.get("/users/me/invites", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const status = c.req.query("status") ?? "unread";
+  const userRegistry = getUserRegistry(c.env);
+  const res = await userRegistry.fetch(
+    new Request(`http://do/invites/${verified.uid}?status=${encodeURIComponent(status)}`)
+  );
+  if (!res.ok) return c.json(await res.json(), res.status as 200 | 400);
+
+  const invites = await res.json<Array<{
+    inviteId: string;
+    inviterName: string;
+    roomCode: string;
+    gameId: string;
+    createdAt: number;
+  }>>();
+
+  const activeInvites = await Promise.all(invites.map(async (invite) => {
+    try {
+      const roomStub = c.env.ROOM_DO.get(c.env.ROOM_DO.idFromName(invite.roomCode));
+      const infoRes = await roomStub.fetch(new Request("http://do/info"));
+      if (!infoRes.ok) return null;
+      return invite;
+    } catch {
+      return null;
+    }
+  }));
+
+  return c.json(activeInvites.filter((invite) => invite !== null));
+});
+
+// 招待既読化
+app.post("/users/me/invites/:inviteId/read", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const inviteId = c.req.param("inviteId");
+  if (!inviteId) return c.json({ error: "inviteId は必須です" }, 400);
+
+  const userRegistry = getUserRegistry(c.env);
+  const res = await userRegistry.fetch(
+    new Request(`http://do/invites/${verified.uid}/${inviteId}/read`, { method: "POST" })
+  );
+  return c.json(await res.json(), res.status as 200 | 400);
+});
+
+// ルーム作成後のフレンド招待（Firebase 認証必須）
+app.post("/rooms/:code/invites", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
+  }
+
+  if (typeof body !== "object" || body === null) {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
+  }
+
+  const { invitedUids } = body as Record<string, unknown>;
+  if (!Array.isArray(invitedUids)) {
+    return c.json({ error: "invitedUids は配列で指定してください" }, 400);
+  }
+
+  const code = c.req.param("code").toUpperCase();
+  const roomStub = c.env.ROOM_DO.get(c.env.ROOM_DO.idFromName(code));
+  const metaRes = await roomStub.fetch(
+    new Request(`http://do/invite-meta?uid=${encodeURIComponent(verified.uid)}`)
+  );
+  if (!metaRes.ok) {
+    if (metaRes.status === 404) return c.json({ error: "ルームが見つかりません" }, 404);
+    if (metaRes.status === 403) return c.json({ error: "このルームの参加者のみ招待できます" }, 403);
+    return c.json({ error: "招待の作成に失敗しました" }, 400);
+  }
+
+  const roomMeta = await metaRes.json<{
+    status: "waiting" | "playing" | "finished";
+    gameId: string;
+    inviterName: string;
+    isHost: boolean;
+  }>();
+  if (!roomMeta.isHost) {
+    return c.json({ error: "ホストのみ招待できます" }, 403);
+  }
+  if (roomMeta.status !== "waiting") {
+    return c.json({ error: "待機中のルームでのみ招待できます" }, 409);
+  }
+
+  const userRegistry = getUserRegistry(c.env);
+  const inviteRes = await userRegistry.fetch(new Request("http://do/invites", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      inviterUid: verified.uid,
+      inviterName: roomMeta.inviterName,
+      roomCode: code,
+      gameId: roomMeta.gameId,
+      invitedUids,
+    }),
+  }));
+
+  return c.json(await inviteRes.json(), inviteRes.status as 200 | 400);
+});
+
 // フォロワー一覧取得
 app.get("/users/me/followers", async (c) => {
   const authHeader = c.req.header("Authorization") ?? "";
@@ -296,6 +417,85 @@ app.delete("/users/me/friends/:uid", async (c) => {
   const userRegistry = getUserRegistry(c.env);
   const res = await userRegistry.fetch(
     new Request(`http://do/friends/${verified.uid}/${friendUid}`, { method: "DELETE" })
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+// フレンド削除（相互）
+app.delete("/users/me/friends/:uid/mutual", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const friendUid = c.req.param("uid");
+  const userRegistry = getUserRegistry(c.env);
+
+  await userRegistry.fetch(
+    new Request(`http://do/friends/${verified.uid}/${friendUid}`, { method: "DELETE" })
+  );
+  await userRegistry.fetch(
+    new Request(`http://do/friends/${friendUid}/${verified.uid}`, { method: "DELETE" })
+  );
+
+  return c.json({ ok: true });
+});
+
+// 申請取り下げ（自分 -> 相手 の一方向解除）
+app.delete("/users/me/friend-requests/:uid", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const targetUid = c.req.param("uid");
+  const userRegistry = getUserRegistry(c.env);
+  const res = await userRegistry.fetch(
+    new Request(`http://do/friends/${verified.uid}/${targetUid}`, { method: "DELETE" })
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+// 申請承認（自分 -> 申請者 を追加して相互化）
+app.post("/users/me/friend-requests/:uid/approve", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const requesterUid = c.req.param("uid");
+  const userRegistry = getUserRegistry(c.env);
+  const res = await userRegistry.fetch(new Request("http://do/friends", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ownerUid: verified.uid, friendUid: requesterUid }),
+  }));
+
+  if (res.status === 409) {
+    return c.json({ ok: true });
+  }
+  return c.json(await res.json(), res.status as 200 | 400 | 404);
+});
+
+// 申請拒否（申請者 -> 自分 の一方向解除）
+app.post("/users/me/friend-requests/:uid/reject", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const requesterUid = c.req.param("uid");
+  const userRegistry = getUserRegistry(c.env);
+  const res = await userRegistry.fetch(
+    new Request(`http://do/friends/${requesterUid}/${verified.uid}`, { method: "DELETE" })
   );
   return c.json(await res.json(), res.status as 200);
 });

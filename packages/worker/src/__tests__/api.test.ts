@@ -169,3 +169,55 @@ describe("GET /rooms/:code/ws", () => {
     expect(res.status).toBe(426);
   });
 });
+
+describe("invite APIs auth guard", () => {
+  it("GET /users/me/invites は未認証で 401", async () => {
+    const res = await SELF.fetch("http://example.com/users/me/invites");
+    expect(res.status).toBe(401);
+    const json = await res.json<{ error: string }>();
+    expect(json.error).toMatch(/認証が必要/);
+  });
+
+  it("POST /users/me/invites/:inviteId/read は未認証で 401", async () => {
+    const res = await SELF.fetch("http://example.com/users/me/invites/test-invite/read", {
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+    const json = await res.json<{ error: string }>();
+    expect(json.error).toMatch(/認証が必要/);
+  });
+
+  it("POST /rooms/:code/invites は未認証で 401", async () => {
+    const res = await SELF.fetch("http://example.com/rooms/ABCD/invites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ invitedUids: ["u1"] }),
+    });
+    expect(res.status).toBe(401);
+    const json = await res.json<{ error: string }>();
+    expect(json.error).toMatch(/認証が必要/);
+  });
+});
+
+describe("friend request APIs auth guard", () => {
+  it("DELETE /users/me/friends/:uid/mutual は未認証で 401", async () => {
+    const res = await SELF.fetch("http://example.com/users/me/friends/u1/mutual", {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("POST /users/me/friend-requests/:uid/approve は未認証で 401", async () => {
+    const res = await SELF.fetch("http://example.com/users/me/friend-requests/u1/approve", {
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("POST /users/me/friend-requests/:uid/reject は未認証で 401", async () => {
+    const res = await SELF.fetch("http://example.com/users/me/friend-requests/u1/reject", {
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+  });
+});

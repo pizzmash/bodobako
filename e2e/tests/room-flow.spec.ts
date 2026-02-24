@@ -67,6 +67,36 @@ test.describe("ルーム作成・参加フロー", () => {
     // ロビーに戻る
     await expect(page).toHaveURL("/");
   });
+
+  test("招待ボタンはホストの待機室でのみ表示される", async ({ browser }) => {
+    // タブ A（ホスト）
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await setupPlayer(pageA, "Alice");
+    await pageA.getByLabel("オセロのルームを作成").click();
+    await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
+
+    const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
+
+    const inviteBtnHost = pageA.getByRole("button", { name: "フレンドを招待" });
+    await expect(inviteBtnHost).toBeVisible();
+    // E2Eでは未ログイン状態のため無効化されることを確認
+    await expect(inviteBtnHost).toBeDisabled();
+
+    // タブ B（参加者）
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await setupPlayer(pageB, "Bob");
+    await pageB.getByRole("textbox", { name: "ルームコード入力" }).fill(code);
+    await pageB.getByRole("button", { name: "ルームに参加" }).click();
+    await expect(pageB).toHaveURL(`/room/${code}`);
+
+    // 参加者側には招待ボタンが表示されない
+    await expect(pageB.getByRole("button", { name: "フレンドを招待" })).toHaveCount(0);
+
+    await contextA.close();
+    await contextB.close();
+  });
 });
 
 test.describe("ルームページ - 直接アクセス", () => {
