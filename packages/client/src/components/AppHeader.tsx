@@ -1,7 +1,8 @@
 import { getGameDefinition } from "@bodobako/shared";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
+import { API_BASE } from "../lib/socket";
 
 const FONT = "'Poppins', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
 
@@ -113,17 +114,39 @@ interface AppHeaderProps {
   onMenuClick: () => void;
 }
 
+type FriendRelation = "none" | "outgoing" | "incoming" | "friend";
+
+interface UserProfile {
+  uid: string;
+  displayName: string;
+  photoURL: string;
+}
+
 export function AppHeader({ onMenuClick }: AppHeaderProps) {
   useInjectStyles();
   const { room, playerId, playerName, setPlayerName } = useRoom();
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, idToken } = useAuth();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(playerName);
+  const [profilesByUid, setProfilesByUid] = useState<Record<string, UserProfile>>({});
+  const [relationByUid, setRelationByUid] = useState<Record<string, FriendRelation>>({});
+  const [activePopoverPlayerId, setActivePopoverPlayerId] = useState<string | null>(null);
+  const [requestingUid, setRequestingUid] = useState<string | null>(null);
+  const [approvingUid, setApprovingUid] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   const gameDef = room ? getGameDefinition(room.gameId) : null;
   const myPlayer = room?.players.find((p) => p.id === playerId);
   const displayName = myPlayer?.name ?? playerName;
+  const activePlayer = useMemo(
+    () => room?.players.find((player) => player.id === activePopoverPlayerId) ?? null,
+    [room, activePopoverPlayerId],
+  );
+  const activeUid = activePlayer?.userId ?? "";
+  const activeProfile = activeUid ? profilesByUid[activeUid] : null;
+  const activeRelation: FriendRelation | null = activeUid ? (relationByUid[activeUid] ?? "none") : null;
 
   const canEdit = !room && !firebaseUser;
 
@@ -137,6 +160,114 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
     if (editing) inputRef.current?.focus();
   }, [editing]);
 
+  useEffect(() => {
+    if (!room) {
+      setProfilesByUid({});
+      setActivePopoverPlayerId(null);
+      return;
+    }
+
+    const userIds = Array.from(
+      new Set(room.players.map((player) => player.userId).filter((uid): uid is string => Boolean(uid))),
+    );
+    if (userIds.length === 0) {
+      setProfilesByUid({});
+      return;
+    }
+
+    let canceled = false;
+    void (async () => {
+      const results = await Promise.all(userIds.map(async (uid) => {
+        try {
+          const res = await fetch(`${API_BASE}/users/${uid}/profile`);
+          if (!res.ok) return null;
+          const profile = await res.json() as UserProfile;
+          return [uid, profile] as const;
+        } catch {
+          return null;
+        }
+      }));
+
+      if (canceled) return;
+      const nextProfiles: Record<string, UserProfile> = {};
+      for (const row of results) {
+        if (!row) continue;
+        const [uid, profile] = row;
+        nextProfiles[uid] = profile;
+      }
+      setProfilesByUid(nextProfiles);
+    })();
+
+    return () => {
+      canceled = true;
+    };
+  }, [room]);
+
+  useEffect(() => {
+    if (!room || !idToken || !firebaseUser) {
+      setRelationByUid({});
+      return;
+    }
+
+    let canceled = false;
+    void (async () => {
+      try {
+        const [followingRes, followersRes] = await Promise.all([
+          fetch(`${API_BASE}/users/me/friends`, {
+            headers: { Authorization: `Bearer ${idToken}` },
+          }),
+          fetch(`${API_BASE}/users/me/followers`, {
+            headers: { Authorization: `Bearer ${idToken}` },
+          }),
+        ]);
+
+        if (!followingRes.ok || !followersRes.ok || canceled) return;
+
+        const following = await followingRes.json() as Array<{ uid: string }>;
+        const followers = await followersRes.json() as Array<{ uid: string; isFollowing: boolean }>;
+
+        const followingSet = new Set(following.map((friend) => friend.uid));
+        const followerMap = new Map(followers.map((follower) => [follower.uid, follower.isFollowing]));
+
+        const nextRelations: Record<string, FriendRelation> = {};
+        for (const player of room.players) {
+          const uid = player.userId;
+          if (!uid || uid === firebaseUser.uid) continue;
+          const followerIsFollowing = followerMap.get(uid);
+          if (followerIsFollowing === true) {
+            nextRelations[uid] = "friend";
+          } else if (followingSet.has(uid)) {
+            nextRelations[uid] = "outgoing";
+          } else if (followerMap.has(uid)) {
+            nextRelations[uid] = "incoming";
+          } else {
+            nextRelations[uid] = "none";
+          }
+        }
+        if (!canceled) setRelationByUid(nextRelations);
+      } catch {
+        if (!canceled) setRelationByUid({});
+      }
+    })();
+
+    return () => {
+      canceled = true;
+    };
+  }, [room, idToken, firebaseUser]);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!activePopoverPlayerId) return;
+      const target = event.target as Node;
+      if (popoverRef.current && !popoverRef.current.contains(target)) {
+        setActivePopoverPlayerId(null);
+        setRequestError(null);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [activePopoverPlayerId]);
+
   const commitEdit = () => {
     const trimmed = draft.trim();
     if (trimmed) setPlayerName(trimmed);
@@ -146,6 +277,129 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") commitEdit();
     if (e.key === "Escape") setEditing(false);
+  };
+
+  const refreshParticipantStatus = async (targetUid: string) => {
+    if (!idToken || !firebaseUser || !room) return;
+
+    try {
+      const [profileRes, followingRes, followersRes] = await Promise.all([
+        fetch(`${API_BASE}/users/${targetUid}/profile`),
+        fetch(`${API_BASE}/users/me/friends`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        }),
+        fetch(`${API_BASE}/users/me/followers`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        }),
+      ]);
+
+      if (profileRes.ok) {
+        const profile = await profileRes.json() as UserProfile;
+        setProfilesByUid((prev) => ({ ...prev, [targetUid]: profile }));
+      }
+
+      if (!followingRes.ok || !followersRes.ok) return;
+
+      const following = await followingRes.json() as Array<{ uid: string }>;
+      const followers = await followersRes.json() as Array<{ uid: string; isFollowing: boolean }>;
+
+      const followingSet = new Set(following.map((friend) => friend.uid));
+      const followerMap = new Map(followers.map((follower) => [follower.uid, follower.isFollowing]));
+
+      const followerIsFollowing = followerMap.get(targetUid);
+      const nextRelation: FriendRelation =
+        followerIsFollowing === true
+          ? "friend"
+          : followingSet.has(targetUid)
+            ? "outgoing"
+            : followerMap.has(targetUid)
+              ? "incoming"
+              : "none";
+
+      setRelationByUid((prev) => ({ ...prev, [targetUid]: nextRelation }));
+    } catch {
+      // ignore
+    }
+  };
+
+  const sendFriendRequest = async (targetUid: string) => {
+    if (!idToken || !targetUid) return;
+    setRequestingUid(targetUid);
+    setRequestError(null);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/friend-requests/${targetUid}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        const err = await res.json() as { error?: string };
+        setRequestError(err.error ?? "申請に失敗しました");
+        return;
+      }
+      setRelationByUid((prev) => ({ ...prev, [targetUid]: "outgoing" }));
+    } catch {
+      setRequestError("申請に失敗しました");
+    } finally {
+      setRequestingUid(null);
+    }
+  };
+
+  const approveFriendRequest = async (targetUid: string) => {
+    if (!idToken || !targetUid) return;
+    setApprovingUid(targetUid);
+    setRequestError(null);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/friend-requests/${targetUid}/approve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        const err = await res.json() as { error?: string };
+        setRequestError(err.error ?? "承認に失敗しました");
+        return;
+      }
+      setRelationByUid((prev) => ({ ...prev, [targetUid]: "friend" }));
+    } catch {
+      setRequestError("承認に失敗しました");
+    } finally {
+      setApprovingUid(null);
+    }
+  };
+
+  const handleParticipantClick = (player: NonNullable<typeof room>["players"][number]) => {
+    setRequestError(null);
+    setActivePopoverPlayerId((prev) => {
+      const next = prev === player.id ? null : player.id;
+      if (
+        next &&
+        idToken &&
+        player.userId &&
+        player.userId !== firebaseUser?.uid
+      ) {
+        void refreshParticipantStatus(player.userId);
+      }
+      return next;
+    });
+  };
+
+  const renderParticipantAvatar = (player: NonNullable<typeof room>["players"][number]) => {
+    const uid = player.userId;
+    const profile = uid ? profilesByUid[uid] : null;
+    if (profile?.photoURL) {
+      return (
+        <img
+          src={profile.photoURL}
+          alt={profile.displayName}
+          referrerPolicy="no-referrer"
+          style={styles.participantAvatarImage}
+        />
+      );
+    }
+    return (
+      <span style={styles.participantGuestIcon}>
+        <PersonIcon />
+      </span>
+    );
   };
 
   return (
@@ -172,7 +426,21 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
               )}
               <span style={styles.codePill}>
                 <span style={styles.codePillLabel}>ROOM</span>
-                {room.code}
+                <span style={styles.codeValue}>{room.code}</span>
+                <span style={styles.participantList}>
+                  {room.players.map((player) => (
+                    <button
+                      key={player.id}
+                      type="button"
+                      style={styles.participantIconBtn}
+                      onClick={() => handleParticipantClick(player)}
+                      aria-label={`${player.name} の情報を表示`}
+                      title={player.name}
+                    >
+                      {renderParticipantAvatar(player)}
+                    </button>
+                  ))}
+                </span>
               </span>
             </div>
           )}
@@ -235,6 +503,55 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           </button>
         </div>
       </div>
+      {room && activePlayer && (
+        <div ref={popoverRef} style={styles.participantPopover} role="dialog" aria-label="参加者情報">
+          <div style={styles.participantPopoverHeader}>
+            <span style={styles.participantPopoverAvatar}>
+              {renderParticipantAvatar(activePlayer)}
+            </span>
+            <div style={styles.participantPopoverTextWrap}>
+              <div style={styles.participantPopoverNameRow}>
+                <div style={styles.participantPopoverName}>
+                {activeProfile?.displayName ?? activePlayer.name}
+                </div>
+                {activeRelation === "friend" && <span style={styles.participantFriendBadge}>フレンド</span>}
+              </div>
+            </div>
+          </div>
+
+          {idToken && activeUid && activeUid !== firebaseUser?.uid && (
+            <div style={styles.participantPopoverActionWrap}>
+              {activeRelation === "none" && (
+                <button
+                  type="button"
+                  style={styles.participantRequestBtn}
+                  onClick={() => void sendFriendRequest(activeUid)}
+                  disabled={requestingUid === activeUid}
+                >
+                  {requestingUid === activeUid ? "申請中..." : "フレンド申請"}
+                </button>
+              )}
+              {activeRelation === "outgoing" && (
+                <div style={styles.participantStatusText}>フレンド申請中です</div>
+              )}
+              {activeRelation === "incoming" && (
+                <div style={styles.participantIncomingRow}>
+                  <div style={{ ...styles.participantStatusText, flex: 1 }}>相手からフレンド申請が届いています</div>
+                  <button
+                    type="button"
+                    style={styles.participantApproveBtn}
+                    onClick={() => void approveFriendRequest(activeUid)}
+                    disabled={approvingUid === activeUid}
+                  >
+                    {approvingUid === activeUid ? "承認中..." : "承認"}
+                  </button>
+                </div>
+              )}
+              {requestError && <div style={styles.participantErrorText}>{requestError}</div>}
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }
@@ -337,6 +654,150 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: "#A78BFA",
     letterSpacing: "0.1em",
+  },
+  codeValue: {
+    letterSpacing: "0.15em",
+  },
+  participantList: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    marginLeft: 2,
+  },
+  participantIconBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: "50%",
+    border: "1px solid rgba(99, 102, 241, 0.35)",
+    padding: 0,
+    background: "rgba(255, 255, 255, 0.9)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    color: "#6366F1",
+    overflow: "hidden",
+  },
+  participantAvatarImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    borderRadius: "50%",
+  },
+  participantGuestIcon: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    height: "100%",
+    color: "#6366F1",
+  },
+  participantPopover: {
+    position: "absolute",
+    top: 56,
+    right: "max(calc(50% - 400px), 16px)",
+    width: 280,
+    borderRadius: 14,
+    border: "1px solid rgba(129, 140, 248, 0.35)",
+    background: "rgba(255, 255, 255, 0.98)",
+    backdropFilter: "blur(10px)",
+    boxShadow: "0 14px 32px rgba(79, 70, 229, 0.2)",
+    padding: 12,
+    zIndex: 930,
+  },
+  participantPopoverHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+  participantPopoverAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: "50%",
+    overflow: "hidden",
+    border: "1px solid rgba(99, 102, 241, 0.28)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#6366F1",
+    background: "rgba(238, 242, 255, 0.9)",
+    flexShrink: 0,
+  },
+  participantPopoverTextWrap: {
+    minWidth: 0,
+  },
+  participantPopoverNameRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  participantPopoverName: {
+    fontSize: "0.9rem",
+    fontWeight: 700,
+    color: "#3730A3",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  participantPopoverActionWrap: {
+    marginTop: 10,
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  participantRequestBtn: {
+    minHeight: 36,
+    borderRadius: 10,
+    border: "none",
+    background: "#4F46E5",
+    color: "#fff",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  participantStatusText: {
+    fontSize: "0.82rem",
+    fontWeight: 600,
+    color: "#4F46E5",
+    background: "rgba(238, 242, 255, 0.9)",
+    borderRadius: 10,
+    padding: "8px 10px",
+  },
+  participantFriendBadge: {
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#166534",
+    background: "#ecfdf5",
+    border: "1px solid #86efac",
+    borderRadius: 999,
+    padding: "2px 8px",
+    lineHeight: 1.4,
+    flexShrink: 0,
+  },
+  participantIncomingRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  participantApproveBtn: {
+    minHeight: 34,
+    borderRadius: 10,
+    border: "none",
+    background: "#4F46E5",
+    color: "#fff",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    padding: "7px 10px",
+    cursor: "pointer",
+    flexShrink: 0,
+  },
+  participantErrorText: {
+    fontSize: "0.78rem",
+    fontWeight: 600,
+    color: "#DC2626",
+    background: "#FEF2F2",
+    borderRadius: 10,
+    padding: "6px 8px",
   },
 
   /* Player pill */

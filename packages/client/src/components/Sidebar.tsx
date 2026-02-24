@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE } from "../lib/socket";
 
@@ -233,7 +233,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // フレンドタブ
-  const [friendsSubTab, setFriendsSubTab] = useState<"following" | "followers">("following");
+  const [friendsSubTab, setFriendsSubTab] = useState<"mutual" | "outgoing" | "incoming">("mutual");
   const [following, setFollowing] = useState<Friend[] | null>(null);
   const [followers, setFollowers] = useState<Follower[] | null>(null);
   const [followingLoading, setFollowingLoading] = useState(false);
@@ -245,7 +245,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [addError, setAddError] = useState<string | null>(null);
   const [addSuccess, setAddSuccess] = useState<string | null>(null);
   const [removingUid, setRemovingUid] = useState<string | null>(null);
-  const [followingBackUid, setFollowingBackUid] = useState<string | null>(null);
+  const [cancelingUid, setCancelingUid] = useState<string | null>(null);
+  const [approvingUid, setApprovingUid] = useState<string | null>(null);
+  const [rejectingUid, setRejectingUid] = useState<string | null>(null);
+
+  const mutualFriends = useMemo(
+    () => (followers ?? []).filter((follower) => follower.isFollowing),
+    [followers],
+  );
+
+  const outgoingRequests = useMemo(() => {
+    const followersSet = new Set((followers ?? []).map((follower) => follower.uid));
+    return (following ?? []).filter((friend) => !followersSet.has(friend.uid));
+  }, [following, followers]);
+
+  const incomingRequests = useMemo(
+    () => (followers ?? []).filter((follower) => !follower.isFollowing),
+    [followers],
+  );
 
   // フォロー中を読み込む
   const loadFollowing = useCallback(async () => {
@@ -352,7 +369,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         setAddSuccess(friend.displayName);
         setAddCode("");
         setFollowing((prev) => (prev ? [friend, ...prev] : [friend]));
-        // フォロワー一覧の isFollowing も更新
+        // 申請一覧の isFollowing も更新
         setFollowers((prev) =>
           prev?.map((f) => f.uid === friend.uid ? { ...f, isFollowing: true } : f) ?? null
         );
@@ -366,38 +383,74 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (!idToken) return;
     setRemovingUid(uid);
     try {
-      const res = await fetch(`${API_BASE}/users/me/friends/${uid}`, {
+      const res = await fetch(`${API_BASE}/users/me/friends/${uid}/mutual`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${idToken}` },
       });
       if (res.ok) {
         setFollowing((prev) => prev?.filter((f) => f.uid !== uid) ?? null);
-        setFollowers((prev) =>
-          prev?.map((f) => f.uid === uid ? { ...f, isFollowing: false } : f) ?? null
-        );
+        setFollowers((prev) => prev?.filter((f) => f.uid !== uid) ?? null);
       }
     } catch { /* ignore */ }
     finally { setRemovingUid(null); }
   };
 
-  const handleFollowBack = async (follower: Follower) => {
+  const handleCancelRequest = async (uid: string) => {
     if (!idToken) return;
-    setFollowingBackUid(follower.uid);
+    setCancelingUid(uid);
     try {
-      const res = await fetch(`${API_BASE}/users/me/friends`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ friendCode: follower.friendCode }),
+      const res = await fetch(`${API_BASE}/users/me/friend-requests/${uid}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${idToken}` },
       });
       if (res.ok) {
-        const friend = await res.json() as Friend;
-        setFollowing((prev) => (prev ? [friend, ...prev] : [friend]));
+        setFollowing((prev) => prev?.filter((f) => f.uid !== uid) ?? null);
+      }
+    } catch { /* ignore */ }
+    finally { setCancelingUid(null); }
+  };
+
+  const handleApproveRequest = async (follower: Follower) => {
+    if (!idToken) return;
+    setApprovingUid(follower.uid);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/friend-requests/${follower.uid}/approve`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (res.ok) {
+        const friend: Friend = {
+          uid: follower.uid,
+          displayName: follower.displayName,
+          friendCode: follower.friendCode,
+          photoURL: follower.photoURL,
+        };
+        setFollowing((prev) => {
+          const current = prev ?? [];
+          if (current.some((f) => f.uid === friend.uid)) return current;
+          return [friend, ...current];
+        });
         setFollowers((prev) =>
           prev?.map((f) => f.uid === follower.uid ? { ...f, isFollowing: true } : f) ?? null
         );
       }
     } catch { /* ignore */ }
-    finally { setFollowingBackUid(null); }
+    finally { setApprovingUid(null); }
+  };
+
+  const handleRejectRequest = async (uid: string) => {
+    if (!idToken) return;
+    setRejectingUid(uid);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/friend-requests/${uid}/reject`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (res.ok) {
+        setFollowers((prev) => prev?.filter((f) => f.uid !== uid) ?? null);
+      }
+    } catch { /* ignore */ }
+    finally { setRejectingUid(null); }
   };
 
   const isLoading = isAuthLoading || isProfileLoading;
@@ -405,14 +458,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   // ---- レンダリングヘルパー ----
 
-  function renderFollowingList() {
+  function renderMutualFriendsList() {
     if (followingLoading) return (
       <div style={s.centeredRow}>
         <Spinner size={18} color="#6366F1" />
         <span style={s.loadingText}>読み込み中...</span>
       </div>
     );
-    if (!following || following.length === 0) return (
+    if (mutualFriends.length === 0) return (
       <div style={s.emptyState}>
         <svg width="38" height="38" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ opacity: 0.35, marginBottom: 8 }}>
           <circle cx="9" cy="8" r="3.5" stroke="#818CF8" strokeWidth="1.5"/>
@@ -420,13 +473,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <line x1="17" y1="11" x2="17" y2="17" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round"/>
           <line x1="14" y1="14" x2="20" y2="14" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
-        <p style={s.emptyTitle}>まだフォロー中のフレンドがいません</p>
-        <p style={s.emptySubTitle}>フレンドコードを入力して追加しよう</p>
+        <p style={s.emptyTitle}>まだフレンドがいません</p>
+        <p style={s.emptySubTitle}>申請を承認するとフレンドになります</p>
       </div>
     );
     return (
-      <ul style={s.list} aria-label="フォロー中一覧">
-        {following.map((f) => (
+      <ul style={s.list} aria-label="フレンド一覧">
+        {mutualFriends.map((f) => (
           <li key={f.uid} className="sidebar-friend-item" style={s.friendItem}>
             <Avatar photoURL={f.photoURL} displayName={f.displayName} />
             <div style={s.friendInfo}>
@@ -438,8 +491,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               style={s.iconBtn}
               onClick={() => void handleRemove(f.uid)}
               disabled={removingUid === f.uid}
-              aria-label={`${f.displayName} をフォロー解除`}
-              title="フォロー解除"
+              aria-label={`${f.displayName} をフレンド削除`}
+              title="フレンド削除"
             >
               {removingUid === f.uid
                 ? <Spinner size={14} color="#94A3B8" />
@@ -456,57 +509,110 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     );
   }
 
-  function renderFollowersList() {
-    if (followersLoading) return (
+  function renderOutgoingRequestsList() {
+    if (followingLoading || followersLoading) return (
       <div style={s.centeredRow}>
         <Spinner size={18} color="#6366F1" />
         <span style={s.loadingText}>読み込み中...</span>
       </div>
     );
-    if (!followers || followers.length === 0) return (
+    if (outgoingRequests.length === 0) return (
       <div style={s.emptyState}>
         <svg width="38" height="38" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ opacity: 0.35, marginBottom: 8 }}>
           <circle cx="12" cy="8" r="4" stroke="#818CF8" strokeWidth="1.5"/>
           <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
-        <p style={s.emptyTitle}>まだフォロワーがいません</p>
-        <p style={s.emptySubTitle}>フレンドコードを共有してフォロワーを増やそう</p>
+        <p style={s.emptyTitle}>申請中のユーザーはいません</p>
+        <p style={s.emptySubTitle}>フレンドコードで申請できます</p>
       </div>
     );
     return (
-      <ul style={s.list} aria-label="フォロワー一覧">
-        {followers.map((f) => (
+      <ul style={s.list} aria-label="申請中一覧">
+        {outgoingRequests.map((f) => (
           <li key={f.uid} className="sidebar-friend-item" style={s.friendItem}>
             <Avatar photoURL={f.photoURL} displayName={f.displayName} />
             <div style={s.friendInfo}>
               <span style={s.friendName}>{f.displayName}</span>
               <span style={s.friendCode}>{f.friendCode.slice(0, 4)}-{f.friendCode.slice(4)}</span>
             </div>
-            {f.isFollowing ? (
-              <span style={s.followingBadge} aria-label="フォロー中">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                相互
-              </span>
-            ) : (
+            <button
+              className="sidebar-remove-btn"
+              style={s.iconBtn}
+              onClick={() => void handleCancelRequest(f.uid)}
+              disabled={cancelingUid === f.uid}
+              aria-label={`${f.displayName} への申請を取り下げ`}
+              title="申請取り下げ"
+            >
+              {cancelingUid === f.uid
+                ? <Spinner size={14} color="#94A3B8" />
+                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6M9 6V4h6v2" />
+                  </svg>
+              }
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  function renderIncomingRequestsList() {
+    if (followersLoading) return (
+      <div style={s.centeredRow}>
+        <Spinner size={18} color="#6366F1" />
+        <span style={s.loadingText}>読み込み中...</span>
+      </div>
+    );
+    if (incomingRequests.length === 0) return (
+      <div style={s.emptyState}>
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ opacity: 0.35, marginBottom: 8 }}>
+          <circle cx="12" cy="8" r="4" stroke="#818CF8" strokeWidth="1.5"/>
+          <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <p style={s.emptyTitle}>承認待ちの申請はありません</p>
+        <p style={s.emptySubTitle}>申請が届くとここに表示されます</p>
+      </div>
+    );
+    return (
+      <ul style={s.list} aria-label="承認待ち一覧">
+        {incomingRequests.map((f) => (
+          <li key={f.uid} className="sidebar-friend-item" style={s.friendItem}>
+            <Avatar photoURL={f.photoURL} displayName={f.displayName} />
+            <div style={s.friendInfo}>
+              <span style={s.friendName}>{f.displayName}</span>
+              <span style={s.friendCode}>{f.friendCode.slice(0, 4)}-{f.friendCode.slice(4)}</span>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
               <button
                 className="sidebar-follow-back-btn"
                 style={s.followBackBtn}
-                onClick={() => void handleFollowBack(f)}
-                disabled={followingBackUid === f.uid}
-                aria-label={`${f.displayName} をフォロー`}
-                title="フォローする"
+                onClick={() => void handleApproveRequest(f)}
+                disabled={approvingUid === f.uid}
+                aria-label={`${f.displayName} の申請を承認`}
+                title="承認"
               >
-                {followingBackUid === f.uid
-                  ? <Spinner size={12} color="#fff" />
-                  : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                {approvingUid === f.uid && <Spinner size={12} color="#fff" />}
+                承認
+              </button>
+              <button
+                className="sidebar-remove-btn"
+                style={s.iconBtn}
+                onClick={() => void handleRejectRequest(f.uid)}
+                disabled={rejectingUid === f.uid}
+                aria-label={`${f.displayName} の申請を拒否`}
+                title="拒否"
+              >
+                {rejectingUid === f.uid
+                  ? <Spinner size={14} color="#94A3B8" />
+                  : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                 }
-                追加
               </button>
-            )}
+            </div>
           </li>
         ))}
       </ul>
@@ -564,8 +670,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <circle cx="17" cy="10" r="3" /><path d="M13.5 20c0-3 2.7-5.5 6.5-5.5" />
                       </svg>
                       フレンド
-                      {following !== null && following.length > 0 && (
-                        <span style={s.tabBadge}>{following.length}</span>
+                      {mutualFriends.length > 0 && (
+                        <span style={s.tabBadge}>{mutualFriends.length}</span>
                       )}
                     </>
                   )}
@@ -683,7 +789,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             /* ─── フレンドタブ ─── */
             <div style={s.section}>
               {/* フレンド追加フォーム */}
-              <div style={s.fieldLabel}>フレンドを追加</div>
+              <div style={s.fieldLabel}>フレンド申請</div>
               <div style={s.addRow}>
                 <input
                   className="sidebar-friend-code-input"
@@ -708,22 +814,27 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                     </svg>
                   )}
-                  追加
+                  申請
                 </button>
               </div>
               {addError && <p style={s.errorText} role="alert">{addError}</p>}
               {addSuccess && (
                 <p style={s.successText} role="status">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }}><polyline points="20 6 9 17 4 12" /></svg>
-                  {addSuccess} をフォローしました
+                  {addSuccess} に申請しました
                 </p>
               )}
 
               {/* サブタブ */}
               <div style={s.subTabBar}>
-                {(["following", "followers"] as const).map((tab) => {
+                {(["mutual", "outgoing", "incoming"] as const).map((tab) => {
                   const active = friendsSubTab === tab;
-                  const count = tab === "following" ? (following?.length ?? 0) : (followers?.length ?? 0);
+                  const count =
+                    tab === "mutual"
+                      ? mutualFriends.length
+                      : tab === "outgoing"
+                        ? outgoingRequests.length
+                        : incomingRequests.length;
                   return (
                     <button
                       key={tab}
@@ -739,7 +850,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       aria-selected={active}
                       role="tab"
                     >
-                      {tab === "following" ? "フォロー中" : "フォロワー"}
+                      {tab === "mutual" ? "フレンド" : tab === "outgoing" ? "申請中" : "承認待ち"}
                       {count > 0 && (
                         <span style={{
                           ...s.subTabBadge,
@@ -756,7 +867,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
               {/* リスト */}
               <div style={{ marginTop: 14 }}>
-                {friendsSubTab === "following" ? renderFollowingList() : renderFollowersList()}
+                {friendsSubTab === "mutual"
+                  ? renderMutualFriendsList()
+                  : friendsSubTab === "outgoing"
+                    ? renderOutgoingRequestsList()
+                    : renderIncomingRequestsList()}
               </div>
             </div>
           )}

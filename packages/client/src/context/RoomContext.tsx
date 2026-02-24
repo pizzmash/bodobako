@@ -10,8 +10,8 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
 import { wsClient } from "../lib/socket";
+import { useAuth } from "./AuthContext";
 
 const STORAGE_KEYS = {
   sessionToken: "bodobako:sessionToken",
@@ -176,7 +176,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setIsCreatingRoom(true);
     setCreatingGameId(gameId);
     wsClient
-      .createRoom({ playerName, gameId, sessionToken, idToken: idTokenRef.current ?? undefined })
+      .createRoom({
+        playerName,
+        gameId,
+        sessionToken,
+        idToken: idTokenRef.current ?? undefined,
+      })
       .then(({ code, playerId: pid }) => {
         setPlayerId(pid);
         saveRoomSession(code, pid);

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { SELF } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
 
 // -------------------------------------------------------------------------
 // RoomDO - WebSocket メッセージハンドラテスト
@@ -326,6 +326,7 @@ describe("game:move", () => {
     bobWs.close();
   });
 });
+
 
 describe("room:leave", () => {
   it("正常: room:leave で room:left が返る", async () => {

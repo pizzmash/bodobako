@@ -1,12 +1,22 @@
 import { getAllGames } from "@bodobako/shared";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
+import { API_BASE } from "../lib/socket";
 import { NameEntryModal } from "./NameEntryModal";
 
 const games = getAllGames();
 
 const FONT = "'Poppins', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
 const BODY_FONT = "'Inter', 'Open Sans', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
+
+interface RoomInvite {
+  inviteId: string;
+  inviterName: string;
+  roomCode: string;
+  gameId: string;
+  createdAt: number;
+}
 
 /* ── helper: simple string hash ── */
 function hashCode(str: string): number {
@@ -145,6 +155,32 @@ const INJECTED_STYLES = `
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(99, 102, 241, 0.15);
 }
 
+.lobby-invite-search:focus {
+  outline: 3px solid #6366F1;
+  outline-offset: 2px;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.lobby-invite-item {
+  transition: background .15s ease, border-color .15s ease;
+}
+.lobby-invite-item:hover {
+  background: rgba(238, 242, 255, 0.9) !important;
+  border-color: rgba(129, 140, 248, 0.45) !important;
+}
+
+.lobby-modal-btn {
+  transition: all .2s ease;
+}
+.lobby-modal-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.lobby-modal-btn:focus {
+  outline: 3px solid #6366F1;
+  outline-offset: 2px;
+}
+
 @media (max-width: 480px) {
   .lobby-join-section {
     max-width: calc(100vw - 48px) !important;
@@ -170,8 +206,13 @@ function useInjectStyles() {
 export function Lobby() {
   useInjectStyles();
   const { playerName, createRoom, joinRoom, errorMsg, clearError } = useRoom();
+  const { idToken } = useAuth();
   const [roomCode, setRoomCode] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [inviteQueue, setInviteQueue] = useState<RoomInvite[]>([]);
+  const [isLoadingInvites, setIsLoadingInvites] = useState(false);
+
+  const currentInvite = inviteQueue[0] ?? null;
 
   const filteredGames = games.filter((g) => {
     if (!searchQuery.trim()) return true;
@@ -182,8 +223,73 @@ export function Lobby() {
     );
   });
 
+  const loadInvites = useCallback(async () => {
+    if (!idToken) {
+      setInviteQueue([]);
+      return;
+    }
+    setIsLoadingInvites(true);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/invites`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (res.ok) {
+        setInviteQueue(await res.json() as RoomInvite[]);
+      }
+    } catch {
+      setInviteQueue([]);
+    } finally {
+      setIsLoadingInvites(false);
+    }
+  }, [idToken]);
+
+  useEffect(() => {
+    if (!idToken) {
+      setInviteQueue([]);
+      return;
+    }
+    void loadInvites();
+  }, [idToken, loadInvites]);
+
+  useEffect(() => {
+    const handlePageShow = () => {
+      void loadInvites();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [loadInvites]);
+
+  const markInviteRead = useCallback(async (inviteId: string) => {
+    if (!idToken) return;
+    await fetch(`${API_BASE}/users/me/invites/${encodeURIComponent(inviteId)}/read`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+  }, [idToken]);
+
+  const dismissCurrentInvite = useCallback(async () => {
+    if (!currentInvite) return;
+    try {
+      await markInviteRead(currentInvite.inviteId);
+    } catch {
+      // ignore
+    }
+    setInviteQueue((prev) => prev.slice(1));
+  }, [currentInvite, markInviteRead]);
+
   const handleCreate = (gameId: string) => {
     createRoom(playerName, gameId);
+  };
+
+  const handleJoinFromInvite = async () => {
+    if (!currentInvite || !playerName.trim()) return;
+    try {
+      await markInviteRead(currentInvite.inviteId);
+    } catch {
+      // ignore
+    }
+    setInviteQueue((prev) => prev.slice(1));
+    joinRoom(currentInvite.roomCode, playerName);
   };
 
   const handleJoin = () => {
@@ -194,6 +300,41 @@ export function Lobby() {
   return (
     <>
       {!playerName && <NameEntryModal />}
+      {currentInvite && (
+        <div style={styles.inviteNoticeOverlay} role="dialog" aria-modal="true" aria-label="招待通知">
+          <div style={styles.inviteNoticeCard}>
+            <div style={styles.inviteNoticeBadge}>招待が届いています</div>
+            <div style={styles.inviteNoticeTitle}>ルーム招待</div>
+            <p style={styles.inviteNoticeText}>
+              {currentInvite.inviterName}さんから
+              {games.find((g) => g.id === currentInvite.gameId)?.name ?? "ゲーム"}
+              への招待が届きました。
+            </p>
+            <div style={styles.inviteNoticeMeta}>ルームコード: {currentInvite.roomCode}</div>
+            {inviteQueue.length > 1 && (
+              <div style={styles.inviteNoticeCount}>残り {inviteQueue.length - 1} 件の招待があります</div>
+            )}
+            <div style={styles.inviteNoticeActions}>
+              <button
+                className="lobby-modal-btn"
+                style={styles.inviteDismissBtn}
+                onClick={() => void dismissCurrentInvite()}
+                disabled={isLoadingInvites}
+              >
+                閉じる
+              </button>
+              <button
+                className="lobby-modal-btn"
+                style={styles.inviteJoinBtn}
+                onClick={() => void handleJoinFromInvite()}
+                disabled={!playerName.trim()}
+              >
+                参加する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={styles.container}>
       {/* 装飾的な背景グラデーション */}
       <div style={styles.bgDecoration1} />
@@ -311,6 +452,7 @@ export function Lobby() {
 
       <div style={{ height: 48 }} />
     </div>
+
     </>
   );
 }
@@ -578,5 +720,271 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 48,
     fontFamily: FONT,
     boxShadow: "0 4px 12px rgba(34, 197, 94, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
+  },
+
+  inviteNoticeOverlay: {
+    position: "fixed",
+    inset: 0,
+    pointerEvents: "none",
+    zIndex: 1200,
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingTop: 76,
+  },
+  inviteNoticeCard: {
+    pointerEvents: "auto",
+    width: "min(480px, calc(100vw - 32px))",
+    background: "rgba(255, 255, 255, 0.96)",
+    backdropFilter: "blur(12px)",
+    borderRadius: 18,
+    border: "2px solid rgba(129, 140, 248, 0.3)",
+    boxShadow: "0 14px 36px rgba(99, 102, 241, 0.22)",
+    padding: "16px 18px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    fontFamily: BODY_FONT,
+  },
+  inviteNoticeBadge: {
+    alignSelf: "flex-start",
+    fontSize: "0.75rem",
+    color: "#4338CA",
+    background: "rgba(99, 102, 241, 0.14)",
+    padding: "4px 8px",
+    borderRadius: 999,
+    fontWeight: 700,
+  },
+  inviteNoticeTitle: {
+    fontSize: "1.1rem",
+    fontWeight: 700,
+    color: "#312E81",
+    fontFamily: FONT,
+  },
+  inviteNoticeText: {
+    margin: 0,
+    color: "#4338CA",
+    fontSize: "0.93rem",
+    lineHeight: 1.55,
+  },
+  inviteNoticeMeta: {
+    fontSize: "0.88rem",
+    fontWeight: 700,
+    color: "#4F46E5",
+  },
+  inviteNoticeCount: {
+    fontSize: "0.8rem",
+    color: "#6366F1",
+    fontWeight: 600,
+  },
+  inviteNoticeActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 2,
+  },
+  inviteDismissBtn: {
+    border: "1.5px solid rgba(129, 140, 248, 0.4)",
+    borderRadius: 10,
+    padding: "10px 14px",
+    background: "#fff",
+    color: "#4F46E5",
+    fontWeight: 600,
+    fontFamily: FONT,
+    minHeight: 44,
+    cursor: "pointer",
+  },
+  inviteJoinBtn: {
+    border: "none",
+    borderRadius: 10,
+    padding: "10px 18px",
+    background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
+    color: "#fff",
+    fontWeight: 700,
+    fontFamily: FONT,
+    minHeight: 44,
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
+  },
+
+  inviteModalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.25)",
+    backdropFilter: "blur(6px)",
+    zIndex: 1300,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  inviteModalCard: {
+    width: "min(640px, 100%)",
+    maxHeight: "min(760px, calc(100vh - 32px))",
+    background: "rgba(255, 255, 255, 0.98)",
+    borderRadius: 20,
+    border: "2px solid rgba(129, 140, 248, 0.28)",
+    boxShadow: "0 20px 45px rgba(99, 102, 241, 0.28)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  inviteModalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    padding: "18px 18px 14px",
+    borderBottom: "1px solid rgba(129, 140, 248, 0.2)",
+  },
+  inviteModalTitle: {
+    fontFamily: FONT,
+    color: "#312E81",
+    fontWeight: 700,
+    fontSize: "1.05rem",
+  },
+  inviteModalSubtitle: {
+    marginTop: 4,
+    fontSize: "0.84rem",
+    fontWeight: 600,
+    color: "#6366F1",
+  },
+  inviteModalCloseBtn: {
+    border: "1.5px solid rgba(129, 140, 248, 0.36)",
+    borderRadius: 10,
+    background: "#fff",
+    color: "#4F46E5",
+    fontFamily: FONT,
+    fontWeight: 600,
+    minHeight: 44,
+    padding: "10px 12px",
+    cursor: "pointer",
+  },
+  inviteModalControls: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    padding: "14px 18px",
+    borderBottom: "1px solid rgba(129, 140, 248, 0.14)",
+  },
+  inviteModalSearchInput: {
+    width: "100%",
+    minHeight: 44,
+    borderRadius: 12,
+    border: "2px solid rgba(129, 140, 248, 0.25)",
+    padding: "10px 12px",
+    fontFamily: BODY_FONT,
+    fontSize: "0.95rem",
+    color: "#312E81",
+    outline: "none",
+    background: "rgba(255, 255, 255, 0.96)",
+    boxSizing: "border-box",
+  },
+  inviteModalControlButtons: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  inviteSelectBtn: {
+    border: "none",
+    borderRadius: 10,
+    background: "rgba(99, 102, 241, 0.12)",
+    color: "#4338CA",
+    minHeight: 40,
+    padding: "8px 12px",
+    fontWeight: 700,
+    fontFamily: BODY_FONT,
+    cursor: "pointer",
+  },
+  inviteClearBtn: {
+    border: "1.5px solid rgba(129, 140, 248, 0.35)",
+    borderRadius: 10,
+    background: "#fff",
+    color: "#4F46E5",
+    minHeight: 40,
+    padding: "8px 12px",
+    fontWeight: 600,
+    fontFamily: BODY_FONT,
+    cursor: "pointer",
+  },
+  inviteFriendList: {
+    padding: "12px 18px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    overflowY: "auto",
+    minHeight: 180,
+    maxHeight: 360,
+  },
+  inviteFriendItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    border: "1.5px solid rgba(129, 140, 248, 0.22)",
+    borderRadius: 12,
+    padding: "10px 12px",
+    background: "rgba(255, 255, 255, 0.9)",
+    cursor: "pointer",
+  },
+  inviteCheckbox: {
+    width: 20,
+    height: 20,
+    margin: 0,
+    accentColor: "#6366F1",
+    flexShrink: 0,
+  },
+  inviteFriendTexts: {
+    display: "flex",
+    flexDirection: "column",
+    minWidth: 0,
+  },
+  inviteFriendName: {
+    fontSize: "0.92rem",
+    color: "#312E81",
+    fontWeight: 700,
+    fontFamily: BODY_FONT,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  inviteFriendCode: {
+    fontSize: "0.78rem",
+    color: "#818CF8",
+    fontWeight: 600,
+    letterSpacing: 0.4,
+  },
+  inviteListMessage: {
+    padding: "24px 10px",
+    textAlign: "center",
+    color: "#6366F1",
+    fontWeight: 600,
+    fontSize: "0.9rem",
+  },
+  inviteModalFooter: {
+    borderTop: "1px solid rgba(129, 140, 248, 0.2)",
+    padding: "14px 18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  inviteModalHint: {
+    color: "#6366F1",
+    fontWeight: 600,
+    fontSize: "0.8rem",
+    fontFamily: BODY_FONT,
+  },
+  inviteCreateBtn: {
+    border: "none",
+    borderRadius: 12,
+    minHeight: 44,
+    padding: "10px 18px",
+    background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
+    color: "#fff",
+    fontWeight: 700,
+    fontFamily: FONT,
+    cursor: "pointer",
+    boxShadow: "0 6px 16px rgba(99, 102, 241, 0.28)",
   },
 };
