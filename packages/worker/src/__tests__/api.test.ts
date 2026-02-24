@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll } from "vitest";
 import { SELF } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
 
 // -------------------------------------------------------------------------
 // HTTP API テスト - POST /rooms, GET /rooms/:code/ws

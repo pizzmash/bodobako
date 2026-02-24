@@ -10,8 +10,8 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
 import { wsClient } from "../lib/socket";
+import { useAuth } from "./AuthContext";
 
 const STORAGE_KEYS = {
   sessionToken: "bodobako:sessionToken",

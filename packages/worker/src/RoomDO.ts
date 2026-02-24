@@ -1,9 +1,9 @@
 import type {
-  GameResult,
-  Player,
-  RoomInfo,
-  WsClientMessage,
-  WsServerMessage,
+    GameResult,
+    Player,
+    RoomInfo,
+    WsClientMessage,
+    WsServerMessage,
 } from "@bodobako/shared";
 import { getGameDefinition } from "@bodobako/shared";
 import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";

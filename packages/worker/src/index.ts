@@ -1,6 +1,6 @@
+import { getGameDefinition } from "@bodobako/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { getGameDefinition } from "@bodobako/shared";
 import { RoomDO } from "./RoomDO.js";
 import { RoomRegistry } from "./RoomRegistry.js";
 import { UserRegistry } from "./UserRegistry.js";

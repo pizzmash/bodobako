@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { SELF } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
 
 // -------------------------------------------------------------------------
 // RoomDO - WebSocket メッセージハンドラテスト
