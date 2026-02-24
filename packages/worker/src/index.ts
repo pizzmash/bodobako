@@ -197,6 +197,24 @@ app.put("/users/me", async (c) => {
 // フレンド API（Firebase 認証必須）
 // ---------------------------------------------------------------------------
 
+// ユーザープロフィール取得（公開情報）
+app.get("/users/:uid/profile", async (c) => {
+  const uid = c.req.param("uid");
+  if (!uid) return c.json({ error: "uid は必須です" }, 400);
+
+  const userRegistry = getUserRegistry(c.env);
+  const res = await userRegistry.fetch(new Request(`http://do/users/${uid}`));
+  if (res.status === 404) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  if (!res.ok) return c.json({ error: "プロフィール取得に失敗しました" }, 400);
+
+  const profile = await res.json<{ uid: string; displayName: string; photoURL?: string }>();
+  return c.json({
+    uid: profile.uid,
+    displayName: profile.displayName,
+    photoURL: profile.photoURL ?? "",
+  });
+});
+
 // フレンドコードでユーザー検索
 app.get("/users/search", async (c) => {
   const authHeader = c.req.header("Authorization") ?? "";
@@ -252,6 +270,30 @@ app.post("/users/me/friends", async (c) => {
     body: JSON.stringify({ ownerUid: verified.uid, friendUid: friend.uid }),
   }));
   return c.json(await addRes.json(), addRes.status as 200 | 400 | 404 | 409);
+});
+
+// UID指定でフレンド申請（自分 -> 相手）
+app.post("/users/me/friend-requests/:uid", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const friendUid = c.req.param("uid");
+  if (!friendUid) return c.json({ error: "uid は必須です" }, 400);
+  if (friendUid === verified.uid) return c.json({ error: "自分自身には申請できません" }, 400);
+
+  const userRegistry = getUserRegistry(c.env);
+  const addRes = await userRegistry.fetch(new Request("http://do/friends", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ownerUid: verified.uid, friendUid }),
+  }));
+
+  if (addRes.status === 409) return c.json({ ok: true });
+  return c.json(await addRes.json(), addRes.status as 200 | 400 | 404);
 });
 
 // フレンド一覧取得

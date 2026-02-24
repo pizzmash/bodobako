@@ -200,6 +200,13 @@ describe("invite APIs auth guard", () => {
 });
 
 describe("friend request APIs auth guard", () => {
+  it("POST /users/me/friend-requests/:uid は未認証で 401", async () => {
+    const res = await SELF.fetch("http://example.com/users/me/friend-requests/u1", {
+      method: "POST",
+    });
+    expect(res.status).toBe(401);
+  });
+
   it("DELETE /users/me/friends/:uid/mutual は未認証で 401", async () => {
     const res = await SELF.fetch("http://example.com/users/me/friends/u1/mutual", {
       method: "DELETE",
@@ -219,5 +226,12 @@ describe("friend request APIs auth guard", () => {
       method: "POST",
     });
     expect(res.status).toBe(401);
+  });
+});
+
+describe("public profile API", () => {
+  it("GET /users/:uid/profile は未登録ユーザーに 404 を返す", async () => {
+    const res = await SELF.fetch("http://example.com/users/not-found-user/profile");
+    expect(res.status).toBe(404);
   });
 });
