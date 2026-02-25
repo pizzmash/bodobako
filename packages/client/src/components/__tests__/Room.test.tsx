@@ -40,15 +40,13 @@ describe("Room 招待UI", () => {
     vi.clearAllMocks();
   });
 
-  it("ホストは招待ボタンを表示し、未ログイン時は無効", () => {
+  it("ホストでも未ログイン時は招待ボタンを表示しない", () => {
     mockUseRoom.mockReturnValue(baseRoomState());
     mockUseAuth.mockReturnValue({ idToken: null });
 
     render(<Room />);
 
-    const inviteButton = screen.getByRole("button", { name: "フレンドを招待" });
-    expect(inviteButton).toBeTruthy();
-    expect((inviteButton as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "フレンドを招待" })).toBeNull();
   });
 
   it("ホストでログイン済みなら招待ボタンは有効", () => {

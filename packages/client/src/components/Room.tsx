@@ -297,13 +297,14 @@ export function Room() {
                 >
                   ゲーム開始
                 </button>
-                <button
-                  style={styles.inviteBtn}
-                  onClick={openInviteModal}
-                  disabled={!idToken}
-                >
-                  フレンドを招待
-                </button>
+                {idToken && (
+                  <button
+                    style={styles.inviteBtn}
+                    onClick={openInviteModal}
+                  >
+                    フレンドを招待
+                  </button>
+                )}
               </>
             ) : (
               <div style={styles.waitingHost}>

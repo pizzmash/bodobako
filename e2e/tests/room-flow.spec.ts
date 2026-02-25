@@ -78,10 +78,8 @@ test.describe("ルーム作成・参加フロー", () => {
 
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
-    const inviteBtnHost = pageA.getByRole("button", { name: "フレンドを招待" });
-    await expect(inviteBtnHost).toBeVisible();
-    // E2Eでは未ログイン状態のため無効化されることを確認
-    await expect(inviteBtnHost).toBeDisabled();
+    // E2Eでは未ログイン状態のためホストでも表示されない
+    await expect(pageA.getByRole("button", { name: "フレンドを招待" })).toHaveCount(0);
 
     // タブ B（参加者）
     const contextB = await browser.newContext();
