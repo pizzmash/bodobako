@@ -3,6 +3,7 @@ import { AiueBattleBoard } from "../games/aiuebattle/AiueBattleBoard";
 import { BlokusBoard } from "../games/blokus/BlokusBoard";
 import { CitychaseBoard } from "../games/citychase/CitychaseBoard";
 import { NanaBoard } from "../games/nana/NanaBoard";
+import { NyaMensBoard } from "../games/nyamens/NyaMensBoard";
 import { OthelloBoard } from "../games/othello/OthelloBoard";
 import { SonicRestaurantBoard } from "../games/sonic-restaurant/SonicRestaurantBoard";
 
@@ -23,6 +24,8 @@ export function GameView() {
       return <BlokusBoard />;
     case "nana":
       return <NanaBoard />;
+    case "nyamens":
+      return <NyaMensBoard />;
     default:
       return <div>未対応のゲーム: {room.gameId}</div>;
   }

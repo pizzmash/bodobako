@@ -1,6 +1,7 @@
 import type { NanaMove, NanaStateView } from "@bodobako/shared";
 import { useEffect, useRef, useState } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
+import { PlayingCard } from "../../components/PlayingCard";
 import { useRoom } from "../../context/RoomContext";
 import "./nana.css";
 
@@ -121,42 +122,30 @@ function FieldCardView({
   if (card.number !== null) {
     // 公開済み（turnFlips中）
     return (
-      <div
+      <PlayingCard
         className="nana-card-revealed"
-        style={{
-          width: w,
-          height: h,
-          background: C.card,
-          borderRadius: 8,
-          border: `2px solid ${C.primary}`,
-          boxShadow: `0 0 14px ${C.primaryBorder}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: FONT,
-          fontSize: Math.round(h * 0.36),
-          fontWeight: 900,
-          color: C.primary,
-        }}
-      >
-        {card.number}
-      </div>
+        label={card.number}
+        width={w}
+        height={h}
+        faceBackground={C.card}
+        textColor={C.primary}
+        borderColor={C.primary}
+        highlighted
+        style={{ fontFamily: FONT }}
+      />
     );
   }
 
   // 裏向き
   return (
-    <div
+    <PlayingCard
       className={`nana-field-card${clickable ? " clickable" : ""}`}
-      onClick={clickable ? onClick : undefined}
-      style={{
-        ...CARD_BACK_STYLE,
-        width: w,
-        height: h,
-        borderRadius: 8,
-        cursor: clickable ? "pointer" : "default",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-      }}
+      faceDown
+      backColor={C.primary}
+      width={w}
+      height={h}
+      clickable={clickable}
+      onClick={onClick}
     />
   );
 }
