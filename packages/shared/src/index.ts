@@ -25,6 +25,11 @@ export type {
 } from "./games/citychase/types.js";
 export { getAllGames, getGameDefinition } from "./games/index.js";
 export { nanaDefinition } from "./games/nana/index.js";
+export { nyaMensDefinition } from "./games/nyamens/index.js";
+export type {
+  NyaCard, NyaEventCard, NyaMensMove, NyaMensPhase, NyaMensPlayerView,
+  NyaMensState, NyaMensTrack, NyaRole
+} from "./games/nyamens/types.js";
 export { checkWinCondition, createDeck, getActiveHandCard } from "./games/nana/logic.js";
 export type { NanaCard, NanaCardView, NanaMove, NanaState, NanaStateView } from "./games/nana/types.js";
 export type { GameDefinitionMap, GameId } from "./games/index.js";
