@@ -25,10 +25,3 @@ new_sqlite_classes = ["UserRegistry"]
 
 [vars]
 FIREBASE_PROJECT_ID = "bodobako-1c07a"
-
-# シークレット（コードには書かない。以下のコマンドで登録）:
-#   npx wrangler secret put STRIPE_SECRET_KEY --config packages/worker/wrangler.toml
-#   npx wrangler secret put STRIPE_WEBHOOK_SECRET --config packages/worker/wrangler.toml
-# ローカル開発時は packages/worker/.dev.vars に以下を記載:
-#   STRIPE_SECRET_KEY=sk_test_...
-#   STRIPE_WEBHOOK_SECRET=whsec_...
