@@ -1,5 +1,6 @@
 import { getAllGames } from "@bodobako/shared";
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import { API_BASE } from "../lib/socket";
@@ -233,6 +234,15 @@ export function Lobby() {
   const [currentPage, setCurrentPage] = useState(1);
   const [inviteQueue, setInviteQueue] = useState<RoomInvite[]>([]);
   const [isLoadingInvites, setIsLoadingInvites] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showCoffeeThanks, setShowCoffeeThanks] = useState(() => searchParams.get("coffee") === "thanks");
+
+  useEffect(() => {
+    if (!showCoffeeThanks) return;
+    setSearchParams((prev) => { prev.delete("coffee"); return prev; }, { replace: true });
+    const timer = setTimeout(() => setShowCoffeeThanks(false), 6000);
+    return () => clearTimeout(timer);
+  }, [showCoffeeThanks, setSearchParams]);
 
   const currentInvite = inviteQueue[0] ?? null;
 
@@ -328,6 +338,23 @@ export function Lobby() {
   return (
     <>
       {!playerName && <NameEntryModal />}
+      {showCoffeeThanks && (
+        <div role="status" aria-live="polite" style={{
+          position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
+          zIndex: 2000, display: "flex", alignItems: "center", gap: 10,
+          background: "linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)",
+          border: "1.5px solid rgba(99,102,241,0.35)", borderRadius: 16,
+          padding: "14px 22px", boxShadow: "0 8px 24px rgba(99,102,241,0.25)",
+          fontFamily: FONT, fontSize: "0.95rem", fontWeight: 600, color: "#4F46E5",
+          whiteSpace: "nowrap",
+        }}>
+          ☕ コーヒーありがとうございます！開発の励みになります
+          <button onClick={() => setShowCoffeeThanks(false)} aria-label="閉じる" style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: "#6366F1", fontSize: "1.1rem", lineHeight: 1, padding: 0, marginLeft: 4,
+          }}>✕</button>
+        </div>
+      )}
       {currentInvite && (
         <div style={styles.inviteNoticeOverlay} role="dialog" aria-modal="true" aria-label="招待通知">
           <div style={styles.inviteNoticeCard}>

@@ -56,6 +56,18 @@ const INJECTED_STYLES = `
 }
 .sidebar-sign-out-btn:focus { outline: 3px solid #EF4444; outline-offset: 2px; }
 
+.sidebar-coffee-btn { transition: all .2s ease; cursor: pointer; }
+.sidebar-coffee-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99,102,241,0.35);
+}
+.sidebar-coffee-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.sidebar-coffee-btn:active { transform: translateY(0); }
+.sidebar-coffee-btn:focus { outline: 3px solid #6366F1; outline-offset: 2px; }
+
 .sidebar-save-btn {
   transition: all .2s ease;
   cursor: pointer;
@@ -230,6 +242,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isCoffeeBuying, setIsCoffeeBuying] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // フレンドタブ
@@ -333,6 +346,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleBuyCoffee = async () => {
+    if (!idToken) return;
+    setIsCoffeeBuying(true);
+    try {
+      const res = await fetch(`${API_BASE}/stripe/checkout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ origin: window.location.origin }),
+      });
+      if (!res.ok) return;
+      const { url } = await res.json() as { url: string };
+      window.open(url, "_blank");
+    } catch {
+      console.error("コーヒー決済に失敗しました");
+    } finally {
+      setIsCoffeeBuying(false);
+    }
   };
 
   const handleSave = async () => {
@@ -783,6 +818,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   サインアウト
                 </button>
               </div>
+
+              <div style={{ ...s.section, paddingTop: 0 }}>
+                <button
+                  className="sidebar-coffee-btn"
+                  style={s.coffeeBtn}
+                  onClick={() => void handleBuyCoffee()}
+                  disabled={isCoffeeBuying}
+                  aria-busy={isCoffeeBuying}
+                  aria-label="開発者にコーヒーを贈る"
+                >
+                  {isCoffeeBuying
+                    ? <><Spinner size={14} color="#92400E" />処理中...</>
+                    : <>☕ 開発者にコーヒーを贈る</>
+                  }
+                </button>
+              </div>
             </>
 
           ) : (
@@ -1027,6 +1078,16 @@ const s: Record<string, React.CSSProperties> = {
     border: "1.5px solid rgba(239,68,68,0.3)", background: "transparent",
     color: "#EF4444", fontSize: "0.9rem", fontWeight: 600, fontFamily: FONT, minHeight: 44,
   },
+
+  /* コーヒーボタン */
+  coffeeBtn: {
+    width: "100%", padding: "10px 0", borderRadius: 10,
+    border: "1.5px solid rgba(99,102,241,0.35)",
+    background: "linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)",
+    color: "#4F46E5", fontSize: "0.9rem", fontWeight: 600,
+    fontFamily: FONT, minHeight: 44,
+    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+  } as React.CSSProperties,
 
   /* フレンドタブ内: 追加フォーム */
   addRow: { display: "flex", gap: 8, alignItems: "center" },
