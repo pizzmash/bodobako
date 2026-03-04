@@ -21,6 +21,8 @@ interface Env {
   REGISTRY: DurableObjectNamespace;
   USER_REGISTRY: DurableObjectNamespace;
   FIREBASE_PROJECT_ID: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
 }
 
 function getRegistry(env: Env) {
@@ -569,6 +571,109 @@ app.get("/admin/api/rooms/:code", async (c) => {
   const res = await stub.fetch(new Request("http://do/info"));
   if (!res.ok) return c.json({ error: "ルームが見つかりません" }, 404);
   return c.json(await res.json());
+});
+
+// ---------------------------------------------------------------------------
+// Stripe Webhook 署名検証ヘルパー
+// ---------------------------------------------------------------------------
+async function verifyStripeSignature(body: string, header: string, secret: string): Promise<boolean> {
+  const t = header.split(",").find((p) => p.startsWith("t="))?.slice(2);
+  const v1 = header.split(",").find((p) => p.startsWith("v1="))?.slice(3);
+  if (!t || !v1) return false;
+  // タイムスタンプが5分以内であること
+  if (Math.abs(Date.now() / 1000 - Number(t)) > 300) return false;
+
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${t}.${body}`));
+  const computed = Array.from(new Uint8Array(signed)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return computed === v1;
+}
+
+// ---------------------------------------------------------------------------
+// Stripe Webhook（checkout.session.completed → 寄付をDBに保存）
+// POST /stripe/webhook
+// ---------------------------------------------------------------------------
+app.post("/stripe/webhook", async (c) => {
+  const sig = c.req.header("Stripe-Signature") ?? "";
+  const rawBody = await c.req.text();
+
+  const valid = await verifyStripeSignature(rawBody, sig, c.env.STRIPE_WEBHOOK_SECRET);
+  if (!valid) return c.json({ error: "Invalid signature" }, 400);
+
+  const event = JSON.parse(rawBody) as {
+    type: string;
+    data: { object: { id: string; metadata: { userId: string; displayName: string }; amount_total: number; currency: string; created: number } };
+  };
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const stub = getUserRegistry(c.env);
+    await stub.fetch(new Request("http://do/donations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        stripeSessionId: session.id,
+        userId: session.metadata.userId,
+        displayName: session.metadata.displayName,
+        amountCents: session.amount_total,
+        currency: session.currency,
+        createdAt: session.created * 1000,
+      }),
+    }));
+  }
+
+  return c.json({ received: true });
+});
+
+// ---------------------------------------------------------------------------
+// Stripe Checkout Session 作成（Firebase 認証必須）
+// POST /stripe/checkout
+// ---------------------------------------------------------------------------
+app.post("/stripe/checkout", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const body = await c.req.json<{ origin?: string }>().catch(() => ({} as { origin?: string }));
+  const origin = body.origin ?? "https://youmuch.net";
+
+  const params = new URLSearchParams({
+    mode: "payment",
+    "line_items[0][quantity]": "1",
+    "line_items[0][price_data][currency]": "usd",
+    "line_items[0][price_data][unit_amount]": "100",
+    "line_items[0][price_data][product_data][name]": "☕ 開発者へのコーヒー",
+    "line_items[0][price_data][product_data][description]": "Bodobako の開発を応援する",
+    "metadata[userId]": verified.uid,
+    "metadata[displayName]": verified.name ?? "",
+    "metadata[timestamp]": String(Date.now()),
+    success_url: `${origin}/?coffee=thanks`,
+    cancel_url: `${origin}/`,
+  });
+
+  const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${c.env.STRIPE_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: params.toString(),
+  });
+
+  if (!stripeRes.ok) {
+    const err = await stripeRes.json<{ error: { message: string } }>();
+    console.error("Stripe error:", err);
+    return c.json({ error: "決済セッションの作成に失敗しました" }, 500);
+  }
+
+  const session = await stripeRes.json<{ url: string }>();
+  return c.json({ url: session.url });
 });
 
 export default app;

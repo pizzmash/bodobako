@@ -6,4 +6,5 @@ tmp
 .wrangler/
 packages/client/.env.development
 packages/client/.env.production
+packages/worker/.dev.vars
 test-results/

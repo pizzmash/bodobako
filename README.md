@@ -12,6 +12,7 @@
 | バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects |
 | 通信           | ネイティブ WebSocket（reqIdベースプロトコル） |
 | 認証           | Firebase Authentication（Google サインイン）  |
+| 決済           | Stripe Checkout（コーヒー寄付機能）           |
 | モジュール     | ES Modules                                    |
 | パッケージ管理 | npm workspaces (monorepo)                     |
 
@@ -222,6 +223,23 @@ npm run test:e2e
 | ----------------------- | ---------------------------- |
 | `FIREBASE_PROJECT_ID`   | Firebase プロジェクト ID（JWT 検証に使用） |
 
+**Worker シークレット（`wrangler secret put` で登録 / ローカルは `packages/worker/.dev.vars`）:**
+
+| 変数                      | 説明                                                  |
+| ------------------------- | ----------------------------------------------------- |
+| `STRIPE_SECRET_KEY`       | Stripe シークレットキー（`sk_test_...` / `sk_live_...`） |
+| `STRIPE_WEBHOOK_SECRET`   | Stripe Webhook 署名シークレット（`whsec_...`）         |
+
+```bash
+# 本番への登録
+npx wrangler secret put STRIPE_SECRET_KEY --config packages/worker/wrangler.toml
+npx wrangler secret put STRIPE_WEBHOOK_SECRET --config packages/worker/wrangler.toml
+
+# ローカル開発（packages/worker/.dev.vars.sample をコピーして作成）
+cp packages/worker/.dev.vars.sample packages/worker/.dev.vars
+# .dev.vars に各値を記入
+```
+
 ## デプロイ（Cloudflare）
 
 ```bash
@@ -237,6 +255,20 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 #      VITE_FIREBASE_AUTH_DOMAIN=...
 #      VITE_FIREBASE_PROJECT_ID=...
 ```
+
+**Stripe の事前設定（初回のみ）:**
+
+1. [Stripe ダッシュボード](https://dashboard.stripe.com/) でアカウントを作成
+2. API キー（`sk_test_...` または `sk_live_...`）を取得し、シークレットとして登録
+3. Webhooks > 「送信先を追加」 → エンドポイント URL: `https://api.youmuch.net/stripe/webhook`
+4. リッスンするイベント: `checkout.session.completed` のみ選択
+5. 作成後に表示される署名シークレット（`whsec_...`）を `STRIPE_WEBHOOK_SECRET` として登録
+
+> ローカル開発時は [Stripe CLI](https://docs.stripe.com/stripe-cli) を使用:
+> ```bash
+> stripe listen --forward-to http://localhost:8787/stripe/webhook
+> # 表示される whsec_... を packages/worker/.dev.vars に記載
+> ```
 
 **Firebase コンソールの事前設定（初回のみ）:**
 
