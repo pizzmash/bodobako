@@ -9,6 +9,7 @@ const games = getAllGames();
 
 const FONT = "'Poppins', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
 const BODY_FONT = "'Inter', 'Open Sans', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
+const GAMES_PER_PAGE = 6;
 
 interface RoomInvite {
   inviteId: string;
@@ -162,6 +163,26 @@ const INJECTED_STYLES = `
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
+.lobby-page-btn {
+  transition: background .15s ease, color .15s ease, transform .1s ease, box-shadow .15s ease;
+}
+.lobby-page-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.12) !important;
+  color: #4F46E5 !important;
+  transform: translateY(-1px);
+}
+.lobby-page-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.lobby-page-btn:focus {
+  outline: 3px solid #6366F1;
+  outline-offset: 2px;
+}
+.lobby-page-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .lobby-invite-item {
   transition: background .15s ease, border-color .15s ease;
 }
@@ -209,6 +230,7 @@ export function Lobby() {
   const { idToken } = useAuth();
   const [roomCode, setRoomCode] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [inviteQueue, setInviteQueue] = useState<RoomInvite[]>([]);
   const [isLoadingInvites, setIsLoadingInvites] = useState(false);
 
@@ -222,6 +244,12 @@ export function Lobby() {
       g.description.toLowerCase().includes(q)
     );
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredGames.length / GAMES_PER_PAGE));
+  const pagedGames = filteredGames.slice(
+    (currentPage - 1) * GAMES_PER_PAGE,
+    currentPage * GAMES_PER_PAGE,
+  );
 
   const loadInvites = useCallback(async () => {
     if (!idToken) {
@@ -371,7 +399,7 @@ export function Lobby() {
             style={styles.searchInput}
             placeholder="ゲームを検索..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             aria-label="ゲーム検索"
             type="search"
           />
@@ -380,7 +408,7 @@ export function Lobby() {
 
       {/* ── Game cards grid ── */}
       <div style={styles.cardGrid}>
-        {filteredGames.map((g, i) => (
+        {pagedGames.map((g, i) => (
           <div
             key={g.id}
             className="lobby-card"
@@ -417,6 +445,45 @@ export function Lobby() {
           </div>
         )}
       </div>
+
+      {/* ── Pagination ── */}
+      {totalPages > 1 && (
+        <div style={styles.pagination}>
+          <button
+            className="lobby-page-btn"
+            style={styles.pageBtn}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            aria-label="前のページ"
+          >
+            ‹
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              className="lobby-page-btn"
+              style={{
+                ...styles.pageBtn,
+                ...(page === currentPage ? styles.pageBtnActive : {}),
+              }}
+              onClick={() => setCurrentPage(page)}
+              aria-label={`${page}ページ目`}
+              aria-current={page === currentPage ? "page" : undefined}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            className="lobby-page-btn"
+            style={styles.pageBtn}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            aria-label="次のページ"
+          >
+            ›
+          </button>
+        </div>
+      )}
 
       {/* ── Separator ── */}
       <div style={styles.separator}>
@@ -564,7 +631,7 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: 800,
     padding: "0 24px",
     boxSizing: "border-box",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     position: "relative",
     zIndex: 1,
   },
@@ -720,6 +787,38 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 48,
     fontFamily: FONT,
     boxShadow: "0 4px 12px rgba(34, 197, 94, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
+  },
+
+  pagination: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    position: "relative",
+    zIndex: 1,
+  },
+  pageBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    border: "1.5px solid rgba(129, 140, 248, 0.3)",
+    background: "rgba(255, 255, 255, 0.7)",
+    backdropFilter: "blur(8px)",
+    color: "#4F46E5",
+    fontSize: "1rem",
+    fontWeight: 600,
+    fontFamily: FONT,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 2px 6px rgba(99, 102, 241, 0.08)",
+  },
+  pageBtnActive: {
+    background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
+    color: "#fff",
+    border: "none",
+    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.35)",
   },
 
   inviteNoticeOverlay: {
