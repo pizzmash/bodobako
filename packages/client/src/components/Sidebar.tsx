@@ -362,7 +362,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       });
       if (!res.ok) return;
       const { url } = await res.json() as { url: string };
-      window.open(url, "_blank");
+      window.location.href = url;
     } catch {
       console.error("コーヒー決済に失敗しました");
     } finally {
