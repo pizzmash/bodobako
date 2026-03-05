@@ -114,11 +114,17 @@ export function processNextEvent(state: NyaMensState): NyaMensState {
     return { ...base, phase: "dice-roll" };
   }
 
+
   const [nextEvent, ...rest] = state.eventQueue as [NyaEventCard, ...NyaEventCard[]];
   const reduced = { ...state, eventQueue: rest };
 
   if (nextEvent === "okami") {
-    return processNextEvent({ ...reduced, okamiActive: true });
+    // 既にokamiActiveなら次のイベントへ（多重発動防止）
+    if (state.okamiActive) {
+      return processNextEvent(reduced);
+    }
+    // okamiActive: true & card-selectionへ即遷移
+    return { ...reduced, okamiActive: true, phase: "card-selection" };
   }
 
   if (nextEvent === "shirokuma") {
