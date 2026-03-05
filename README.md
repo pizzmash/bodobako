@@ -12,7 +12,6 @@
 | バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects |
 | 通信           | ネイティブ WebSocket（reqIdベースプロトコル） |
 | 認証           | Firebase Authentication（Google サインイン）  |
-| 寄付           | Buy Me a Coffee ウィジェット                  |
 | モジュール     | ES Modules                                    |
 | パッケージ管理 | npm workspaces (monorepo)                     |
 
@@ -208,20 +207,21 @@ npm run test:e2e
 
 **クライアント（`.env.development` / Cloudflare Pages の環境変数）:**
 
-| 変数                       | デフォルト（dev）                      | 説明                         |
-| -------------------------- | -------------------------------------- | ---------------------------- |
-| `VITE_API_URL`             | `http://localhost:8787`                | Worker の URL（HTTP/WS共用） |
-| `VITE_FIREBASE_API_KEY`    | —                                      | Firebase API キー            |
-| `VITE_FIREBASE_AUTH_DOMAIN`| `<project-id>.firebaseapp.com`         | Firebase Auth ドメイン       |
-| `VITE_FIREBASE_PROJECT_ID` | —                                      | Firebase プロジェクト ID     |
+| 変数                        | デフォルト（dev）              | 説明                                                               |
+| --------------------------- | ------------------------------ | ------------------------------------------------------------------ |
+| `VITE_API_URL`              | `http://localhost:8787`        | Worker の URL（HTTP/WS共用）                                       |
+| `VITE_FIREBASE_API_KEY`     | —                              | Firebase API キー                                                  |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `<project-id>.firebaseapp.com` | Firebase Auth ドメイン                                             |
+| `VITE_FIREBASE_PROJECT_ID`  | —                              | Firebase プロジェクト ID                                           |
+| `VITE_BMC_USERNAME`         | —                              | Buy Me a Coffee のユーザー名（省略時はウィジェット・バナー非表示） |
 
-`.env.development.example` をコピーして `.env.development` を作成し、Firebase コンソールから値を設定する。
+`.env.development.example` をコピーして `.env.development` を作成し、Firebase コンソールから各値を設定する。`VITE_BMC_USERNAME` は [Buy Me a Coffee](https://www.buymeacoffee.com/) のユーザー名を設定する（省略時はウィジェット・バナー非表示）。
 
 **Worker（`wrangler.toml` の `[vars]`）:**
 
-| 変数                    | 説明                         |
-| ----------------------- | ---------------------------- |
-| `FIREBASE_PROJECT_ID`   | Firebase プロジェクト ID（JWT 検証に使用） |
+| 変数                  | 説明                                       |
+| --------------------- | ------------------------------------------ |
+| `FIREBASE_PROJECT_ID` | Firebase プロジェクト ID（JWT 検証に使用） |
 
 ## デプロイ（Cloudflare）
 
@@ -391,13 +391,15 @@ Worker 側のコード修正は不要。`GameDefinition` インターフェー�
 ## 収録
 
 <!-- GAMES:START -->
-| ゲーム | 人数 | 概要 |
-|--------|------|------|
-| オセロ | 2人 | 8x8 盤面で石を挟んでひっくり返す定番ゲーム |
-| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル |
+
+| ゲーム         | 人数   | 概要                                                                        |
+| -------------- | ------ | --------------------------------------------------------------------------- |
+| オセロ         | 2人    | 8x8 盤面で石を挟んでひっくり返す定番ゲーム                                  |
+| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル              |
 | シティチェイス | 2〜4人 | 犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム |
-| 音速飯点 | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！ |
-| ブロックス | 2〜4人 | 20×20 の盤面にピースを角で繋げて配置する陣取りゲーム |
-| ナナ | 2〜5人 | 7をねらえ！3枚ペアの神経衰弱ゲーム |
-| ニャーメンズ | 2〜5人 | アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！ |
+| 音速飯点       | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！          |
+| ブロックス     | 2〜4人 | 20×20 の盤面にピースを角で繋げて配置する陣取りゲーム                        |
+| ナナ           | 2〜5人 | 7をねらえ！3枚ペアの神経衰弱ゲーム                                          |
+| ニャーメンズ   | 2〜5人 | アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！  |
+
 <!-- GAMES:END -->
