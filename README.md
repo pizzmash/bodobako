@@ -223,14 +223,6 @@ npm run test:e2e
 | ----------------------- | ---------------------------- |
 | `FIREBASE_PROJECT_ID`   | Firebase プロジェクト ID（JWT 検証に使用） |
 
-**ローカル開発の設定:**
-
-`packages/worker/.dev.vars` を作成し、以下の内容を記入してください:
-
-```
-FIREBASE_PROJECT_ID=your-firebase-project-id
-```
-
 ## デプロイ（Cloudflare）
 
 ```bash
