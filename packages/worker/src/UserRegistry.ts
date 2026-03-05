@@ -60,16 +60,6 @@ export class UserRegistry implements DurableObject {
       `);
       this.db.exec("CREATE INDEX IF NOT EXISTS idx_invites_invited_uid_status_created ON invites(invited_uid, status, created_at DESC)");
       this.db.exec("CREATE INDEX IF NOT EXISTS idx_invites_created_at ON invites(created_at)");
-      this.db.exec(`
-        CREATE TABLE IF NOT EXISTS donations (
-          stripe_session_id TEXT PRIMARY KEY,
-          user_id TEXT NOT NULL,
-          display_name TEXT NOT NULL DEFAULT '',
-          amount_cents INTEGER NOT NULL,
-          currency TEXT NOT NULL,
-          created_at INTEGER NOT NULL
-        )
-      `);
     });
   }
 
@@ -423,41 +413,6 @@ export class UserRegistry implements DurableObject {
         ownerUid, friendUid
       );
       return Response.json({ ok: true });
-    }
-
-    // POST /donations — 寄付記録を保存（Webhook から呼ぶ）
-    if (url.pathname === "/donations" && request.method === "POST") {
-      const { stripeSessionId, userId, displayName, amountCents, currency, createdAt } =
-        await request.json<{
-          stripeSessionId: string;
-          userId: string;
-          displayName: string;
-          amountCents: number;
-          currency: string;
-          createdAt: number;
-        }>();
-      this.db.exec(
-        `INSERT OR IGNORE INTO donations
-           (stripe_session_id, user_id, display_name, amount_cents, currency, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        stripeSessionId, userId, displayName, amountCents, currency, createdAt,
-      );
-      return Response.json({ ok: true });
-    }
-
-    // GET /donations — 全寄付一覧（管理者用）
-    if (url.pathname === "/donations" && request.method === "GET") {
-      const rows = this.db.exec(
-        "SELECT stripe_session_id, user_id, display_name, amount_cents, currency, created_at FROM donations ORDER BY created_at DESC"
-      ).toArray();
-      return Response.json(rows.map((r) => ({
-        stripeSessionId: r.stripe_session_id,
-        userId: r.user_id,
-        displayName: r.display_name,
-        amountCents: r.amount_cents,
-        currency: r.currency,
-        createdAt: r.created_at,
-      })));
     }
 
     return new Response("Not found", { status: 404 });
