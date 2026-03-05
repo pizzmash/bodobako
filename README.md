@@ -225,10 +225,10 @@ npm run test:e2e
 
 **ローカル開発の設定:**
 
-```bash
-# packages/worker/.dev.vars.sample をコピーして作成
-cp packages/worker/.dev.vars.sample packages/worker/.dev.vars
-# .dev.vars に各値を記入
+`packages/worker/.dev.vars` を作成し、以下の内容を記入してください:
+
+```
+FIREBASE_PROJECT_ID=your-firebase-project-id
 ```
 
 ## デプロイ（Cloudflare）
