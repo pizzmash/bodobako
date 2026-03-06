@@ -1,9 +1,8 @@
-import type { AiueBattleMove, AiueBattleState } from "@bodobako/shared";
+import type { AiueBattleMove } from "@bodobako/shared";
 import { useCallback, useState } from "react";
 import { useRoom } from "../../context/RoomContext";
-import "./aiuebattle.css";
 import { BattleBoard } from "./BattleBoard";
-import { C, FONT, RADIUS, SPACING, styles, TYPOGRAPHY } from "./constants";
+import { C, FONT, RADIUS } from "./constants";
 import { useAiueState } from "./hooks/useAiueState";
 import { TopicSelect } from "./TopicSelect";
 import { WordInput } from "./WordInput";
@@ -11,7 +10,8 @@ import { WordInput } from "./WordInput";
 export function AiueBattleBoard() {
   const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
     useRoom();
-  const state = gameState as AiueBattleState | null;
+  if (gameState !== null && gameState.gameId !== "aiuebattle") return null;
+  const state = gameState?.state ?? null;
   const [wordChars, setWordChars] = useState<string[]>([]);
   const [customTopic, setCustomTopic] = useState("");
   const [showWordConfirm, setShowWordConfirm] = useState(false);
@@ -28,19 +28,8 @@ export function AiueBattleBoard() {
   // カラフルでポップなタイトル
   const Title = (
     <h2
-      style={{
-        ...TYPOGRAPHY["3xl"],
-        fontWeight: 900,
-        margin: `${SPACING.lg} 0 ${SPACING.xl}`,
-        fontFamily: FONT,
-        letterSpacing: "0.05em",
-        textAlign: "center",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "clamp(4px, 1vw, 8px)",
-        flexWrap: "wrap",
-      }}
+      className="m-0 my-4 text-4xl font-black tracking-[0.05em] text-center flex items-center justify-center flex-wrap"
+      style={{ gap: "clamp(4px, 1vw, 8px)", fontFamily: FONT }}
     >
       {[
         { char: "あ", color: "#ff5c8d", rotate: "-2deg" },
@@ -51,6 +40,7 @@ export function AiueBattleBoard() {
       ].map((item, i) => (
         <span
           key={i}
+          className="ab-title-char inline-block"
           style={{
             color: item.color,
             background: C.bgCard,
@@ -58,11 +48,9 @@ export function AiueBattleBoard() {
             borderRadius: RADIUS.md,
             border: `2px solid ${item.color}`,
             transform: `rotate(${item.rotate})`,
-            display: "inline-block",
             boxShadow: `0 4px 12px ${item.color}30`,
             transition: "transform 0.2s ease",
           }}
-          className="ab-title-char"
         >
           {item.char}
         </span>
@@ -70,10 +58,14 @@ export function AiueBattleBoard() {
     </h2>
   );
 
-  if (state.phase === "topic-select") {
-    return (
-      <div style={styles.container}>
-        {Title}
+  return (
+    <div
+      className="flex flex-col items-center justify-start min-h-screen p-4 text-[#171717]"
+      style={{ background: C.gray50, fontFamily: FONT }}
+    >
+      {Title}
+
+      {state.phase === "topic-select" && (
         <TopicSelect
           state={state}
           playerId={playerId}
@@ -82,14 +74,8 @@ export function AiueBattleBoard() {
           customTopic={customTopic}
           setCustomTopic={setCustomTopic}
         />
-      </div>
-    );
-  }
-
-  if (state.phase === "word-input") {
-    return (
-      <div style={styles.container}>
-        {Title}
+      )}
+      {state.phase === "word-input" && (
         <WordInput
           state={state}
           playerId={playerId}
@@ -100,24 +86,20 @@ export function AiueBattleBoard() {
           showWordConfirm={showWordConfirm}
           setShowWordConfirm={setShowWordConfirm}
         />
-      </div>
-    );
-  }
-
-  return (
-    <div style={styles.container}>
-      {Title}
-      <BattleBoard
-        state={state}
-        playerId={playerId}
-        room={room}
-        sendTypedMove={sendTypedMove}
-        gameResult={gameResult}
-        startGame={startGame}
-        leaveRoom={leaveRoom}
-        attackAnim={attackAnim}
-        newlyRevealed={newlyRevealed}
-      />
+      )}
+      {state.phase === "battle" && (
+        <BattleBoard
+          state={state}
+          playerId={playerId}
+          room={room}
+          sendTypedMove={sendTypedMove}
+          gameResult={gameResult}
+          startGame={startGame}
+          leaveRoom={leaveRoom}
+          attackAnim={attackAnim}
+          newlyRevealed={newlyRevealed}
+        />
+      )}
     </div>
   );
 }

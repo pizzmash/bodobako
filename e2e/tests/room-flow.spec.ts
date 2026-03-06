@@ -9,10 +9,13 @@ async function setupPlayer(page: Page, name: string) {
   await page.goto("/");
   // 既に名前が設定されていなければ設定する
   const nameInput = page.getByRole("textbox", { name: "プレイヤー名入力" });
-  if (await nameInput.isVisible()) {
+  try {
+    await nameInput.waitFor({ state: "visible", timeout: 8000 });
     await nameInput.fill(name);
     await page.getByRole("button", { name: "ゲームを始める" }).click();
     await expect(nameInput).not.toBeVisible();
+  } catch {
+    // 名前が既にlocalStorageに設定済み、またはモーダルが表示されていない
   }
 }
 

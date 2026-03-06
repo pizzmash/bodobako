@@ -1,5 +1,4 @@
 import type { CitychaseMove, CitychasePlayerView, RoomInfo } from "@bodobako/shared";
-import { useEffect } from "react";
 
 interface Props {
   state: CitychasePlayerView;
@@ -8,27 +7,7 @@ interface Props {
   sendMove: (move: CitychaseMove) => void;
 }
 
-const CSS_ID = "cc-role-styles";
-const INJECTED_CSS = `
-.cc-role-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(37,140,244,.4) !important;
-  border-color: #258cf4 !important;
-}
-.cc-role-btn:active {
-  transform: translateY(0) !important;
-}
-`;
-
 export function RoleSelect({ state, playerId, room, sendMove }: Props) {
-  useEffect(() => {
-    if (document.getElementById(CSS_ID)) return;
-    const tag = document.createElement("style");
-    tag.id = CSS_ID;
-    tag.textContent = INJECTED_CSS;
-    document.head.appendChild(tag);
-    return () => { document.getElementById(CSS_ID)?.remove(); };
-  }, []);
 
   const isHost = playerId === room.hostId;
 

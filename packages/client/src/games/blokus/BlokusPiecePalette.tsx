@@ -10,7 +10,6 @@ import { NUM_PIECES, PIECES, getValidPlacements } from "@bodobako/shared";
 import { useMemo } from "react";
 import { BLOKUS_COLORS, MINI_CELL, MINI_CELL_GAP, SURFACE, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 import { PieceThumbnail } from "./PieceThumbnail";
-import "./blokus.css";
 
 interface BlokusPiecePaletteProps {
   state: BlokusState;

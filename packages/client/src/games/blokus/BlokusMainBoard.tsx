@@ -18,7 +18,6 @@ import {
   EMPTY_CELL_COLOR,
   VALID_DOT_COLOR,
 } from "./constants";
-import "./blokus.css";
 
 interface BlokusMainBoardProps {
   grid: number[][];

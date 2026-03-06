@@ -2,7 +2,7 @@
  * ブロックス ゲームロゴ
  * Fredoka フォント + 4色でブロック感を表現
  */
-import "./blokus.css";
+
 
 const LETTERS: { char: string; color: string; cls: string }[] = [
   { char: "B", color: "#60a5fa", cls: "blk-logo-b" },

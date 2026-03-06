@@ -1,6 +1,6 @@
 import type { NyaMensPlayerView } from "@bodobako/shared";
+import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
 
-const ACCENT = "#0EA5E9";
 const DANGER = "#DC2626";
 
 const PersonIcon = ({ size = 16 }: { size?: number }) => (

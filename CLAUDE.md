@@ -9,7 +9,7 @@
 - **バックエンド:** Hono 4 + Cloudflare Workers + Durable Objects
 - **認証:** Firebase Authentication（Google サインイン）+ `jose` による Worker 側 JWT 検証
 - **パッケージ管理:** npm workspaces（モノレポ）
-- **スタイリング:** インライン CSS-in-JS（CSSフレームワークなし）
+- **スタイリング:** Tailwind CSS v3 + カスタム CSS (`@layer components`)
 - **ルーティング:** React Router v7（`react-router-dom`）。`createBrowserRouter` + `RouterProvider` による2ルート構成（`/` と `/room/:code`）
 
 ## ディレクトリ構成
@@ -178,6 +178,7 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 ```
 
 **Firebase コンソールの事前設定（初回のみ）:**
+
 1. Firebase コンソールでプロジェクトを作成
 2. Authentication > Sign-in method > Google を有効化
 3. 「Authorized domains」に本番ドメインを追加
@@ -191,13 +192,14 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 
 各パッケージに独立した `vitest.config.ts` を持ち、`npm test` でまとめて実行される。
 
-| パッケージ | 環境 | テスト対象 |
-| --- | --- | --- |
-| `packages/shared` | Node（デフォルト） | ゲームロジック・`GameDefinition` 実装（ゲームごとに `__tests__/logic.test.ts` と `__tests__/definition.test.ts`） |
-| `packages/client` | happy-dom | `socket.ts`（WebSocketシングルトン）・`RoomContext`（状態管理・WSイベント） |
-| `packages/worker` | `@cloudflare/vitest-pool-workers` | HTTP API（`POST /rooms`・`GET /rooms/:code/ws`）・RoomDO WebSocket ハンドラ |
+| パッケージ        | 環境                              | テスト対象                                                                                                        |
+| ----------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `packages/shared` | Node（デフォルト）                | ゲームロジック・`GameDefinition` 実装（ゲームごとに `__tests__/logic.test.ts` と `__tests__/definition.test.ts`） |
+| `packages/client` | happy-dom                         | `socket.ts`（WebSocketシングルトン）・`RoomContext`（状態管理・WSイベント）                                       |
+| `packages/worker` | `@cloudflare/vitest-pool-workers` | HTTP API（`POST /rooms`・`GET /rooms/:code/ws`）・RoomDO WebSocket ハンドラ                                       |
 
 **client テストの注意点:**
+
 - `vi.stubGlobal("WebSocket", MockWebSocket)` でネイティブWS をモック
 - `vi.mock("../../lib/socket", ...)` で wsClient シングルトンを差し替え
 - `RoomContext` のテストは `<MemoryRouter>` でラップして `useNavigate()` を有効化
@@ -205,6 +207,7 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 - `RoomContext.test.tsx` では `vi.mock("../../context/AuthContext", ...)` で Firebase 初期化を回避（テスト環境では env vars が空のため `auth/invalid-api-key` が発生する）
 
 **worker テストの注意点:**
+
 - `isolatedStorage: false`（WebSocket Hibernation API がリクエストコンテキスト外でハンドラを呼ぶため）
 - `SELF.fetch()` で Workers ランタイム上の実際の HTTP リクエストを送信
 - `res.webSocket!.accept()` で WS 接続を確立し、メッセージキュー（`createMsgQueue`）で受信を管理
@@ -213,12 +216,12 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 
 `playwright.config.ts` が `npm run dev` を自動起動してからテストを実行する。テストファイルは `e2e/tests/` に配置。
 
-| ファイル | 内容 |
-| --- | --- |
-| `lobby.spec.ts` | 名前入力モーダル・ゲーム一覧・localStorage 復元 |
-| `room-flow.spec.ts` | ルーム作成・コード参加・退出・直接アクセス |
-| `game-othello.spec.ts` | 2タブで対戦開始・手を打つ |
-| `reconnect.spec.ts` | リロード後の sessionToken 再接続 |
+| ファイル               | 内容                                            |
+| ---------------------- | ----------------------------------------------- |
+| `lobby.spec.ts`        | 名前入力モーダル・ゲーム一覧・localStorage 復元 |
+| `room-flow.spec.ts`    | ルーム作成・コード参加・退出・直接アクセス      |
+| `game-othello.spec.ts` | 2タブで対戦開始・手を打つ                       |
+| `reconnect.spec.ts`    | リロード後の sessionToken 再接続                |
 
 ## コーディング規約
 

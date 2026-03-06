@@ -1,6 +1,5 @@
 import type { NyaMensPlayerView, NyaMensTrack } from "@bodobako/shared";
 import { PlayingCard } from "../../components/PlayingCard";
-import "./nyamens.css";
 
 const UP_COLOR = "#10B981";
 const DOWN_COLOR = "#F59E0B";

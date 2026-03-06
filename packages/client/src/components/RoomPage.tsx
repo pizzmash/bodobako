@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { useRoom } from "../context/RoomContext";
+import { Z } from "../styles/tokens";
 import { GameView } from "./GameView";
 import { NameEntryModal } from "./NameEntryModal";
 import { Room } from "./Room";
@@ -84,7 +85,7 @@ export function RoomPage() {
           gap: 16,
           background: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(4px)",
-          zIndex: 2000,
+          zIndex: Z.roomError,
           fontFamily: "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif",
         }}
       >

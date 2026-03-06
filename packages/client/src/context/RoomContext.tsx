@@ -1,4 +1,10 @@
-import type { GameResult, RoomInfo, WsServerMessage } from "@bodobako/shared";
+import type {
+    AiueBattleState,
+    BlokusState,
+    CitychasePlayerView, GameResult, NanaStateView,
+    NyaMensPlayerView,
+    OthelloState, RoomInfo, SonicRestaurantState, WsServerMessage
+} from "@bodobako/shared";
 import {
     createContext,
     useCallback,
@@ -12,6 +18,19 @@ import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { wsClient } from "../lib/socket";
 import { useAuth } from "./AuthContext";
+
+/**
+ * サーバーから受け取る gameState の discriminated union。
+ * 各ゲームボードでは `gameState.gameId` で分岐することで `as` キャストが不要になる。
+ */
+export type GameStateEntry =
+  | { gameId: "othello"; state: OthelloState }
+  | { gameId: "aiuebattle"; state: AiueBattleState }
+  | { gameId: "citychase"; state: CitychasePlayerView }
+  | { gameId: "sonic-restaurant"; state: SonicRestaurantState }
+  | { gameId: "blokus"; state: BlokusState }
+  | { gameId: "nana"; state: NanaStateView }
+  | { gameId: "nyamens"; state: NyaMensPlayerView };
 
 const STORAGE_KEYS = {
   sessionToken: "bodobako:sessionToken",
@@ -34,7 +53,7 @@ interface RoomContextValue {
   playerId: string | null;
   playerName: string;
   setPlayerName: (name: string) => void;
-  gameState: unknown | null;
+  gameState: GameStateEntry | null;
   gameResult: GameResult | null;
   errorMsg: string | null;
   isCreatingRoom: boolean;
@@ -69,13 +88,18 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [playerName, setPlayerNameState] = useState(
     () => localStorage.getItem(STORAGE_KEYS.playerName) ?? ""
   );
-  const [gameState, setGameState] = useState<unknown | null>(null);
+  const [gameState, setGameState] = useState<GameStateEntry | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [creatingGameId, setCreatingGameId] = useState<string | null>(null);
   /** createRoom 後、room:updated を受け取ったら navigate するためのコード */
   const pendingNavigateRef = useRef<string | null>(null);
+  /** イベントハンドラ内で現在の room にアクセスするための ref */
+  const roomRef = useRef<RoomInfo | null>(null);
+  useEffect(() => { roomRef.current = room; }, [room]);
+  /** WS 接続待ちポーリングの interval ID（重複起動防止用） */
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const setPlayerName = useCallback((name: string) => {
     setPlayerNameState(name);
@@ -131,11 +155,13 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       }
     };
     const onGameStarted = (msg: Extract<WsServerMessage, { type: "game:started" }>) => {
-      setGameState(msg.state);
+      const gameId = roomRef.current?.gameId ?? "";
+      setGameState({ gameId, state: msg.state } as GameStateEntry);
       setGameResult(null);
     };
     const onGameStateUpdated = (msg: Extract<WsServerMessage, { type: "game:stateUpdated" }>) => {
-      setGameState(msg.state);
+      const gameId = roomRef.current?.gameId ?? "";
+      setGameState({ gameId, state: msg.state } as GameStateEntry);
     };
     const onGameEnded = (msg: Extract<WsServerMessage, { type: "game:ended" }>) => {
       setGameResult(msg.result);
@@ -245,13 +271,16 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       tryJoin();
     } else {
       let waited = 0;
-      const interval = setInterval(() => {
+      if (pollingIntervalRef.current !== null) clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = setInterval(() => {
         waited += 100;
         if (wsClient.connected) {
-          clearInterval(interval);
+          clearInterval(pollingIntervalRef.current!);
+          pollingIntervalRef.current = null;
           tryJoin();
         } else if (waited >= 5000) {
-          clearInterval(interval);
+          clearInterval(pollingIntervalRef.current!);
+          pollingIntervalRef.current = null;
           wsClient.disconnect();
           setErrorMsg("接続タイムアウトしました");
         }
@@ -317,7 +346,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
           .then((data) => {
             setRoom(data.room);
             setPlayerId(data.playerId);
-            setGameState(data.gameState ?? null);
+            const gsEntry = data.gameState != null
+              ? ({ gameId: data.room.gameId, state: data.gameState } as GameStateEntry)
+              : null;
+            setGameState(gsEntry);
             setGameResult(data.gameResult ?? null);
             saveRoomSession(code, data.playerId);
           })
@@ -332,13 +364,16 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         attemptReconnect();
       } else {
         let waited = 0;
-        const interval = setInterval(() => {
+        if (pollingIntervalRef.current !== null) clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = setInterval(() => {
           waited += 100;
           if (wsClient.connected) {
-            clearInterval(interval);
+            clearInterval(pollingIntervalRef.current!);
+            pollingIntervalRef.current = null;
             attemptReconnect();
           } else if (waited >= 2000) {
-            clearInterval(interval);
+            clearInterval(pollingIntervalRef.current!);
+            pollingIntervalRef.current = null;
             wsClient.disconnect();
             clearRoomSession();
             doJoin();
