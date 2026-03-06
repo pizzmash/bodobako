@@ -7,10 +7,13 @@ import { test, expect, type Page } from "@playwright/test";
 async function setupPlayer(page: Page, name: string) {
   await page.goto("/");
   const nameInput = page.getByRole("textbox", { name: "プレイヤー名入力" });
-  if (await nameInput.isVisible()) {
+  try {
+    await nameInput.waitFor({ state: "visible", timeout: 8000 });
     await nameInput.fill(name);
     await page.getByRole("button", { name: "ゲームを始める" }).click();
     await expect(nameInput).not.toBeVisible();
+  } catch {
+    // 名前が既にlocalStorageに設定済み、またはモーダルが表示されていない
   }
 }
 

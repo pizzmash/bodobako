@@ -10,6 +10,7 @@ import {
     posKey,
 } from "@bodobako/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { clsx } from "clsx";
 
 interface Props {
   state: CitychasePlayerView;
@@ -31,33 +32,6 @@ const GRID_SIZE = BOARD_SIZE * CELL + (BOARD_SIZE - 1) * GAP + PAD * 2;
 
 const HELI_COLORS = ["#2563eb", "#059669", "#d97706"];
 
-const CSS_ID = "cc-board-styles";
-const INJECTED_CSS = `
-@keyframes cc-highlight-green {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,.0), 0 0 6px 2px rgba(34,197,94,.0); }
-  50% { box-shadow: 0 0 0 3px rgba(34,197,94,.6), 0 0 6px 2px rgba(34,197,94,.3); }
-}
-@keyframes cc-highlight-amber {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(245,158,11,.0), 0 0 6px 2px rgba(245,158,11,.0); }
-  50% { box-shadow: 0 0 0 3px rgba(245,158,11,.6), 0 0 6px 2px rgba(245,158,11,.3); }
-}
-@keyframes cc-highlight-intersection {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(34,197,94,.0), 0 0 4px 1px rgba(34,197,94,.0); }
-  50% { box-shadow: 0 0 0 2px rgba(34,197,94,.7), 0 0 4px 1px rgba(34,197,94,.4); }
-}
-@keyframes cc-heli-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,.4); }
-  50% { box-shadow: 0 0 0 5px rgba(59,130,246,0); }
-}
-@keyframes cc-criminal-glow {
-  0%, 100% { box-shadow: 0 0 4px 2px rgba(220,38,38,.3); }
-  50% { box-shadow: 0 0 10px 4px rgba(220,38,38,.5); }
-}
-.cc-building-clickable { cursor: pointer !important; }
-.cc-building-clickable:hover { transform: scale(1.06) !important; filter: brightness(1.08) !important; }
-.cc-intersection-clickable { cursor: pointer !important; }
-.cc-intersection-clickable:hover { transform: scale(1.2) !important; filter: brightness(1.1) !important; }
-`;
 
 export function BoardGrid({
   state,
@@ -83,15 +57,6 @@ export function BoardGrid({
     window.addEventListener("resize", updateScale);
     return () => window.removeEventListener("resize", updateScale);
   }, [updateScale]);
-
-  useEffect(() => {
-    if (document.getElementById(CSS_ID)) return;
-    const tag = document.createElement("style");
-    tag.id = CSS_ID;
-    tag.textContent = INJECTED_CSS;
-    document.head.appendChild(tag);
-    return () => { document.getElementById(CSS_ID)?.remove(); };
-  }, []);
 
   const getTraceInfo = (pos: BuildingPos) =>
     state.revealedTraces.find((t) => isSamePos(t.pos, pos));
@@ -238,19 +203,18 @@ export function BoardGrid({
           }
 
           // ハイライトアニメーション（色は上書きせず枠の光で表現）
-          let animation: string | undefined;
-          if (isCriminalHere) {
-            animation = "cc-criminal-glow 2s ease-in-out infinite";
-          } else if (highlighted) {
-            animation = "cc-highlight-green 1.2s ease-in-out infinite";
-          } else if (searchable) {
-            animation = "cc-highlight-amber 1.2s ease-in-out infinite";
-          }
+          const animationClass = isCriminalHere
+            ? "animate-cc-criminal-glow"
+            : highlighted
+              ? "animate-cc-highlight-green"
+              : searchable
+                ? "animate-cc-highlight-amber"
+                : "";
 
           return (
             <div
               key={`b-${row}-${col}`}
-              className={clickable ? "cc-building-clickable" : undefined}
+              className={clsx(clickable && "cc-building-clickable", animationClass) || undefined}
               onClick={() => clickable && onBuildingClick?.(pos)}
               style={{
                 position: "absolute",
@@ -268,13 +232,12 @@ export function BoardGrid({
                 fontWeight: label === "T" ? 900 : label.startsWith("R") ? 900 : 800,
                 fontFamily: label === "T" || label === "!" ? "'Orbitron', monospace" : "monospace",
                 letterSpacing: label === "···" ? "0.05em" : "0.02em",
-                border: trace || criminalTrace ? `2px solid ${borderColor}` : `2px solid ${borderColor}`,
+                border: `2px solid ${borderColor}`,
                 transition: "transform 0.12s, filter 0.12s",
                 userSelect: "none",
-                boxShadow: glowColor 
+                boxShadow: glowColor
                   ? `0 2px 10px ${glowColor}, 0 0 15px ${glowColor}, inset 0 1px 2px rgba(255,255,255,.08)`
                   : "0 2px 6px rgba(0,0,0,.3), inset 0 1px 2px rgba(255,255,255,.05)",
-                animation,
                 backdropFilter: "blur(4px)",
               }}
             >
@@ -327,10 +290,16 @@ export function BoardGrid({
             ? HELI_COLORS[heliIndex % HELI_COLORS.length]
             : undefined;
 
+          const intersectionAnimClass = isActiveHeli
+            ? "animate-cc-heli-pulse"
+            : highlighted
+              ? "animate-cc-highlight-intersection"
+              : "";
+
           return (
             <div
               key={`i-${row}-${col}`}
-              className={clickable ? "cc-intersection-clickable" : undefined}
+              className={clsx(clickable && "cc-intersection-clickable", intersectionAnimClass) || undefined}
               onClick={() => clickable && onIntersectionClick?.(pos)}
               style={{
                 position: "absolute",
@@ -367,11 +336,6 @@ export function BoardGrid({
                     : highlighted
                       ? "0 0 8px 2px rgba(0, 230, 118, 0.4)"
                       : "0 2px 4px rgba(0,0,0,.3)",
-                animation: isActiveHeli
-                  ? "cc-heli-pulse 1.5s ease-in-out infinite"
-                  : highlighted
-                    ? "cc-highlight-intersection 1.2s ease-in-out infinite"
-                    : undefined,
               }}
             >
               {hasHeli ? `H${heliIndex + 1}` : ""}

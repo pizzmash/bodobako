@@ -6,24 +6,21 @@
  * 委譲で解決している。
  */
 
-import type { BlokusMove, BlokusState } from "@bodobako/shared";
-import {
-  boardToGrid,
-  computePlayerRemainingCells,
-  getCurrentPlayerId,
-} from "@bodobako/shared";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { BlokusMove, BlokusState, GameResult, RoomInfo } from "@bodobako/shared";
+import { boardToGrid, computePlayerRemainingCells } from "@bodobako/shared";
+import { useCallback, useMemo } from "react";
 import { GameRankingResult } from "../../components/GameRankingResult";
 import { useRoom } from "../../context/RoomContext";
-import type { GameResult, RoomInfo } from "@bodobako/shared";
+import { useBreakpoint } from "../../hooks/useBreakpoint";
+import { BlokusLogo } from "./BlokusLogo";
 import { BlokusMainBoard } from "./BlokusMainBoard";
 import { BlokusPieceControls } from "./BlokusPieceControls";
 import { BlokusPiecePalette } from "./BlokusPiecePalette";
 import { BlokusPlayerInfo } from "./BlokusPlayerInfo";
-import { BlokusLogo } from "./BlokusLogo";
-import { BLOKUS_COLORS, BOARD_PX, BG_GRADIENT, FONT, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
+import { BG_GRADIENT, BLOKUS_COLORS, BOARD_PX } from "./constants";
+import { useBlokusDerivedState } from "./hooks/useBlokusDerivedState";
 import { useBlokusInteraction } from "./hooks/useBlokusInteraction";
-import "./blokus.css";
+import { useBoardScale } from "./hooks/useBoardScale";
 
 // ---------------------------------------------------------------------------
 // 型定義
@@ -40,30 +37,13 @@ interface BlokusBoardContentProps {
 }
 
 // ---------------------------------------------------------------------------
-// レスポンシブフック
-// ---------------------------------------------------------------------------
-
-function useIsWide(breakpoint = 760): boolean {
-  const [isWide, setIsWide] = useState(
-    () => typeof window !== "undefined" && window.innerWidth > breakpoint,
-  );
-  useEffect(() => {
-    const mql = window.matchMedia(`(min-width: ${breakpoint}px)`);
-    const handler = (e: MediaQueryListEvent) => setIsWide(e.matches);
-    setIsWide(mql.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [breakpoint]);
-  return isWide;
-}
-
-// ---------------------------------------------------------------------------
 // ルートコンポーネント（guard + 委譲）
 // ---------------------------------------------------------------------------
 
 export function BlokusBoard() {
   const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } = useRoom();
-  const state = gameState as BlokusState | null;
+  if (gameState !== null && gameState.gameId !== "blokus") return null;
+  const state = gameState?.state ?? null;
 
   if (!state || !playerId || !room) return null;
 
@@ -93,23 +73,8 @@ function BlokusBoardContent({
   startGame,
   leaveRoom,
 }: BlokusBoardContentProps) {
-  const isWide = useIsWide(760);
-
-  // ボードの外側コンテナ ref でスケール計算
-  const boardOuterRef = useRef<HTMLDivElement>(null);
-  const [boardScale, setBoardScale] = useState(1);
-  useEffect(() => {
-    const el = boardOuterRef.current;
-    if (!el) return;
-    const update = () => {
-      const available = el.clientWidth;
-      setBoardScale(Math.min(1, available / BOARD_PX));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  const isWide = useBreakpoint(760);
+  const [boardOuterRef, boardScale] = useBoardScale(BOARD_PX);
 
   const sendTypedMove = useCallback((move: BlokusMove) => sendMove(move), [sendMove]);
 
@@ -117,6 +82,13 @@ function BlokusBoardContent({
     state,
     playerId,
     sendMove: sendTypedMove,
+  });
+
+  const { myColorIndices, turnMessage, turnColor } = useBlokusDerivedState({
+    state,
+    playerId,
+    room,
+    isMyTurn: interaction.isMyTurn,
   });
 
   const grid = useMemo(() => boardToGrid(state), [state]);
@@ -127,36 +99,13 @@ function BlokusBoardContent({
   );
 
   const currentColorIndex = state.currentColorIndex;
-  const isMyTurn = interaction.isMyTurn;
-
-  // 自分が担当する色インデックス（2人戦は2色、4人戦は1色、3人戦は手番によって1〜2色）
-  const myPlayerIndex = state.playerIds.indexOf(playerId);
-  const myColorIndices = useMemo(
-    () =>
-      ([0, 1, 2, 3] as const).filter((c) => {
-        if (state.colorOwner[c] === myPlayerIndex) return true;
-        // 3人戦フリーカラー: 常時パレットに表示する
-        if (state.colorOwner[c] === -1) return true;
-        return false;
-      }),
-    [state, myPlayerIndex],
-  );
-
-  // 手番メッセージ
-  const turnPlayerId = getCurrentPlayerId(state);
-  const turnPlayerName = room.players.find((p) => p.id === turnPlayerId)?.name ?? "相手";
-  const turnMessage = state.finished
-    ? null
-    : isMyTurn
-      ? `あなたの番です（${BLOKUS_COLORS[currentColorIndex].label}）`
-      : `${turnPlayerName} の番です`;
-  const turnColor = BLOKUS_COLORS[currentColorIndex].fill;
-
-  // ボードの実効高さ（スケール後）
   const scaledBoardH = BOARD_PX * boardScale;
 
   return (
-    <div style={{ ...styles.container, fontFamily: FONT }}>
+    <div
+      className="flex flex-col items-center min-h-screen py-3 px-2 gap-[0.65rem]"
+      style={{ background: BG_GRADIENT }}
+    >
       {/* ロゴ */}
       <BlokusLogo size="lg" />
 
@@ -166,41 +115,33 @@ function BlokusBoardContent({
       {/* 手番メッセージ */}
       {turnMessage && (
         <div
-          className={isMyTurn ? "blk-turn-banner-glow" : undefined}
+          className={`text-[0.95rem] font-bold px-4 py-[0.35rem] rounded-full tracking-[0.03em] flex items-center gap-[0.4rem]${interaction.isMyTurn ? " blk-turn-banner-glow" : ""}`}
           style={{
-            ...styles.turnBanner,
             color: turnColor,
             background: `${turnColor}14`,
             border: `1px solid ${turnColor}33`,
           }}
         >
-          {isMyTurn && <span style={styles.turnArrow}>▶</span>}
+          {interaction.isMyTurn && <span className="text-[0.7rem] opacity-80">▶</span>}
           {turnMessage}
         </div>
       )}
 
       {/* メインゲームエリア */}
       <div
+        className="flex gap-[0.9rem] w-full max-w-[900px] justify-center"
         style={{
-          display: "flex",
           flexDirection: isWide ? "row" : "column",
-          gap: "0.9rem",
           alignItems: isWide ? "flex-start" : "center",
-          width: "100%",
-          maxWidth: 900,
-          justifyContent: "center",
         }}
       >
         {/* ボード列（モバイル: スケール変換） */}
         <div
           ref={boardOuterRef}
-          className="blk-board-outer"
+          className="blk-board-outer overflow-hidden shrink-0"
           style={{
-            // スケール後の実効サイズでスペースを確保
             width: isWide ? BOARD_PX : "100%",
             height: isWide ? BOARD_PX : scaledBoardH,
-            flexShrink: 0,
-            overflow: "hidden",
           }}
         >
           <div
@@ -220,7 +161,7 @@ function BlokusBoardContent({
               validCenterSet={interaction.validCenterSet}
               ghostCells={interaction.ghostCells}
               isGhostValid={interaction.isGhostValid}
-              isMyTurn={isMyTurn}
+              isMyTurn={interaction.isMyTurn}
               activeColorIndex={currentColorIndex}
               lastMoveCells={lastMoveCells}
               onCellClick={interaction.handleBoardClick}
@@ -232,13 +173,10 @@ function BlokusBoardContent({
 
         {/* 右パネル（コントロール + パレット） */}
         <div
+          className="flex flex-col gap-[0.7rem] shrink-0"
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.7rem",
             width: isWide ? 290 : "100%",
             maxWidth: isWide ? 290 : 560,
-            flexShrink: 0,
           }}
         >
           <BlokusPieceControls
@@ -253,7 +191,7 @@ function BlokusBoardContent({
             myColorIndices={myColorIndices}
             activeColorIndex={currentColorIndex}
             selectedPieceId={interaction.selectedPieceId}
-            isMyTurn={isMyTurn}
+            isMyTurn={interaction.isMyTurn}
             onSelectPiece={interaction.handleSelectPiece}
           />
         </div>
@@ -278,33 +216,3 @@ function BlokusBoardContent({
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// スタイル
-// ---------------------------------------------------------------------------
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    minHeight: "100vh",
-    background: BG_GRADIENT,
-    padding: "0.75rem 0.5rem",
-    gap: "0.65rem",
-  },
-  turnBanner: {
-    fontSize: "0.95rem",
-    fontWeight: 700,
-    padding: "0.35rem 1rem",
-    borderRadius: 24,
-    letterSpacing: "0.03em",
-    display: "flex",
-    alignItems: "center",
-    gap: "0.4rem",
-  },
-  turnArrow: {
-    fontSize: "0.7rem",
-    opacity: 0.8,
-  },
-};

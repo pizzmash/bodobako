@@ -1,158 +1,30 @@
-import type { NanaMove, NanaStateView } from "@bodobako/shared";
-import { useEffect, useRef, useState } from "react";
+import type { NanaCardView, NanaMove, NanaStateView } from "@bodobako/shared";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
-import { PlayingCard } from "../../components/PlayingCard";
 import { useRoom } from "../../context/RoomContext";
-import "./nana.css";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { withAlpha } from "../../lib/color";
+import {
+  APP_HEADER_HEIGHT,
+  C,
+  FONT,
+  NANA_HAND_FOOTER_HEIGHT_DESKTOP,
+  NANA_HAND_FOOTER_HEIGHT_MOBILE,
+  NANA_PLAYER_BAR_HEIGHT_MOBILE,
+  NANA_TAB_HEIGHT_MOBILE,
+  PLAYER_COLORS,
+} from "./constants";
+import { FieldCardView, findVisibleCardNumber } from "./FieldCardView";
+import { GameLogPanel } from "./GameLogPanel";
+import { OpponentArea } from "./OpponentArea";
+import { RulesPanel } from "./RulesPanel";
+import { StatusPanel } from "./StatusPanel";
+import { TurnFlipsBar } from "./TurnFlipsBar";
+import type { LogEntry } from "./types";
 
-// ── 定数 ────────────────────────────────────────────────────────────
+// ── サブコンポーネント ────────────────────────────────────────────────────────────────────
 
-const C = {
-  primary: "#f49d25",
-  primaryLight: "rgba(244,157,37,0.10)",
-  primaryBorder: "rgba(244,157,37,0.30)",
-  bg: "#f0ede8",
-  card: "#ffffff",
-  text: "#1e293b",
-  muted: "#94a3b8",
-  border: "#e2e8f0",
-} as const;
-
-const CARD_BACK_STYLE: React.CSSProperties = {
-  backgroundColor: C.primary,
-  backgroundImage:
-    "radial-gradient(#ffffff 10%, transparent 10%), radial-gradient(#ffffff 10%, transparent 10%)",
-  backgroundSize: "20px 20px",
-  backgroundPosition: "0 0, 10px 10px",
-  border: "2px solid rgba(255,255,255,0.5)",
-};
-
-const FONT = `'Spline Sans', 'Hiragino Sans', 'Noto Sans JP', sans-serif`;
-const APP_HEADER_HEIGHT = 76;
-const NANA_HAND_FOOTER_HEIGHT_DESKTOP = 143;
-const NANA_HAND_FOOTER_HEIGHT_MOBILE = 121;
-const NANA_PLAYER_BAR_HEIGHT_MOBILE = 132;
-const NANA_TAB_HEIGHT_MOBILE = 52;
-const PLAYER_COLORS = ["#0496ff", "#ff5c8d", "#22c55e", "#06d6a0", "#9d4edd", "#ec4899"];
-
-function withAlpha(hexColor: string, alpha: number): string {
-  const hex = hexColor.replace("#", "");
-  const fullHex =
-    hex.length === 3
-      ? hex
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : hex;
-  const r = Number.parseInt(fullHex.slice(0, 2), 16);
-  const g = Number.parseInt(fullHex.slice(2, 4), 16);
-  const b = Number.parseInt(fullHex.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-// ── モバイル判定 ─────────────────────────────────────────────────────
-
-function useIsMobile(): boolean {
-  const [m, setM] = useState(() => window.innerWidth <= 640);
-  useEffect(() => {
-    const fn = () => setM(window.innerWidth <= 640);
-    window.addEventListener("resize", fn);
-    return () => window.removeEventListener("resize", fn);
-  }, []);
-  return m;
-}
-
-// ── 型 ──────────────────────────────────────────────────────────────
-
-interface LogEntry {
-  id: number;
-  playerId: string;
-  player: string;
-  msg: string;
-  tag?: string;
-  tagColor?: string;
-}
-
-interface CardView {
-  id: number;
-  number: number | null;
-}
-
-function findVisibleCardNumber(state: NanaStateView, cardId: number): number | null {
-  for (const c of state.fieldCards) {
-    if (c?.id === cardId) return c.number;
-  }
-  for (const hand of Object.values(state.hands)) {
-    const c = hand.find((h) => h.id === cardId);
-    if (c) return c.number;
-  }
-  return null;
-}
-
-
-// ── 場札カード ───────────────────────────────────────────────────────
-
-function FieldCardView({
-  card,
-  clickable,
-  w,
-  h,
-  onClick,
-}: {
-  card: CardView | null;
-  clickable: boolean;
-  w: number;
-  h: number;
-  onClick?: () => void;
-}) {
-  if (card === null) {
-    return (
-      <div
-        style={{
-          width: w,
-          height: h,
-          border: `2px dashed ${C.border}`,
-          borderRadius: 8,
-          opacity: 0.35,
-        }}
-      />
-    );
-  }
-
-  if (card.number !== null) {
-    // 公開済み（turnFlips中）
-    return (
-      <PlayingCard
-        className="nana-card-revealed"
-        label={card.number}
-        width={w}
-        height={h}
-        faceBackground={C.card}
-        textColor={C.primary}
-        borderColor={C.primary}
-        highlighted
-        style={{ fontFamily: FONT }}
-      />
-    );
-  }
-
-  // 裏向き
-  return (
-    <PlayingCard
-      className={`nana-field-card${clickable ? " clickable" : ""}`}
-      faceDown
-      backColor={C.primary}
-      width={w}
-      height={h}
-      clickable={clickable}
-      onClick={onClick}
-    />
-  );
-}
-
-// ── めくりスロット（3枠） ───────────────────────────────────────────
-
-function TurnFlipsBar({
+function TurnFlipsSection({
   flips,
   state,
   resolvedNumbers,
@@ -160,576 +32,326 @@ function TurnFlipsBar({
 }: {
   flips: NanaStateView["turnFlips"];
   state: NanaStateView;
-  resolvedNumbers?: Record<number, number | null>;
+  resolvedNumbers: Record<number, number | null>;
   getPlayerColor: (pid: string) => string;
 }) {
-  const findNum = (cardId: number): number | null =>
-    resolvedNumbers?.[cardId] ?? findVisibleCardNumber(state, cardId);
-
-  return (
-    <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center" }}>
-      {[0, 1, 2].map((i) => {
-        const flip = flips[i];
-        if (!flip) {
-          return (
-            <div
-              key={i}
-              style={{
-                width: 52,
-                height: 70,
-                border: `2px dashed ${C.border}`,
-                borderRadius: 8,
-                opacity: 0.45,
-              }}
-            />
-          );
-        }
-        const num = findNum(flip.cardId);
-        const handSource = flip.source.type === "hand" ? flip.source : null;
-        const accentColor = handSource ? getPlayerColor(handSource.targetPlayerId) : C.primary;
-        const handPosLabel =
-          handSource?.position === "max" ? "MAX" : handSource?.position === "min" ? "MIN" : null;
-        return (
-          <div
-            key={i}
-            className="nana-card-revealed"
-            style={{
-              position: "relative",
-              width: 52,
-              height: 70,
-              background: C.card,
-              border: `2px solid ${accentColor}`,
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: FONT,
-              fontSize: 22,
-              fontWeight: 900,
-              color: accentColor,
-              boxShadow: `0 0 10px ${withAlpha(accentColor, 0.35)}`,
-            }}
-          >
-            {handPosLabel && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: 4,
-                  left: 4,
-                  fontSize: 8,
-                  fontWeight: 900,
-                  lineHeight: 1,
-                  letterSpacing: "0.03em",
-                  color: "white",
-                  background: accentColor,
-                  borderRadius: 999,
-                  padding: "2px 5px",
-                  boxShadow: `0 2px 6px ${withAlpha(accentColor, 0.35)}`,
-                }}
-              >
-                {handPosLabel}
-              </span>
-            )}
-            {num ?? "?"}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── 対戦相手エリア ───────────────────────────────────────────────────
-
-function OpponentArea({
-  pid,
-  name,
-  state,
-  isMyTurn,
-  onFlip,
-  isCurrentPlayer,
-  playerColor,
-}: {
-  pid: string;
-  name: string;
-  state: NanaStateView;
-  isMyTurn: boolean;
-  onFlip: (pos: "min" | "max") => void;
-  isCurrentPlayer: boolean;
-  playerColor: string;
-}) {
-  const hand = state.hands[pid] ?? [];
-  const pendingResult = state.pendingResult ?? null;
-  const flippedIds = state.turnFlips.map((f) => f.cardId);
-  const activeCards = hand.filter((c) => !flippedIds.includes(c.id));
-  const hasMin = activeCards.length > 0;
-  const hasMax = activeCards.length > 0;
-  const sets = state.collectedSets[pid] ?? [];
-
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "stretch",
+        alignItems: "center",
         gap: 6,
-        padding: "10px",
-        borderRadius: 14,
-        border: `1px solid ${isCurrentPlayer ? withAlpha(playerColor, 0.45) : withAlpha(playerColor, 0.22)}`,
-        background: isCurrentPlayer
-          ? `linear-gradient(135deg, ${withAlpha(playerColor, 0.22)} 0%, ${C.card} 75%)`
-          : `linear-gradient(135deg, ${withAlpha(playerColor, 0.09)} 0%, ${C.card} 70%)`,
-        boxShadow: isCurrentPlayer
-          ? `0 0 0 2px ${withAlpha(playerColor, 0.16)}, 0 10px 24px ${withAlpha(playerColor, 0.22)}`
-          : `0 4px 14px ${withAlpha(playerColor, 0.12)}`,
-        minWidth: 118,
+        minHeight: 102,
+        justifyContent: "center",
       }}
     >
-      {/* 1行目: 名前 / MIN MAX / 枚数 */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-          fontSize: 12,
+          fontSize: 11,
+          color: C.muted,
           fontWeight: 600,
-          color: C.text,
-          fontFamily: FONT,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          opacity: flips.length > 0 ? 1 : 0.65,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            minWidth: 0,
-            flex: 1,
-          }}
-        >
-          <span
-            className={`nana-player-dot${isCurrentPlayer ? " active" : ""}`}
-            aria-hidden="true"
-            style={{
-              color: playerColor,
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: "currentColor",
-              boxShadow: `0 0 0 3px ${withAlpha(playerColor, 0.2)}`,
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {name}
-          </span>
-        </div>
-
-        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-          {(["min", "max"] as const).map((pos) => {
-            const enabled = isMyTurn && pendingResult === null && (pos === "min" ? hasMin : hasMax);
-            return (
-              <button
-                key={pos}
-                className="nana-minmax-btn"
-                disabled={!enabled}
-                onClick={() => onFlip(pos)}
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  padding: "3px 7px",
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 4,
-                  background: "white",
-                  cursor: enabled ? "pointer" : "not-allowed",
-                  fontFamily: FONT,
-                  color: C.text,
-                }}
-              >
-                {pos === "min" ? "最小" : "最大"}
-              </button>
-            );
-          })}
-        </div>
-
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: withAlpha(playerColor, 0.95),
-            background: withAlpha(playerColor, 0.12),
-            border: `1px solid ${withAlpha(playerColor, 0.35)}`,
-            borderRadius: 999,
-            padding: "1px 7px",
-            flexShrink: 0,
-          }}
-        >
-          {hand.length}枚
-        </span>
+        今ターンのカード
       </div>
+      <TurnFlipsBar
+        flips={flips}
+        state={state}
+        resolvedNumbers={resolvedNumbers}
+        getPlayerColor={getPlayerColor}
+      />
+    </div>
+  );
+}
 
-      <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 2 }}>
-        {Array.from({ length: 3 }).map((_, i) => {
-          const num = sets[i];
-          return num !== undefined ? (
-            <div
-              key={i}
-              style={{
-                width: 26,
-                height: 34,
-                borderRadius: 6,
-                background: `linear-gradient(135deg, ${playerColor}, ${withAlpha(playerColor, 0.75)})`,
-                color: "white",
-                fontFamily: FONT,
-                fontWeight: 900,
-                fontSize: 13,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: `0 2px 8px ${withAlpha(playerColor, 0.3)}`,
-              }}
-            >
-              {num}
-            </div>
-          ) : (
-            <div
-              key={i}
-              style={{
-                width: 26,
-                height: 34,
-                borderRadius: 6,
-                border: `1.5px dashed ${withAlpha(playerColor, 0.45)}`,
-                color: withAlpha(playerColor, 0.4),
-                fontSize: 14,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              +
-            </div>
-          );
-        })}
+function GuideBanner({
+  isMyTurn,
+  pendingResult,
+  turnFlipsCount,
+}: {
+  isMyTurn: boolean;
+  pendingResult: "success" | "failure" | null;
+  turnFlipsCount: number;
+}) {
+  if (!isMyTurn || pendingResult !== null || turnFlipsCount >= 3) return null;
+  const msgs = [
+    "場か誰かの手札からカードを1枚選んでください",
+    "もう1枚めくってください！",
+    "あと〒1枚！3枚揃えてセット！",
+  ];
+  return (
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <div
+        className="nana-guide-banner"
+        style={{
+          background: C.primary,
+          color: "white",
+          fontWeight: 700,
+          padding: "10px 24px",
+          borderRadius: 99,
+          boxShadow: "0 4px 20px rgba(244,157,37,0.4)",
+          fontSize: 13,
+          fontFamily: FONT,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <span>👆</span>
+        {msgs[turnFlipsCount]}
       </div>
     </div>
   );
 }
 
-// ── 全プレイヤーの獲得セット ─────────────────────────────────────────
-
-function AllCollectedSets({
-  state,
-  players,
-  getPlayerColor,
+function ConfirmBanner({
+  isMyTurn,
+  pendingResult,
+  onConfirm,
 }: {
-  state: NanaStateView;
-  players: { id: string; name: string }[];
-  getPlayerColor: (pid: string) => string;
+  isMyTurn: boolean;
+  pendingResult: "success" | "failure" | null;
+  onConfirm: () => void;
 }) {
+  if (!isMyTurn || pendingResult === null) return null;
+  const isSuccess = pendingResult === "success";
+  const label = isSuccess ? "確認してセット獲得" : "確認してターン終了";
+  const bg = isSuccess ? "#16a34a" : "#2563eb";
   return (
-    <div>
-      <div
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <button
+        onClick={onConfirm}
         style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: C.muted,
-          marginBottom: 10,
+          border: "none",
+          background: bg,
+          color: "white",
+          fontWeight: 800,
+          padding: "10px 20px",
+          borderRadius: 999,
+          boxShadow: `0 6px 16px ${withAlpha(bg, 0.35)}`,
+          fontSize: 13,
+          fontFamily: FONT,
+          cursor: "pointer",
         }}
       >
-        獲得したセット
-      </div>
-      {players.map((p) => {
-        const sets = state.collectedSets[p.id] ?? [];
+        {label}
+      </button>
+    </div>
+  );
+}
+
+function FieldGrid({
+  cardW,
+  cardH,
+  fieldCards,
+  isMyTurn,
+  pendingResult,
+  displayTurnFlipIds,
+  displayTurnFlipNumbers,
+  onFlipField,
+}: {
+  cardW: number;
+  cardH: number;
+  fieldCards: NanaStateView["fieldCards"];
+  isMyTurn: boolean;
+  pendingResult: "success" | "failure" | null;
+  displayTurnFlipIds: Set<number>;
+  displayTurnFlipNumbers: Record<number, number | null>;
+  onFlipField: (index: number) => void;
+}) {
+  const cols = fieldCards.length <= 6 ? 3 : fieldCards.length <= 8 ? 4 : 5;
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: `repeat(${cols}, ${cardW}px)`,
+        gap: 10,
+        justifyContent: "center",
+      }}
+    >
+      {fieldCards.map((card, i) => {
+        const clickable =
+          isMyTurn && pendingResult === null && card !== null && !displayTurnFlipIds.has(card.id);
+        const displayCard =
+          card && displayTurnFlipIds.has(card.id)
+            ? { ...card, number: displayTurnFlipNumbers[card.id] ?? card.number }
+            : card;
         return (
-          <div key={p.id} style={{ marginBottom: 12 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 600,
-                color: C.text,
-                fontFamily: FONT,
-                marginBottom: 5,
-              }}
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: getPlayerColor(p.id),
-                  flexShrink: 0,
-                }}
-              />
-              {p.name}
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {sets.map((num, i) => (
-                <div
-                  key={i}
-                  className="nana-set-acquired"
-                  style={{
-                    width: 36,
-                    height: 48,
-                    background: C.primary,
-                    borderRadius: 6,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                    fontFamily: FONT,
-                    fontWeight: 900,
-                    fontSize: 17,
-                    boxShadow: "0 2px 8px rgba(244,157,37,0.35)",
-                  }}
-                >
-                  {num}
-                </div>
-              ))}
-              {/* 空スロット (最大3まで) */}
-              {Array.from({ length: Math.max(0, 3 - sets.length) }).map((_, i) => (
-                <div
-                  key={`e${i}`}
-                  style={{
-                    width: 36,
-                    height: 48,
-                    border: `2px dashed ${C.border}`,
-                    borderRadius: 6,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: C.border,
-                    fontSize: 18,
-                  }}
-                >
-                  +
-                </div>
-              ))}
-            </div>
-          </div>
+          <FieldCardView
+            key={i}
+            card={displayCard}
+            clickable={clickable}
+            w={cardW}
+            h={cardH}
+            onClick={() => onFlipField(i)}
+          />
         );
       })}
     </div>
   );
 }
 
-// ── ゲームログ ────────────────────────────────────────────────────────
-
-function GameLogPanel({
-  logs,
-  getPlayerColor,
+function HandFooter({
+  cardW,
+  cardH,
+  myHand,
+  displayTurnFlipIds,
+  displayTurnFlipNumbers,
+  isMyTurn,
+  pendingResult,
+  myMinId,
+  myMaxId,
+  playerId,
+  myColor,
+  onFlipHand,
 }: {
-  logs: LogEntry[];
-  getPlayerColor: (pid: string) => string;
+  cardW: number;
+  cardH: number;
+  myHand: NanaCardView[];
+  displayTurnFlipIds: Set<number>;
+  displayTurnFlipNumbers: Record<number, number | null>;
+  isMyTurn: boolean;
+  pendingResult: "success" | "failure" | null;
+  myMinId: number | undefined;
+  myMaxId: number | undefined;
+  playerId: string;
+  myColor: string;
+  onFlipHand: (targetPlayerId: string, position: "min" | "max") => void;
 }) {
   return (
-    <div style={{ height: "100%", overflowY: "auto" }}>
+    <div
+      style={{
+        height: cardH + 52,
+        background: "white",
+        borderTop: `1px solid ${C.border}`,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        flexShrink: 0,
+        justifyContent: "flex-start",
+        padding: "4px 0 0",
+      }}
+    >
       <div
         style={{
-          fontSize: 11,
+          background: "white",
+          border: `1px solid ${C.border}`,
+          padding: "1px 10px",
+          borderRadius: 99,
+          fontSize: 10,
           fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: C.muted,
-          marginBottom: 12,
+          fontFamily: FONT,
+          color: C.text,
+          whiteSpace: "nowrap",
+          marginBottom: 4,
         }}
       >
-        ゲームログ
+        あなたの手札
       </div>
-      {logs.length === 0 && (
-        <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
-          まだログはありません
-        </div>
-      )}
-      {logs.map((entry) => (
-        <div
-          key={entry.id}
-          className="nana-log-entry"
-          style={{ display: "flex", gap: 6, marginBottom: 8, fontSize: 12 }}
-        >
-          <span
-            style={{
-              color: getPlayerColor(entry.playerId),
-              fontWeight: 700,
-              fontFamily: FONT,
-              flexShrink: 0,
-            }}
-          >
-            {entry.player}:
-          </span>
-          <span style={{ color: "#64748b", fontFamily: FONT, lineHeight: 1.4 }}>
-            {entry.tag && (
-              <span
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          overflowX: "auto",
+          overflowY: "visible",
+          padding: "8px 8px 14px",
+          maxWidth: "100%",
+          minHeight: cardH + 14,
+        }}
+      >
+        {myHand.map((card) => {
+          const isFlipped = displayTurnFlipIds.has(card.id);
+          const isMin = myMinId === card.id && !isFlipped;
+          const isMax = myMaxId === card.id && !isFlipped && myMinId !== myMaxId;
+          const canClick = isMyTurn && pendingResult === null && (isMin || isMax);
+          return (
+            <div
+              key={card.id}
+              className={`nana-hand-card${canClick ? " clickable" : ""}`}
+              style={{ position: "relative", flexShrink: 0 }}
+              onClick={
+                canClick
+                  ? () => onFlipHand(playerId, isMin ? "min" : "max")
+                  : undefined
+              }
+            >
+              <div
                 style={{
-                  color: entry.tagColor ?? "#64748b",
-                  fontWeight: 800,
-                  marginRight: 6,
+                  width: cardW,
+                  height: cardH,
+                  background: isFlipped ? "#e2e8f0" : "#f8f7f5",
+                  borderRadius: 8,
+                  border: `2px solid ${isMin || isMax ? myColor : C.border}`,
+                  boxShadow:
+                    isMin || isMax
+                      ? `0 0 0 4px ${withAlpha(myColor, 0.2)}`
+                      : "0 2px 6px rgba(0,0,0,0.08)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: canClick ? "pointer" : "default",
+                  opacity: isFlipped ? 0.5 : 1,
                 }}
               >
-                [{entry.tag}]
-              </span>
-            )}
-            {entry.msg}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── 状況パネル ────────────────────────────────────────────────────────
-
-function StatusPanel({
-  state,
-  playerId,
-  currentPlayerName,
-}: {
-  state: NanaStateView;
-  playerId: string;
-  currentPlayerName: string;
-}) {
-  const isMyTurn = state.playerIds[state.currentPlayerIndex] === playerId;
-  const flipCount = state.turnFlips.length;
-
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: C.muted,
-          marginBottom: 8,
-        }}
-      >
-        現在の状況
-      </div>
-      <div
-        style={{
-          padding: "10px 12px",
-          borderRadius: 12,
-          border: `1px solid ${isMyTurn ? C.primaryBorder : C.border}`,
-          background: isMyTurn ? C.primaryLight : "rgba(248,247,245,0.8)",
-        }}
-      >
-        {isMyTurn ? (
-          <>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: C.primary,
-                margin: "0 0 4px",
-                fontFamily: FONT,
-              }}
-            >
-              あなたの番です
-            </p>
-            <p
-              style={{
-                fontSize: 11,
-                color: "#64748b",
-                lineHeight: 1.5,
-                margin: "0 0 6px",
-                fontFamily: FONT,
-              }}
-            >
-              {flipCount === 0
-                ? "場か誰かの手札から1枚選んでください"
-                : flipCount === 1
-                  ? "もう1枚めくってください（同じ数字を狙おう）"
-                  : "あと1枚！3枚揃えてセット獲得！"}
-            </p>
-            <p
-              style={{
-                fontSize: 11,
-                color: C.primary,
-                margin: 0,
-                fontWeight: 600,
-                fontFamily: FONT,
-              }}
-            >
-              めくり: {flipCount} / 3
-            </p>
-          </>
-        ) : (
-          <>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: C.text,
-                margin: "0 0 4px",
-                fontFamily: FONT,
-              }}
-            >
-              {currentPlayerName} の番
-            </p>
-            <p style={{ fontSize: 11, color: "#64748b", margin: 0, fontFamily: FONT }}>
-              めくり: {flipCount} / 3
-            </p>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── ルール概要 ────────────────────────────────────────────────────────
-
-function RulesPanel() {
-  return (
-    <div>
-      <div
-        style={{
-          padding: "12px 14px",
-          background: "#f8f7f5",
-          borderRadius: 12,
-          border: `1px solid ${C.border}`,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            marginBottom: 8,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            color: C.text,
-            fontFamily: FONT,
-          }}
-        >
-          <span style={{ color: C.primary }}>ℹ</span> ルール概要
-        </div>
-        <ul
-          style={{
-            fontSize: 11,
-            color: "#64748b",
-            lineHeight: 1.7,
-            paddingLeft: 0,
-            listStyle: "none",
-            margin: 0,
-            fontFamily: FONT,
-          }}
-        >
-          <li>• 同じ数字を3枚揃えると1セット</li>
-          <li>• 3セット獲得で勝利！</li>
-          <li>• 「7」のセットを揃えると即勝利</li>
-          <li>• 2セットの和・差が7でも勝利</li>
-        </ul>
+                <span
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: Math.round(cardH * 0.36),
+                    fontWeight: 900,
+                    color: isMin || isMax ? myColor : C.text,
+                  }}
+                >
+                  {card.number}
+                </span>
+              </div>
+              {isMin && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: -8,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: myColor,
+                    color: "white",
+                    fontSize: 8,
+                    fontWeight: 900,
+                    padding: "1px 5px",
+                    borderRadius: 4,
+                    fontFamily: FONT,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  MIN
+                </div>
+              )}
+              {isMax && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: -8,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: myColor,
+                    color: "white",
+                    fontSize: 8,
+                    fontWeight: 900,
+                    padding: "1px 5px",
+                    borderRadius: 4,
+                    fontFamily: FONT,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  MAX
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -739,7 +361,8 @@ function RulesPanel() {
 
 export function NanaBoard() {
   const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom } = useRoom();
-  const state = gameState as NanaStateView | null;
+  // フックはすべて条件リターンより前に呼ぶ（React Hooks のルール）
+  const state = gameState?.gameId === "nana" ? gameState.state : null;
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<"game" | "log">("game");
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -748,8 +371,10 @@ export function NanaBoard() {
   const playersRef = useRef(room?.players ?? []);
   playersRef.current = room?.players ?? [];
 
-  const getName = (pid: string) =>
-    playersRef.current.find((p) => p.id === pid)?.name ?? pid;
+  const getName = useCallback(
+    (pid: string) => playersRef.current.find((p) => p.id === pid)?.name ?? pid,
+    [],
+  );
   const getPlayerColor = (pid: string) => {
     const i = playersRef.current.findIndex((p) => p.id === pid);
     return PLAYER_COLORS[(i >= 0 ? i : 0) % PLAYER_COLORS.length];
@@ -839,44 +464,44 @@ export function NanaBoard() {
         }
       }
     }
-  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state, getName]);
 
   // ── 早期リターン ──────────────────────────────────────────────────
+  if (gameState !== null && gameState.gameId !== "nana") return null;
   if (!state || !playerId || !room) return null;
 
   // ── ゲーム結果オーバーレイ ───────────────────────────────────────
-  const resultOverlay = gameResult ? (
-    (() => {
-      const winnerId = gameResult.ranking?.[0] ?? null;
-      const myResult = winnerId === playerId ? "win" : "lose";
-      const winnerName = room.players.find((p) => p.id === winnerId)?.name;
-      return (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 120,
-            background: "rgba(15,23,42,0.34)",
-            backdropFilter: "blur(2px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-        >
-          <div style={{ maxWidth: 420, width: "100%" }}>
-            <GameResultCard
-              result={myResult}
-              winnerName={winnerName}
-              isHost={room.hostId === playerId}
-              onRematch={startGame}
-              onLeave={leaveRoom}
-            />
-          </div>
+  let resultOverlay = null;
+  if (gameResult) {
+    const winnerId = gameResult.ranking?.[0] ?? null;
+    const myResult = winnerId === playerId ? "win" : "lose";
+    const winnerName = room.players.find((p) => p.id === winnerId)?.name;
+    resultOverlay = (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 120,
+          background: "rgba(15,23,42,0.34)",
+          backdropFilter: "blur(2px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+        }}
+      >
+        <div style={{ maxWidth: 420, width: "100%" }}>
+          <GameResultCard
+            result={myResult}
+            winnerName={winnerName}
+            isHost={room.hostId === playerId}
+            onRematch={startGame}
+            onLeave={leaveRoom}
+          />
         </div>
-      );
-    })()
-  ) : null;
+      </div>
+    );
+  }
 
   // ── 計算 ──────────────────────────────────────────────────────────
   const players = room.players;
@@ -911,275 +536,7 @@ export function NanaBoard() {
     sendMove({ type: "confirm" } as NanaMove);
   };
 
-  // ── 場札グリッド ──────────────────────────────────────────────────
-  const renderFieldGrid = (cardW: number, cardH: number) => {
-    const fieldCount = state.fieldCards.length;
-    const cols = fieldCount <= 6 ? 3 : fieldCount <= 8 ? 4 : 5;
-    return (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${cols}, ${cardW}px)`,
-          gap: 10,
-          justifyContent: "center",
-        }}
-      >
-        {state.fieldCards.map((card, i) => {
-          const clickable =
-            isMyTurn && pendingResult === null && card !== null && !displayTurnFlipIds.has(card.id);
-          const displayCard =
-            card && displayTurnFlipIds.has(card.id)
-              ? { ...card, number: displayTurnFlipNumbers[card.id] ?? card.number }
-              : card;
-          return (
-            <FieldCardView
-              key={i}
-              card={displayCard}
-              clickable={clickable}
-              w={cardW}
-              h={cardH}
-              onClick={() => handleFlipField(i)}
-            />
-          );
-        })}
-      </div>
-    );
-  };
-
-  // ── 自分の手札フッター ────────────────────────────────────────────
-  const renderHandFooter = (cardW: number, cardH: number) => (
-    <div
-      style={{
-        height: cardH + 52,
-        background: "white",
-        borderTop: `1px solid ${C.border}`,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        flexShrink: 0,
-        justifyContent: "flex-start",
-        padding: "4px 0 0",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          border: `1px solid ${C.border}`,
-          padding: "1px 10px",
-          borderRadius: 99,
-          fontSize: 10,
-          fontWeight: 700,
-          fontFamily: FONT,
-          color: C.text,
-          whiteSpace: "nowrap",
-          marginBottom: 4,
-        }}
-      >
-        あなたの手札
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          overflowX: "auto",
-          overflowY: "visible",
-          padding: "8px 8px 14px",
-          maxWidth: "100%",
-          minHeight: cardH + 14,
-        }}
-      >
-        {myHand.map((card) => {
-          const isFlipped = displayTurnFlipIds.has(card.id);
-          const isMin = myMinId === card.id && !isFlipped;
-          const isMax = myMaxId === card.id && !isFlipped && myMinId !== myMaxId;
-          const canClick = isMyTurn && pendingResult === null && (isMin || isMax);
-          return (
-            <div
-              key={card.id}
-              className={`nana-hand-card${canClick ? " clickable" : ""}`}
-              style={{ position: "relative", flexShrink: 0 }}
-              onClick={
-                canClick
-                  ? () => handleFlipHand(playerId, isMin ? "min" : "max")
-                  : undefined
-              }
-            >
-              <div
-                style={{
-                  width: cardW,
-                  height: cardH,
-                  background: isFlipped ? "#e2e8f0" : "#f8f7f5",
-                  borderRadius: 8,
-                  border: `2px solid ${isMin || isMax ? myColor : C.border}`,
-                  boxShadow:
-                    isMin || isMax
-                      ? `0 0 0 4px ${withAlpha(myColor, 0.2)}`
-                      : "0 2px 6px rgba(0,0,0,0.08)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: canClick ? "pointer" : "default",
-                  opacity: isFlipped ? 0.5 : 1,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: FONT,
-                    fontSize: Math.round(cardH * 0.36),
-                    fontWeight: 900,
-                    color: isMin || isMax ? myColor : C.text,
-                  }}
-                >
-                  {card.number}
-                </span>
-              </div>
-              {isMin && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: -8,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: myColor,
-                    color: "white",
-                    fontSize: 8,
-                    fontWeight: 900,
-                    padding: "1px 5px",
-                    borderRadius: 4,
-                    fontFamily: FONT,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  MIN
-                </div>
-              )}
-              {isMax && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: -8,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: myColor,
-                    color: "white",
-                    fontSize: 8,
-                    fontWeight: 900,
-                    padding: "1px 5px",
-                    borderRadius: 4,
-                    fontFamily: FONT,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  MAX
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  // ── めくりインジケーター ──────────────────────────────────────────
-  const renderTurnFlips = () => {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 6,
-          minHeight: 102,
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 11,
-            color: C.muted,
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            opacity: displayTurnFlips.length > 0 ? 1 : 0.65,
-          }}
-        >
-          今ターンのカード
-        </div>
-        <TurnFlipsBar
-          flips={displayTurnFlips}
-          state={state}
-          resolvedNumbers={displayTurnFlipNumbers}
-          getPlayerColor={getPlayerColor}
-        />
-      </div>
-    );
-  };
-
-  // ── 操作ガイドバナー ──────────────────────────────────────────────
-  const renderGuideBanner = () => {
-    if (!isMyTurn || pendingResult !== null || state.turnFlips.length >= 3) return null;
-    const msgs = [
-      "場か誰かの手札からカードを1枚選んでください",
-      "もう1枚めくってください！",
-      "あと1枚！3枚揃えてセット！",
-    ];
-    return (
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <div
-          className="nana-guide-banner"
-          style={{
-            background: C.primary,
-            color: "white",
-            fontWeight: 700,
-            padding: "10px 24px",
-            borderRadius: 99,
-            boxShadow: "0 4px 20px rgba(244,157,37,0.4)",
-            fontSize: 13,
-            fontFamily: FONT,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <span>👆</span>
-          {msgs[state.turnFlips.length]}
-        </div>
-      </div>
-    );
-  };
-
-  const renderConfirmBanner = () => {
-    if (!isMyTurn || pendingResult === null) return null;
-    const isSuccess = pendingResult === "success";
-    const label = isSuccess ? "確認してセット獲得" : "確認してターン終了";
-    const bg = isSuccess ? "#16a34a" : "#2563eb";
-    return (
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <button
-          onClick={handleConfirm}
-          style={{
-            border: "none",
-            background: bg,
-            color: "white",
-            fontWeight: 800,
-            padding: "10px 20px",
-            borderRadius: 999,
-            boxShadow: `0 6px 16px ${withAlpha(bg, 0.35)}`,
-            fontSize: 13,
-            fontFamily: FONT,
-            cursor: "pointer",
-          }}
-        >
-          {label}
-        </button>
-      </div>
-    );
-  };
-
-  const confirmBanner = renderConfirmBanner();
-  const guideBanner = renderGuideBanner();
-  const hasBottomAction = Boolean(confirmBanner || guideBanner);
+  const hasBottomAction = isMyTurn && (pendingResult !== null || state.turnFlips.length < 3);
 
   // ── デスクトップレイアウト ──────────────────────────────────────────
   if (!isMobile) {
@@ -1314,7 +671,12 @@ export function NanaBoard() {
               height: "auto",
             }}
           >
-            {renderTurnFlips()}
+            <TurnFlipsSection
+              flips={displayTurnFlips}
+              state={state}
+              resolvedNumbers={displayTurnFlipNumbers}
+              getPlayerColor={getPlayerColor}
+            />
             <div
               style={{
                 flex: 1,
@@ -1323,7 +685,16 @@ export function NanaBoard() {
                 justifyContent: "center",
               }}
             >
-              {renderFieldGrid(76, 101)}
+              <FieldGrid
+                cardW={76}
+                cardH={101}
+                fieldCards={state.fieldCards}
+                isMyTurn={isMyTurn}
+                pendingResult={pendingResult}
+                displayTurnFlipIds={displayTurnFlipIds}
+                displayTurnFlipNumbers={displayTurnFlipNumbers}
+                onFlipField={handleFlipField}
+              />
             </div>
             <div
               style={{
@@ -1334,8 +705,8 @@ export function NanaBoard() {
                 gap: 8,
               }}
             >
-              {confirmBanner}
-              {guideBanner}
+              <ConfirmBanner isMyTurn={isMyTurn} pendingResult={pendingResult} onConfirm={handleConfirm} />
+              <GuideBanner isMyTurn={isMyTurn} pendingResult={pendingResult} turnFlipsCount={state.turnFlips.length} />
             </div>
           </section>
 
@@ -1367,7 +738,20 @@ export function NanaBoard() {
             background: "white",
           }}
         >
-          {renderHandFooter(68, 91)}
+          <HandFooter
+          cardW={68}
+          cardH={91}
+          myHand={myHand}
+          displayTurnFlipIds={displayTurnFlipIds}
+          displayTurnFlipNumbers={displayTurnFlipNumbers}
+          isMyTurn={isMyTurn}
+          pendingResult={pendingResult}
+          myMinId={myMinId}
+          myMaxId={myMaxId}
+          playerId={playerId}
+          myColor={myColor}
+          onFlipHand={handleFlipHand}
+        />
         </div>
         {resultOverlay}
       </>
@@ -1403,7 +787,12 @@ export function NanaBoard() {
               rowGap: 10,
             }}
           >
-            {renderTurnFlips()}
+            <TurnFlipsSection
+              flips={displayTurnFlips}
+              state={state}
+              resolvedNumbers={displayTurnFlipNumbers}
+              getPlayerColor={getPlayerColor}
+            />
             <div
               style={{
                 flex: 1,
@@ -1413,7 +802,16 @@ export function NanaBoard() {
                 justifyContent: "center",
               }}
             >
-              {renderFieldGrid(55, 73)}
+              <FieldGrid
+                cardW={55}
+                cardH={73}
+                fieldCards={state.fieldCards}
+                isMyTurn={isMyTurn}
+                pendingResult={pendingResult}
+                displayTurnFlipIds={displayTurnFlipIds}
+                displayTurnFlipNumbers={displayTurnFlipNumbers}
+                onFlipField={handleFlipField}
+              />
             </div>
             {hasBottomAction && (
               <div
@@ -1425,8 +823,8 @@ export function NanaBoard() {
                   gap: 6,
                 }}
               >
-                {confirmBanner}
-                {guideBanner}
+                <ConfirmBanner isMyTurn={isMyTurn} pendingResult={pendingResult} onConfirm={handleConfirm} />
+                <GuideBanner isMyTurn={isMyTurn} pendingResult={pendingResult} turnFlipsCount={state.turnFlips.length} />
               </div>
             )}
           </div>
@@ -1449,7 +847,20 @@ export function NanaBoard() {
           background: "white",
         }}
       >
-        {renderHandFooter(52, 69)}
+        <HandFooter
+          cardW={52}
+          cardH={69}
+          myHand={myHand}
+          displayTurnFlipIds={displayTurnFlipIds}
+          displayTurnFlipNumbers={displayTurnFlipNumbers}
+          isMyTurn={isMyTurn}
+          pendingResult={pendingResult}
+          myMinId={myMinId}
+          myMaxId={myMaxId}
+          playerId={playerId}
+          myColor={myColor}
+          onFlipHand={handleFlipHand}
+        />
       </div>
 
       <div

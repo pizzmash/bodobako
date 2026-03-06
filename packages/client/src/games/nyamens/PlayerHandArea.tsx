@@ -1,7 +1,6 @@
 import type { NyaMensPlayerView } from "@bodobako/shared";
 import { PlayingCard } from "../../components/PlayingCard";
-
-const ACCENT = "#0EA5E9";
+import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
 const PLAYER_COLORS = [
   "#0EA5E9", "#10B981", "#F59E0B", "#A855F7", "#EC4899",
 ];

@@ -1,58 +1,23 @@
 import type { NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { PlayingCard } from "../../components/PlayingCard";
+import { Avatar } from "../../components/ui/Avatar";
 import { useRoom } from "../../context/RoomContext";
 import { API_BASE } from "../../lib/socket";
+import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
 import { DrawCardsView } from "./DrawCardsView";
-import "./nyamens.css";
 import { PlayerHandArea } from "./PlayerHandArea";
 import { RepairArea } from "./RepairArea";
 import { VoteView } from "./VoteView";
 
 const BG_CARD = "rgba(255,255,255,0.06)";
-const ACCENT = "#0EA5E9";
 const DANGER = "#DC2626";
 
 function cardColor(num: number): string {
   if (num <= 10) return "#BAE6FD";
   if (num <= 20) return "#BBF7D0";
   return "#FED7AA";
-}
-
-// ---- ヘッダーと同じ PersonIcon SVG ----
-const PersonIcon = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" />
-  </svg>
-);
-
-// ---- ヘッダーと同じアバター（円+PersonIcon） ----
-function PlayerAvatar({ photoURL, name, size = 28 }: { photoURL?: string; name: string; size?: number }) {
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        border: "1px solid rgba(99,102,241,0.35)",
-        background: "rgba(255,255,255,0.9)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#6366F1",
-        overflow: "hidden",
-        flexShrink: 0,
-      }}
-    >
-      {photoURL ? (
-        <img src={photoURL} alt={name} referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-      ) : (
-        <PersonIcon size={size * 0.6} />
-      )}
-    </div>
-  );
 }
 
 // ---- プレイヤーバー ----
@@ -105,7 +70,7 @@ function PlayerBar({
               transition: "all 0.2s",
             }}
           >
-            <PlayerAvatar photoURL={photoURLs[pid]} name={name} size={26} />
+            <Avatar photoURL={photoURLs[pid]} displayName={name} size={26} />
             <span>
               {name}{isMe ? <span style={{ color: "#475569", fontSize: "0.7rem" }}>（自分）</span> : ""}
             </span>
@@ -244,7 +209,8 @@ function WaitingDots() {
 // ---- メインコンポーネント ----
 export function NyaMensBoard() {
   const { gameState, sendMove, playerId, room, startGame, leaveRoom } = useRoom();
-  const state = gameState as NyaMensPlayerView | null;
+  if (gameState !== null && gameState.gameId !== "nyamens") return null;
+  const state = gameState?.state ?? null;
   const [selectedRevealedCard, setSelectedRevealedCard] = useState<number | null>(null);
   const [diceAnimating, setDiceAnimating] = useState(false);
   const [diceShowingResult, setDiceShowingResult] = useState(false);
@@ -293,12 +259,15 @@ export function NyaMensBoard() {
   }, [state?.phase, state?.repairDutyIndex]);
 
   // playerId → 表示名のマップ
-  const playerNames: Record<string, string> = {};
-  if (room) {
-    for (const p of room.players) {
-      playerNames[p.id] = p.name;
+  const playerNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    if (room) {
+      for (const p of room.players) {
+        names[p.id] = p.name;
+      }
     }
-  }
+    return names;
+  }, [room]);
   const nameOf = (id: string) => playerNames[id] ?? id.slice(0, 10);
 
   // プロフィール写真を取得（ヘッダーと同じ API）
@@ -444,6 +413,41 @@ export function NyaMensBoard() {
   }
 
   // ---- 共通レイアウト ----
+  const finishedOverlay = (() => {
+    if (state.phase !== "finished" || !room) return null;
+    const isWinner =
+      (state.result?.winner === "nyamens" && state.myRole === "nyamens") ||
+      (state.result?.winner === "assassin" && state.myRole === "assassin");
+    const winnerTeam = state.result?.winner === "nyamens" ? "ニャーメンズ" : "アサシン";
+    const reasonLabel: Record<string, string> = {
+      "repair-complete": "🔧 全カード修理完了！",
+      "correct-arrest": "🎯 アサシンを正しく逮捕！",
+      "no-assassin": "🕊️ アサシン不在で修理失敗も無投票勝利",
+      "wrong-arrest": "💀 無実のプレイヤーを逮捕してしまいました",
+      "missed-assassin": "👻 アサシンを特定できませんでした",
+    };
+    const winColor = state.result?.winner === "nyamens" ? ACCENT : DANGER;
+    return (
+      <>
+        <GameResultCard
+          result={isWinner ? "win" : "lose"}
+          winnerName={isWinner ? undefined : `${winnerTeam}チーム`}
+          isHost={room.hostId === myId}
+          onRematch={startGame}
+          onLeave={leaveRoom}
+        />
+        {state.result && (
+          <div style={{ background: `${winColor}12`, border: `1px solid ${winColor}40`, borderRadius: 12, padding: "10px 16px", textAlign: "center" }}>
+            <span style={{ color: winColor, fontWeight: 700, fontSize: "0.88rem" }}>
+              {state.result.winner === "nyamens" ? "ニャーメンズの勝利！" : "アサシンの勝利..."}&ensp;
+              {reasonLabel[state.result.reason] ?? ""}
+            </span>
+          </div>
+        )}
+      </>
+    );
+  })();
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 600, margin: "0 auto" }}>
       {/* イベントキュー表示 */}
@@ -469,39 +473,7 @@ export function NyaMensBoard() {
       )}
 
       {/* 終了時リザルト＋勝利理由（リペアボードより上） */}
-      {state.phase === "finished" && room && (() => {
-        const isWinner =
-          (state.result?.winner === "nyamens" && state.myRole === "nyamens") ||
-          (state.result?.winner === "assassin" && state.myRole === "assassin");
-        const winnerTeam = state.result?.winner === "nyamens" ? "ニャーメンズ" : "アサシン";
-        const reasonLabel: Record<string, string> = {
-          "repair-complete": "🔧 全カード修理完了！",
-          "correct-arrest": "🎯 アサシンを正しく逮捕！",
-          "no-assassin": "🕊️ アサシン不在で修理失敗も無投票勝利",
-          "wrong-arrest": "💀 無実のプレイヤーを逮捕してしまいました",
-          "missed-assassin": "👻 アサシンを特定できませんでした",
-        };
-        const winColor = state.result?.winner === "nyamens" ? ACCENT : DANGER;
-        return (
-          <>
-            <GameResultCard
-              result={isWinner ? "win" : "lose"}
-              winnerName={isWinner ? undefined : `${winnerTeam}チーム`}
-              isHost={room.hostId === myId}
-              onRematch={startGame}
-              onLeave={leaveRoom}
-            />
-            {state.result && (
-              <div style={{ background: `${winColor}12`, border: `1px solid ${winColor}40`, borderRadius: 12, padding: "10px 16px", textAlign: "center" }}>
-                <span style={{ color: winColor, fontWeight: 700, fontSize: "0.88rem" }}>
-                  {state.result.winner === "nyamens" ? "ニャーメンズの勝利！" : "アサシンの勝利..."}&ensp;
-                  {reasonLabel[state.result.reason] ?? ""}
-                </span>
-              </div>
-            )}
-          </>
-        );
-      })()}
+      {finishedOverlay}
 
       {/* プレイヤーバー（リペアボード直前、終了時は非表示） */}
       {state.phase !== "finished" && (
@@ -674,7 +646,7 @@ export function NyaMensBoard() {
                       transition: "all 0.15s",
                     }}
                   >
-                    <PlayerAvatar photoURL={photoURLs[pid]} name={nameOf(pid)} size={22} />
+                    <Avatar photoURL={photoURLs[pid]} displayName={nameOf(pid)} size={22} />
                     {nameOf(pid)}{pid === myId ? "（自分）" : ""}
                     <span style={{ color: "#475569", fontSize: "0.7rem", marginLeft: 4 }}>
                       {handCount}枚
@@ -933,14 +905,14 @@ export function NyaMensBoard() {
                     border: role ? `1px solid ${isAssassin ? "rgba(220,38,38,0.3)" : "rgba(14,165,233,0.3)"}` : "1px solid transparent",
                   }}
                 >
-                  <PlayerAvatar photoURL={photoURLs[pid]} name={nameOf(pid)} size={24} />
+                  <Avatar photoURL={photoURLs[pid]} displayName={nameOf(pid)} size={24} />
                   <span style={{ color: "#1e293b", fontWeight: 600, minWidth: 80 }}>
                     {nameOf(pid)}{pid === myId ? <span style={{ color: "#64748b", fontSize: "0.68rem", fontWeight: 400 }}>（自分）</span> : ""}
                   </span>
                   {voteTargetName !== undefined ? (
                     <>
                       <span style={{ color: "#94a3b8", fontSize: "0.7rem" }}>→</span>
-                      {!isNoneVote && vote && <PlayerAvatar photoURL={photoURLs[vote]} name={voteTargetName} size={20} />}
+                      {!isNoneVote && vote && <Avatar photoURL={photoURLs[vote]} displayName={voteTargetName} size={20} />}
                       <span style={{ color: isNoneVote ? "#94a3b8" : "#dc2626", fontWeight: isNoneVote ? 400 : 600, fontSize: "0.78rem" }}>
                         {voteTargetName}
                       </span>

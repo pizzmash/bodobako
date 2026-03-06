@@ -7,7 +7,6 @@
 import type { BlokusState, RoomInfo } from "@bodobako/shared";
 import { computeRemainingCells, getCurrentPlayerId } from "@bodobako/shared";
 import { BLOKUS_COLORS, SURFACE, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
-import "./blokus.css";
 
 interface BlokusPlayerInfoProps {
   state: BlokusState;

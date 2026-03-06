@@ -1,9 +1,3 @@
-import { useEffect } from "react";
-
-const FONT = "'Poppins', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
-const BODY_FONT = "'Inter', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
-
-/* SVGトロフィーアイコン */
 const TrophyIcon = () => (
   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M6 9C6 10.5913 6.63214 12.1174 7.75736 13.2426C8.88258 14.3679 10.4087 15 12 15C13.5913 15 15.1174 14.3679 16.2426 13.2426C17.3679 12.1174 18 10.5913 18 9V4H6V9Z" fill="url(#trophy-gradient)" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -18,63 +12,6 @@ const TrophyIcon = () => (
     </defs>
   </svg>
 );
-
-const INJECTED_STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Poppins:wght@600;700;800&display=swap');
-
-@keyframes gr-bounceIn {
-  0%{ transform:scale(.3); opacity:0 }
-  50%{ transform:scale(1.05) }
-  70%{ transform:scale(.95) }
-  100%{ transform:scale(1); opacity:1 }
-}
-
-@keyframes gr-iconFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gr-action-btn, .gr-icon {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-.gr-action-btn {
-  transition: all .2s ease !important;
-}
-.gr-action-btn:hover:not(:disabled) {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35) !important;
-}
-.gr-action-btn:active:not(:disabled) {
-  transform: translateY(0) !important;
-}
-.gr-action-btn:focus {
-  outline: 3px solid #6366F1 !important;
-  outline-offset: 2px !important;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
-}
-
-.gr-icon {
-  animation: gr-iconFloat 3s ease-in-out infinite;
-}
-`;
-
-function useInjectStyles() {
-  useEffect(() => {
-    const id = "gr-styles";
-    if (document.getElementById(id)) return;
-    const tag = document.createElement("style");
-    tag.id = id;
-    tag.textContent = INJECTED_STYLES;
-    document.head.appendChild(tag);
-    return () => {
-      document.getElementById(id)?.remove();
-    };
-  }, []);
-}
 
 interface GameResultCardProps {
   result: "win" | "lose" | "draw";
@@ -91,38 +28,58 @@ export function GameResultCard({
   onRematch,
   onLeave,
 }: GameResultCardProps) {
-  useInjectStyles();
-
   const isWin = result === "win";
   const isDraw = result === "draw";
 
   return (
     <div
-      style={{
-        ...styles.card,
-        ...(isWin ? styles.cardWin : styles.cardDefault),
-        animation: "gr-bounceIn .6s ease-out",
-      }}
+      className="my-2 mb-4 px-10 py-8 rounded-3xl text-center flex flex-col items-center gap-4 backdrop-blur-xl animate-bounce-in"
+      style={
+        isWin
+          ? {
+              background:
+                "linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(129,140,248,0.1) 50%, rgba(250,245,255,0.95) 100%)",
+              border: "2px solid rgba(129,140,248,0.4)",
+              boxShadow:
+                "0 12px 32px rgba(99,102,241,0.25), 0 0 0 1px rgba(255,255,255,0.3) inset",
+              color: "#4F46E5",
+            }
+          : {
+              background: "rgba(248,250,252,0.85)",
+              border: "2px solid rgba(129,140,248,0.2)",
+              boxShadow:
+                "0 8px 24px rgba(99,102,241,0.15), 0 0 0 1px rgba(255,255,255,0.2) inset",
+              color: "#312E81",
+            }
+      }
       role="status"
       aria-live="polite"
     >
       {isWin && (
-        <div className="gr-icon" style={styles.iconWrapper}>
+        <div
+          className="mb-2 animate-icon-float"
+          style={{ filter: "drop-shadow(0 4px 12px rgba(99,102,241,0.3))" }}
+        >
           <TrophyIcon />
         </div>
       )}
-      <div style={styles.resultText}>
+      <div className="text-2xl font-bold font-poppins tracking-tight">
         {isWin
           ? "あなたの勝ちです！"
           : isDraw
             ? "引き分けです"
             : `${winnerName ?? "相手"} の勝ちです`}
       </div>
-      <div style={styles.buttons}>
+      <div className="flex gap-3 justify-center mt-2 w-full flex-nowrap items-center">
         {isHost && (
           <button
-            className="gr-action-btn"
-            style={styles.rematchButton}
+            className="gr-action-btn px-7 py-3.5 text-base rounded-2xl font-semibold font-poppins text-white cursor-pointer whitespace-nowrap min-h-[48px] min-w-[120px]"
+            style={{
+              background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+              boxShadow:
+                "0 4px 12px rgba(34,197,94,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset",
+              border: "none",
+            }}
             onClick={onRematch}
             aria-label="再戦する"
           >
@@ -130,8 +87,12 @@ export function GameResultCard({
           </button>
         )}
         <button
-          className="gr-action-btn"
-          style={styles.lobbyButton}
+          className="gr-action-btn px-7 py-3.5 text-base rounded-2xl font-semibold font-poppins text-white cursor-pointer whitespace-nowrap min-h-[48px] min-w-[120px] bg-indigo-gradient"
+          style={{
+            boxShadow:
+              "0 4px 12px rgba(99,102,241,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset",
+            border: "none",
+          }}
           onClick={onLeave}
           aria-label="ロビーに戻る"
         >
@@ -141,80 +102,3 @@ export function GameResultCard({
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  card: {
-    margin: "0.5rem 0 1rem",
-    padding: "2rem 2.5rem 1.75rem",
-    borderRadius: "24px",
-    textAlign: "center",
-    fontFamily: BODY_FONT,
-    backdropFilter: "blur(20px)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "1rem",
-  },
-  cardWin: {
-    background: "linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(129, 140, 248, 0.1) 50%, rgba(250, 245, 255, 0.95) 100%)",
-    border: "2px solid rgba(129, 140, 248, 0.4)",
-    boxShadow: "0 12px 32px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-    color: "#4F46E5",
-  },
-  cardDefault: {
-    background: "rgba(248, 250, 252, 0.85)",
-    backdropFilter: "blur(16px)",
-    border: "2px solid rgba(129, 140, 248, 0.2)",
-    boxShadow: "0 8px 24px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
-    color: "#312E81",
-  },
-  iconWrapper: {
-    marginBottom: "0.5rem",
-    filter: "drop-shadow(0 4px 12px rgba(99, 102, 241, 0.3))",
-  },
-  resultText: {
-    fontSize: "1.5rem",
-    fontWeight: 700,
-    fontFamily: FONT,
-    letterSpacing: "-0.01em",
-  },
-  buttons: {
-    display: "flex",
-    gap: "0.75rem",
-    justifyContent: "center",
-    marginTop: "0.5rem",
-    width: "100%",
-    flexWrap: "nowrap",
-    alignItems: "center",
-  },
-  rematchButton: {
-    padding: "0.875rem 1.75rem",
-    fontSize: "1rem",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
-    color: "#fff",
-    cursor: "pointer",
-    fontFamily: FONT,
-    fontWeight: 600,
-    boxShadow: "0 4px 12px rgba(34, 197, 94, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
-    minHeight: "48px",
-    whiteSpace: "nowrap",
-    minWidth: "120px",
-  },
-  lobbyButton: {
-    padding: "0.875rem 1.75rem",
-    fontSize: "1rem",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
-    color: "#fff",
-    cursor: "pointer",
-    fontFamily: FONT,
-    fontWeight: 600,
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
-    minHeight: "48px",
-    whiteSpace: "nowrap",
-    minWidth: "120px",
-  },
-};

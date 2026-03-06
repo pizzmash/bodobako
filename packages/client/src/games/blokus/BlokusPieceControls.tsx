@@ -7,7 +7,6 @@
 import { PIECES } from "@bodobako/shared";
 import { BLOKUS_COLORS, PREVIEW_CELL, SURFACE, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 import { PieceThumbnail } from "./PieceThumbnail";
-import "./blokus.css";
 
 interface BlokusPieceControlsProps {
   selectedPieceId: number | null;

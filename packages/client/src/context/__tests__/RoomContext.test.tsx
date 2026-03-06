@@ -1,7 +1,7 @@
-import { render, act, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
+import { act, render, waitFor } from "@testing-library/react";
+import React from "react";
 import { MemoryRouter } from "react-router-dom";
-import React, { useEffect } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 // -------------------------------------------------------------------------
 // wsClient モック
@@ -288,24 +288,38 @@ describe("サーバーイベント - game:started / game:stateUpdated / game:end
   it("game:startedでgameStateが設定される", async () => {
     const { getContext } = await renderRoomProvider();
 
+    act(() => {
+      simulateServerEvent("room:updated", {
+        type: "room:updated",
+        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+      });
+    });
+
     const mockState = { board: [], currentPlayerIndex: 0 };
     act(() => {
       simulateServerEvent("game:started", { type: "game:started", state: mockState });
     });
 
-    expect(getContext().gameState).toEqual(mockState);
+    expect(getContext().gameState).toEqual({ gameId: "othello", state: mockState });
     expect(getContext().gameResult).toBeNull();
   });
 
   it("game:stateUpdatedでgameStateが更新される", async () => {
     const { getContext } = await renderRoomProvider();
 
+    act(() => {
+      simulateServerEvent("room:updated", {
+        type: "room:updated",
+        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+      });
+    });
+
     const newState = { board: [["black"]], currentPlayerIndex: 1 };
     act(() => {
       simulateServerEvent("game:stateUpdated", { type: "game:stateUpdated", state: newState });
     });
 
-    expect(getContext().gameState).toEqual(newState);
+    expect(getContext().gameState).toEqual({ gameId: "othello", state: newState });
   });
 
   it("game:endedでgameResultが設定される", async () => {
