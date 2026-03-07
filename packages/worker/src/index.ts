@@ -2,11 +2,10 @@ import { getGameDefinition } from "@bodobako/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { RoomSession } from "./RoomSession.js";
-import { UserRegistry } from "./UserRegistry.js";
 import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
 import * as r2UserStorage from "./lib/r2UserStorage.js";
 
-export { RoomSession, UserRegistry };
+export { RoomSession };
 
 // 4文字ルームコード生成
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -18,14 +17,8 @@ function generateCode(): string {
 
 interface Env {
   ROOM_SESSION: DurableObjectNamespace;
-  // 移行期間中のみ残す。/admin/migrate-users 実行後に削除し wrangler.toml の v4 migration を有効化する。
-  USER_REGISTRY: DurableObjectNamespace;
   USER_DATA: R2Bucket;
   FIREBASE_PROJECT_ID: string;
-}
-
-function getUserRegistry(env: Env) {
-  return env.USER_REGISTRY.get(env.USER_REGISTRY.idFromName("global"));
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -464,19 +457,6 @@ app.post("/users/me/friend-requests/:uid/reject", async (c) => {
 // ---------------------------------------------------------------------------
 // 管理API
 // ---------------------------------------------------------------------------
-
-// UserRegistry DO → R2 への一括データ移行（一時エンドポイント・移行完了後に削除）
-// 実行方法: curl https://<worker>/admin/migrate-users
-app.get("/admin/migrate-users", async (c) => {
-  const userRegistry = getUserRegistry(c.env);
-  const exportRes = await userRegistry.fetch(new Request("http://do/export-all"));
-  if (!exportRes.ok) return c.json({ error: "DOからのエクスポートに失敗しました" }, 500);
-
-  const data = await exportRes.json<r2UserStorage.DoExportData>();
-  const counts = await r2UserStorage.importFromDo(c.env.USER_DATA, data);
-
-  return c.json({ ok: true, ...counts });
-});
 
 app.get("/admin/api/rooms/:code", async (c) => {
   const code = c.req.param("code").toUpperCase();
