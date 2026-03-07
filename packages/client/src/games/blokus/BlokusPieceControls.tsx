@@ -4,8 +4,8 @@
  * 回転・反転ボタンを提供する。
  */
 
-import React from "react";
 import { PIECES } from "@bodobako/shared";
+import React from "react";
 import { BLOKUS_COLORS, PREVIEW_CELL, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 import { PieceThumbnail } from "./PieceThumbnail";
 

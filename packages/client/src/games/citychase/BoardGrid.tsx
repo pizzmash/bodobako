@@ -9,8 +9,8 @@ import {
     isSamePos,
     posKey,
 } from "@bodobako/shared";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { clsx } from "clsx";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HELI_COLORS } from "./constants";
 
 interface Props {

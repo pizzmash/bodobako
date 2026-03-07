@@ -13,8 +13,8 @@ import {
     getValidCriminalMoves,
     isSamePos,
 } from "@bodobako/shared";
-import React, { useCallback, useMemo } from "react";
 import { clsx } from "clsx";
+import React, { useCallback, useMemo } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { BoardGrid } from "./BoardGrid";
 import { PlayerPanel } from "./PlayerPanel";

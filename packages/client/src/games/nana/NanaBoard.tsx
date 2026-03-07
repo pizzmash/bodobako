@@ -5,14 +5,14 @@ import { useRoom } from "../../context/RoomContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { withAlpha } from "../../lib/color";
 import {
-  APP_HEADER_HEIGHT,
-  C,
-  FONT,
-  NANA_HAND_FOOTER_HEIGHT_DESKTOP,
-  NANA_HAND_FOOTER_HEIGHT_MOBILE,
-  NANA_PLAYER_BAR_HEIGHT_MOBILE,
-  NANA_TAB_HEIGHT_MOBILE,
-  PLAYER_COLORS,
+    APP_HEADER_HEIGHT,
+    C,
+    FONT,
+    NANA_HAND_FOOTER_HEIGHT_DESKTOP,
+    NANA_HAND_FOOTER_HEIGHT_MOBILE,
+    NANA_PLAYER_BAR_HEIGHT_MOBILE,
+    NANA_TAB_HEIGHT_MOBILE,
+    PLAYER_COLORS,
 } from "./constants";
 import { FieldCardView, findVisibleCardNumber } from "./FieldCardView";
 import { GameLogPanel } from "./GameLogPanel";

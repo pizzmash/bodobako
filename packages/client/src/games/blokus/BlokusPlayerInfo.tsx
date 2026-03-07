@@ -4,9 +4,9 @@
  * 2人戦では1プレイヤーが2色を持つ。
  */
 
-import { memo } from "react";
 import type { BlokusState, RoomInfo } from "@bodobako/shared";
 import { computeRemainingCells, getCurrentPlayerId } from "@bodobako/shared";
+import { memo } from "react";
 import { BLOKUS_COLORS, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 
 interface BlokusPlayerInfoProps {

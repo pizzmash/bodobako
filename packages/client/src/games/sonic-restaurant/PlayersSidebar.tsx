@@ -2,8 +2,8 @@
  * プレイヤーサイドバー（他プレイヤー情報）
  */
 
-import React from "react";
 import type { RoomInfo, SonicRestaurantState } from "@bodobako/shared";
+import React from "react";
 import { styles } from "./constants";
 
 interface PlayersSidebarProps {

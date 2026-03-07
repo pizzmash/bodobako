@@ -2,9 +2,9 @@
  * メニューサイドバー（お品書き）
  */
 
-import React from "react";
 import type { SonicRestaurantState } from "@bodobako/shared";
 import { MENUS } from "@bodobako/shared";
+import React from "react";
 import { C, styles } from "./constants";
 
 interface MenuSidebarProps {

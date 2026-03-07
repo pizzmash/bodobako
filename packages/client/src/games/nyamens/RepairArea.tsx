@@ -1,4 +1,4 @@
-import type { NyaMensPlayerView, NyaMensTrack } from "@bodobako/shared";
+import type { NyaMensTrack } from "@bodobako/shared";
 import { PlayingCard } from "../../components/PlayingCard";
 import { cardColor } from "./nyaUtils";
 

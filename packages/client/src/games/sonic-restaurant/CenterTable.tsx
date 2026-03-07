@@ -2,8 +2,8 @@
  * 中央テーブルコンポーネント（回転テーブル）
  */
 
-import React from "react";
 import type { Card, SonicRestaurantState } from "@bodobako/shared";
+import React from "react";
 import { CardComponent } from "./CardComponent";
 import { LAYOUT, styles } from "./constants";
 
