@@ -1,13 +1,12 @@
 import type { CitychasePlayerView, RoomInfo } from "@bodobako/shared";
 import { getHelicoptersForPlayer } from "@bodobako/shared";
+import { HELI_COLORS } from "./constants";
 
 interface Props {
   state: CitychasePlayerView;
   playerId: string;
   room: RoomInfo;
 }
-
-const HELI_COLORS = ["#2563eb", "#059669", "#d97706"];
 
 export function PlayerPanel({ state, playerId, room }: Props) {
   const isPolicePhase = state.phase === "police-turn" || state.phase === "police-setup";
@@ -26,7 +25,6 @@ export function PlayerPanel({ state, playerId, room }: Props) {
           playerId={playerId}
           isCurrentTurn={currentTurnId === state.criminalId}
           heliIndices={[]}
-          helicopterAssignments={state.helicopterAssignments}
         />
       )}
 
@@ -42,7 +40,6 @@ export function PlayerPanel({ state, playerId, room }: Props) {
             playerId={playerId}
             isCurrentTurn={currentTurnId === pid}
             heliIndices={helis}
-            helicopterAssignments={state.helicopterAssignments}
             activeHelicopterIndex={
               isPolicePhase && currentTurnId === pid
                 ? state.currentHelicopterIndex
@@ -62,7 +59,6 @@ interface PlayerCardProps {
   playerId: string;
   isCurrentTurn: boolean;
   heliIndices: number[];
-  helicopterAssignments: string[];
   activeHelicopterIndex?: number;
 }
 
@@ -129,27 +125,30 @@ function PlayerCard({
       {/* ヘリ担当表示（警察のみ） */}
       {heliIndices.length > 0 && (
         <div style={styles.heliRow}>
-          {heliIndices.map((hi) => (
+          {heliIndices.map((hi) => {
+            const color = HELI_COLORS[hi % HELI_COLORS.length];
+            return (
             <span
               key={hi}
               style={{
                 ...styles.heliBadge,
                 background:
                   activeHelicopterIndex === hi
-                    ? HELI_COLORS[hi % HELI_COLORS.length]
-                    : `${HELI_COLORS[hi % HELI_COLORS.length]}33`,
+                    ? color
+                    : `${color}33`,
                 color:
                   activeHelicopterIndex === hi
                     ? "white"
-                    : HELI_COLORS[hi % HELI_COLORS.length],
-                border: `1px solid ${HELI_COLORS[hi % HELI_COLORS.length]}99`,
+                    : color,
+                border: `1px solid ${color}99`,
                 fontWeight: activeHelicopterIndex === hi ? 800 : 600,
-                boxShadow: activeHelicopterIndex === hi ? `0 0 12px ${HELI_COLORS[hi % HELI_COLORS.length]}66` : "none",
+                boxShadow: activeHelicopterIndex === hi ? `0 0 12px ${color}66` : "none",
               }}
             >
               H{hi + 1}
             </span>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -206,14 +205,6 @@ const styles: Record<string, React.CSSProperties> = {
   turnLabel: {
     fontSize: "0.65rem",
     fontWeight: 700,
-  },
-  roleBadge: {
-    fontSize: "0.65rem",
-    fontWeight: 700,
-    padding: "0.2rem 0.6rem",
-    borderRadius: 6,
-    letterSpacing: "0.05em",
-    textTransform: "uppercase",
   },
   heliRow: {
     display: "flex",

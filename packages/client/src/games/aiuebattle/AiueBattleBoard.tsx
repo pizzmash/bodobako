@@ -1,4 +1,4 @@
-import type { AiueBattleMove } from "@bodobako/shared";
+import type { AiueBattleMove, AiueBattleState } from "@bodobako/shared";
 import { useCallback, useState } from "react";
 import { useRoom } from "../../context/RoomContext";
 import { BattleBoard } from "./BattleBoard";
@@ -10,8 +10,9 @@ import { WordInput } from "./WordInput";
 export function AiueBattleBoard() {
   const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
     useRoom();
-  if (gameState !== null && gameState.gameId !== "aiuebattle") return null;
-  const state = gameState?.state ?? null;
+  // ゲームIDが一致する場合のみ state を取得。フックは早期 return より前に呼ぶ必要があるため
+  // ここで型を絞り込む（gameId 不一致時は null を渡してフックを安全に稼働させる）
+  const state = (gameState?.gameId === "aiuebattle" ? gameState.state : null) as AiueBattleState | null;
   const [wordChars, setWordChars] = useState<string[]>([]);
   const [customTopic, setCustomTopic] = useState("");
   const [showWordConfirm, setShowWordConfirm] = useState(false);
@@ -23,6 +24,7 @@ export function AiueBattleBoard() {
     [sendMove]
   );
 
+  if (gameState !== null && gameState.gameId !== "aiuebattle") return null;
   if (!state || !playerId || !room) return null;
 
   // カラフルでポップなタイトル

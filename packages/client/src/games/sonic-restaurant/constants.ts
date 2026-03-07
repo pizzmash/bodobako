@@ -10,8 +10,6 @@ import type { CSSProperties } from "react";
 export const C = {
   primary: "#d74242",
   accentYellow: "#ffcc00",
-  bgLight: "#f8f6f6",
-  bgDark: "#201212",
   white: "#ffffff",
   gray50: "#f9fafb",
   gray100: "#f3f4f6",

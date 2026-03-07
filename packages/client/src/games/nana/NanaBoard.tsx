@@ -1,5 +1,5 @@
 import type { NanaCardView, NanaMove, NanaStateView } from "@bodobako/shared";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { useRoom } from "../../context/RoomContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -24,7 +24,7 @@ import type { LogEntry } from "./types";
 
 // ── サブコンポーネント ────────────────────────────────────────────────────────────────────
 
-function TurnFlipsSection({
+const TurnFlipsSection = memo(function TurnFlipsSection({
   flips,
   state,
   resolvedNumbers,
@@ -66,9 +66,9 @@ function TurnFlipsSection({
       />
     </div>
   );
-}
+});
 
-function GuideBanner({
+const GuideBanner = memo(function GuideBanner({
   isMyTurn,
   pendingResult,
   turnFlipsCount,
@@ -81,7 +81,7 @@ function GuideBanner({
   const msgs = [
     "場か誰かの手札からカードを1枚選んでください",
     "もう1枚めくってください！",
-    "あと〒1枚！3枚揃えてセット！",
+    "あと1枚！3枚揃えてセット！",
   ];
   return (
     <div style={{ display: "flex", justifyContent: "center" }}>
@@ -106,9 +106,9 @@ function GuideBanner({
       </div>
     </div>
   );
-}
+});
 
-function ConfirmBanner({
+const ConfirmBanner = memo(function ConfirmBanner({
   isMyTurn,
   pendingResult,
   onConfirm,
@@ -142,9 +142,9 @@ function ConfirmBanner({
       </button>
     </div>
   );
-}
+});
 
-function FieldGrid({
+const FieldGrid = memo(function FieldGrid({
   cardW,
   cardH,
   fieldCards,
@@ -182,7 +182,7 @@ function FieldGrid({
             : card;
         return (
           <FieldCardView
-            key={i}
+            key={card ? card.id : `empty-${i}`}
             card={displayCard}
             clickable={clickable}
             w={cardW}
@@ -193,9 +193,9 @@ function FieldGrid({
       })}
     </div>
   );
-}
+});
 
-function HandFooter({
+const HandFooter = memo(function HandFooter({
   cardW,
   cardH,
   myHand,
@@ -355,7 +355,7 @@ function HandFooter({
       </div>
     </div>
   );
-}
+});
 
 // ── メインコンポーネント ──────────────────────────────────────────────
 
@@ -375,10 +375,10 @@ export function NanaBoard() {
     (pid: string) => playersRef.current.find((p) => p.id === pid)?.name ?? pid,
     [],
   );
-  const getPlayerColor = (pid: string) => {
+  const getPlayerColor = useCallback((pid: string) => {
     const i = playersRef.current.findIndex((p) => p.id === pid);
     return PLAYER_COLORS[(i >= 0 ? i : 0) % PLAYER_COLORS.length];
-  };
+  }, []);
 
   // ── ログ生成 ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -504,37 +504,52 @@ export function NanaBoard() {
   }
 
   // ── 計算 ──────────────────────────────────────────────────────────
-  const players = room.players;
   const pendingResult = state.pendingResult ?? null;
   const isMyTurn = state.playerIds[state.currentPlayerIndex] === playerId;
-  const displayFlipEntries = state.turnFlips.map((flip) => ({
-    flip,
-    number: findVisibleCardNumber(state, flip.cardId),
-  }));
-  const displayTurnFlips = displayFlipEntries.map((e) => e.flip);
-  const displayTurnFlipNumbers = Object.fromEntries(
-    displayFlipEntries.map((e) => [e.flip.cardId, e.number]),
+  const displayFlipEntries = useMemo(
+    () => state.turnFlips.map((flip) => ({
+      flip,
+      number: findVisibleCardNumber(state, flip.cardId),
+    })),
+    [state]
   );
-  const displayTurnFlipIds = new Set(displayTurnFlips.map((f) => f.cardId));
-  const turnFlipIds = new Set(state.turnFlips.map((f) => f.cardId));
+  const displayTurnFlips = useMemo(
+    () => displayFlipEntries.map((e) => e.flip),
+    [displayFlipEntries]
+  );
+  const displayTurnFlipNumbers = useMemo(
+    () => Object.fromEntries(displayFlipEntries.map((e) => [e.flip.cardId, e.number])),
+    [displayFlipEntries]
+  );
+  const displayTurnFlipIds = useMemo(
+    () => new Set(displayTurnFlips.map((f) => f.cardId)),
+    [displayTurnFlips]
+  );
+  const turnFlipIds = useMemo(
+    () => new Set(state.turnFlips.map((f) => f.cardId)),
+    [state.turnFlips]
+  );
   const myHand = state.hands[playerId] ?? [];
-  const myActiveCards = myHand.filter((c) => !turnFlipIds.has(c.id));
+  const myActiveCards = useMemo(
+    () => myHand.filter((c) => !turnFlipIds.has(c.id)),
+    [myHand, turnFlipIds]
+  );
   const myMinId = myActiveCards[0]?.id;
   const myMaxId = myActiveCards[myActiveCards.length - 1]?.id;
   const currentPlayerName = getName(state.playerIds[state.currentPlayerIndex]);
   const playerList = state.playerIds;
-  const myColor = getPlayerColor(playerId);
+  const myColor = useMemo(() => getPlayerColor(playerId), [getPlayerColor, playerId]);
 
   // ── ムーブ送信 ────────────────────────────────────────────────────
-  const handleFlipField = (index: number) => {
+  const handleFlipField = useCallback((index: number) => {
     sendMove({ type: "flip-field", fieldIndex: index } as NanaMove);
-  };
-  const handleFlipHand = (targetPlayerId: string, position: "min" | "max") => {
+  }, [sendMove]);
+  const handleFlipHand = useCallback((targetPlayerId: string, position: "min" | "max") => {
     sendMove({ type: "flip-hand", targetPlayerId, position } as NanaMove);
-  };
-  const handleConfirm = () => {
+  }, [sendMove]);
+  const handleConfirm = useCallback(() => {
     sendMove({ type: "confirm" } as NanaMove);
-  };
+  }, [sendMove]);
 
   const hasBottomAction = isMyTurn && (pendingResult !== null || state.turnFlips.length < 3);
 

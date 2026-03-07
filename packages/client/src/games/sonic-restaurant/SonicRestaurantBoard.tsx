@@ -15,12 +15,12 @@ import { CompletedDishBanner } from "./CompletedDishBanner";
 import { HandCards } from "./HandCards";
 import { MenuSidebar } from "./MenuSidebar";
 import { OrderStartCountdown } from "./OrderStartCountdown";
+import { LAYOUT } from "./constants";
 import { PlayersSidebar } from "./PlayersSidebar";
 import { SonicRestaurantResult } from "./SonicRestaurantResult";
 export function SonicRestaurantBoard() {
   const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom } = useRoom();
-  if (gameState !== null && gameState.gameId !== "sonic-restaurant") return null;
-  const rawState = gameState?.state ?? null;
+  const rawState = gameState?.gameId === "sonic-restaurant" ? gameState.state : null;
 
   // Socket.IOでシリアライズされたMapを復元
   const state = useMemo(() => {
@@ -87,6 +87,7 @@ export function SonicRestaurantBoard() {
     [state, playerId, sendTypedMove]
   );
 
+  if (gameState !== null && gameState.gameId !== "sonic-restaurant") return null;
   // ゲーム状態がnullの場合の処理
   if (!state || !playerId || !room) {
     return (
@@ -121,7 +122,7 @@ export function SonicRestaurantBoard() {
         className="fixed left-0 right-0 flex transition-opacity duration-300"
         style={{
           top: "76px",
-          bottom: "176px",
+          bottom: `${LAYOUT.handHeight}px`,
           pointerEvents: isCountdown ? "none" : "auto",
           opacity: isCountdown ? 0.6 : 1,
         }}

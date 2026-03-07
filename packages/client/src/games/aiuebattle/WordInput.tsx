@@ -13,8 +13,8 @@ import {
     topicBadgeStyle,
     topicCardStyle,
     topicTextStyle,
-    useIsWideBoard,
 } from "./constants";
+import { useIsWideBoard } from "./hooks/useIsWideBoard";
 
 interface WordInputProps {
   state: AiueBattleState;

@@ -2,6 +2,7 @@
  * メニューサイドバー（お品書き）
  */
 
+import React from "react";
 import type { SonicRestaurantState } from "@bodobako/shared";
 import { MENUS } from "@bodobako/shared";
 import { C, styles } from "./constants";
@@ -10,7 +11,7 @@ interface MenuSidebarProps {
   state: SonicRestaurantState;
 }
 
-export function MenuSidebar({ state }: MenuSidebarProps) {
+export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSidebarProps) {
   // 現在製作可能なメニュー名のリスト
   const possibleMenus = state.currentNode.possibleMenus || [];
 
@@ -127,4 +128,4 @@ export function MenuSidebar({ state }: MenuSidebarProps) {
       </div>
     </aside>
   );
-}
+});

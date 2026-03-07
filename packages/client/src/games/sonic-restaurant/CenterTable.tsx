@@ -2,43 +2,44 @@
  * 中央テーブルコンポーネント（回転テーブル）
  */
 
+import React from "react";
 import type { Card, SonicRestaurantState } from "@bodobako/shared";
 import { CardComponent } from "./CardComponent";
-import { styles } from "./constants";
+import { LAYOUT, styles } from "./constants";
 
 interface CenterTableProps {
   state: SonicRestaurantState;
   lastPlayedCard: Card | null;
 }
 
-export function CenterTable({ state, lastPlayedCard }: CenterTableProps) {
+// カードを重ねて表示するための位置計算（固定値を使用）
+function getCardTransform(card: Card, index: number, total: number) {
+  if (total === 0) return {};
+
+  // カード名とインデックスから決定論的に角度を生成
+  const cardCode = card.charCodeAt(0) + card.charCodeAt(card.length - 1);
+  const seed = cardCode * (index + 1) * 37; // 固定のシード値
+
+  // 疑似ランダム値を生成（0-1の範囲）
+  const random = (seed % 1000) / 1000;
+  const random2 = ((seed * 7) % 1000) / 1000;
+  const random3 = ((seed * 13) % 1000) / 1000;
+
+  const angle = (random - 0.5) * 20; // -10度 ~ +10度
+  const offsetX = (random2 - 0.5) * 40; // -20px ~ +20px
+  const offsetY = (random3 - 0.5) * 40;
+
+  return {
+    transform: `rotate(${angle}deg) translate(${offsetX}px, ${offsetY}px)`,
+    zIndex: index,
+  };
+}
+
+export const CenterTable = React.memo(function CenterTable({ state, lastPlayedCard }: CenterTableProps) {
   // 場に表示するカード：playedCardsHistory（すべての出されたカード）
   const displayPath = state.playedCardsHistory;
   // 下部の履歴表示用：currentPath（現在構築中のメニュー）
   const currentPath = state.currentPath;
-
-  // カードを重ねて表示するための位置計算（固定値を使用）
-  const getCardTransform = (card: Card, index: number, total: number) => {
-    if (total === 0) return {};
-    
-    // カード名とインデックスから決定論的に角度を生成
-    const cardCode = card.charCodeAt(0) + card.charCodeAt(card.length - 1);
-    const seed = cardCode * (index + 1) * 37; // 固定のシード値
-    
-    // 疑似ランダム値を生成（0-1の範囲）
-    const random = (seed % 1000) / 1000;
-    const random2 = ((seed * 7) % 1000) / 1000;
-    const random3 = ((seed * 13) % 1000) / 1000;
-    
-    const angle = (random - 0.5) * 20; // -10度 ~ +10度
-    const offsetX = (random2 - 0.5) * 40; // -20px ~ +20px
-    const offsetY = (random3 - 0.5) * 40;
-    
-    return {
-      transform: `rotate(${angle}deg) translate(${offsetX}px, ${offsetY}px)`,
-      zIndex: index,
-    };
-  };
 
   return (
     <div style={styles.centerContainer}>
@@ -73,13 +74,13 @@ export function CenterTable({ state, lastPlayedCard }: CenterTableProps) {
             <div
               style={{
                 position: "relative",
-                width: "112px", // カード1枚分の幅
-                height: "160px", // カード1枚分の高さ
+                width: `${LAYOUT.cardWidth}px`,  // カード1枚分の幅
+                height: `${LAYOUT.cardHeight}px`, // カード1枚分の高さ
               }}
             >
               {displayPath.map((card, index) => (
                 <div
-                  key={`${card}-${index}`}
+                  key={`slot-${index}`}
                   style={{
                     position: "absolute",
                     top: 0,
@@ -134,4 +135,4 @@ export function CenterTable({ state, lastPlayedCard }: CenterTableProps) {
       )}
     </div>
   );
-}
+});

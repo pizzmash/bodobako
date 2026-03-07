@@ -2,6 +2,7 @@ import type {
     BuildingPos,
     CitychaseMove,
     CitychasePlayerView,
+    CitychaseState,
     GameResult,
     IntersectionPos,
     RoomInfo,
@@ -12,6 +13,8 @@ import {
     getValidCriminalMoves,
     isSamePos,
 } from "@bodobako/shared";
+import React, { useCallback, useMemo } from "react";
+import { clsx } from "clsx";
 import { GameResultCard } from "../../components/GameResultCard";
 import { BoardGrid } from "./BoardGrid";
 import { PlayerPanel } from "./PlayerPanel";
@@ -46,29 +49,36 @@ export function GameBoard({
   const currentHeli = state.helicopters[state.currentHelicopterIndex];
 
   // 移動可能な交差点（警察）
-  const moveTargets: IntersectionPos[] =
-    isMyPoliceTurn && currentHeli
-      ? getAdjacentIntersections(currentHeli).filter(
-          (p) =>
-            !state.helicopters.some(
-              (h, i) =>
-                h &&
-                i !== state.currentHelicopterIndex &&
-                isSamePos(h, p)
-            )
-        )
-      : [];
+  const moveTargets = useMemo<IntersectionPos[]>(
+    () =>
+      isMyPoliceTurn && currentHeli
+        ? getAdjacentIntersections(currentHeli).filter(
+            (p) =>
+              !state.helicopters.some(
+                (h, i) =>
+                  h &&
+                  i !== state.currentHelicopterIndex &&
+                  isSamePos(h, p)
+              )
+          )
+        : [],
+    [isMyPoliceTurn, currentHeli, state.helicopters, state.currentHelicopterIndex]
+  );
 
   // 捜索可能なビル（警察）
-  const searchTargets: BuildingPos[] =
-    isMyPoliceTurn && currentHeli ? getSurroundingBuildings(currentHeli) : [];
+  const searchTargets = useMemo<BuildingPos[]>(
+    () => (isMyPoliceTurn && currentHeli ? getSurroundingBuildings(currentHeli) : []),
+    [isMyPoliceTurn, currentHeli]
+  );
 
   // 犯人の移動先候補
-  const criminalMoveTargets: BuildingPos[] = isMyCriminalTurn
-    ? getValidCriminalMoves(
-        state as unknown as Parameters<typeof getValidCriminalMoves>[0]
-      )
-    : [];
+  const criminalMoveTargets = useMemo<BuildingPos[]>(
+    () =>
+      isMyCriminalTurn
+        ? getValidCriminalMoves(state as CitychaseState)
+        : [],
+    [isMyCriminalTurn, state]
+  );
 
   const currentPlayer = room.players.find(
     (p) => p.id === (isPolicePhase ? currentPoliceId : state.criminalId)
@@ -76,7 +86,7 @@ export function GameBoard({
 
   const searchResult = state.lastSearchResult;
 
-  const handleIntersectionClick = (pos: IntersectionPos) => {
+  const handleIntersectionClick = useCallback((pos: IntersectionPos) => {
     if (isMyPoliceTurn) {
       sendMove({
         type: "move-helicopter",
@@ -84,9 +94,9 @@ export function GameBoard({
         pos,
       });
     }
-  };
+  }, [isMyPoliceTurn, sendMove, state.currentHelicopterIndex]);
 
-  const handleBuildingClick = (pos: BuildingPos) => {
+  const handleBuildingClick = useCallback((pos: BuildingPos) => {
     if (isMyPoliceTurn) {
       sendMove({
         type: "search-building",
@@ -97,7 +107,7 @@ export function GameBoard({
     if (isMyCriminalTurn) {
       sendMove({ type: "move-criminal", pos });
     }
-  };
+  }, [isMyPoliceTurn, isMyCriminalTurn, sendMove, state.currentHelicopterIndex]);
 
   // ゲーム結果のresult計算
   const getResultType = (): "win" | "lose" => {
@@ -127,8 +137,7 @@ export function GameBoard({
           ROUND {state.round} / 11
         </div>
         <div
-          className={`cc-status-badge ${isPolicePhase ? "cc-status-badge-primary" : "cc-status-badge-danger"}`}
-        >
+          className={clsx("cc-status-badge", isPolicePhase ? "cc-status-badge-primary" : "cc-status-badge-danger")}>
           {isPolicePhase ? "[P] POLICE PHASE" : "[T] FUGITIVE PHASE"}
         </div>
       </div>
@@ -136,7 +145,7 @@ export function GameBoard({
       {/* 捜索結果バナー */}
       {searchResult && !searchResult.found && (
         <div
-          className={searchResult.traceFound ? "cc-glass-panel" : "cc-glass-panel"}
+          className="cc-glass-panel"
           style={{
             ...styles.searchBanner,
             borderColor: searchResult.traceFound ? "#d97706" : "rgba(37, 140, 244, 0.3)",
@@ -164,7 +173,7 @@ export function GameBoard({
       {/* ターン案内（ゲーム終了時は非表示） */}
       {!isFinished && (
         <div
-          className={isMyPoliceTurn || isMyCriminalTurn ? "cc-glass-panel cc-pulse" : "cc-glass-panel"}
+          className={clsx("cc-glass-panel", { "cc-pulse": isMyPoliceTurn || isMyCriminalTurn })}
           style={{
             ...styles.turnGuide,
             borderColor: isMyPoliceTurn || isMyCriminalTurn
@@ -272,7 +281,7 @@ function LegendItem({
           justifyContent: "center",
           width: 16,
           height: 16,
-          borderRadius: badge ? 3 : 3,
+          borderRadius: 3,
           background: badge ? "rgba(16, 25, 34, 0.8)" : glow ? "rgba(100, 116, 139, 0.3)" : color,
           fontSize: icon === "···" ? "0.7rem" : badge ? "0.55rem" : "0.65rem",
           fontWeight: badge ? 900 : icon === "!" ? 900 : 700,
@@ -303,15 +312,6 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "0.75rem",
     marginBottom: "0.75rem",
     flexWrap: "wrap",
-  },
-  badge: {
-    display: "inline-block",
-    padding: "0.25rem 0.75rem",
-    borderRadius: 8,
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    letterSpacing: "0.05em",
-    textTransform: "uppercase",
   },
   roundBadge: {
     display: "flex",

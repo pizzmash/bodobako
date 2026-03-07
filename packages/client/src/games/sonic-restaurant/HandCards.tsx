@@ -4,7 +4,7 @@
 
 import type { Card, SonicRestaurantState } from "@bodobako/shared";
 import { canPlayCard } from "@bodobako/shared";
-import { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CardComponent } from "./CardComponent";
 import { styles } from "./constants";
 
@@ -14,7 +14,7 @@ interface HandCardsProps {
   onCardPlay: (card: Card, index: number) => void;
 }
 
-export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
+export const HandCards = React.memo(function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
   const myHand = state.hands[playerId] || [];
   const isFinished = state.finishedOrder.includes(playerId);
   
@@ -23,31 +23,30 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   // スクロール可能状態を更新
-  const updateScrollButtons = () => {
+  const updateScrollButtons = useCallback(() => {
     if (!scrollRef.current) return;
-    
+
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     setCanScrollLeft(scrollLeft > 0);
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-  };
+  }, []);
 
   // 初期表示とカード枚数変更時にスクロール状態を更新
   useEffect(() => {
     updateScrollButtons();
-    const handleResize = () => updateScrollButtons();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [myHand.length]);
+    window.addEventListener("resize", updateScrollButtons);
+    return () => window.removeEventListener("resize", updateScrollButtons);
+  }, [myHand.length, updateScrollButtons]);
 
   // スクロール処理
-  const scroll = (direction: "left" | "right") => {
+  const scroll = useCallback((direction: "left" | "right") => {
     if (!scrollRef.current) return;
     const scrollAmount = 300;
     scrollRef.current.scrollBy({
       left: direction === "left" ? -scrollAmount : scrollAmount,
       behavior: "smooth",
     });
-  };
+  }, []);
 
   return (
     <footer style={styles.handContainer}>
@@ -57,6 +56,7 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
       {/* 左スクロールボタン */}
       {canScrollLeft && (
         <button
+          className="sr-scroll-btn"
           onClick={() => scroll("left")}
           style={{
             position: "absolute",
@@ -66,9 +66,6 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
             width: "3rem",
             height: "3rem",
             borderRadius: "50%",
-            border: "2px solid #d74242",
-            background: "rgba(255, 255, 255, 0.95)",
-            color: "#d74242",
             fontSize: "1.5rem",
             cursor: "pointer",
             display: "flex",
@@ -76,15 +73,6 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
             justifyContent: "center",
             boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
             zIndex: 60,
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#d74242";
-            e.currentTarget.style.color = "#ffffff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
-            e.currentTarget.style.color = "#d74242";
           }}
         >
           ‹
@@ -94,6 +82,7 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
       {/* 右スクロールボタン */}
       {canScrollRight && (
         <button
+          className="sr-scroll-btn"
           onClick={() => scroll("right")}
           style={{
             position: "absolute",
@@ -103,9 +92,6 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
             width: "3rem",
             height: "3rem",
             borderRadius: "50%",
-            border: "2px solid #d74242",
-            background: "rgba(255, 255, 255, 0.95)",
-            color: "#d74242",
             fontSize: "1.5rem",
             cursor: "pointer",
             display: "flex",
@@ -113,15 +99,6 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
             justifyContent: "center",
             boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
             zIndex: 60,
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#d74242";
-            e.currentTarget.style.color = "#ffffff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
-            e.currentTarget.style.color = "#d74242";
           }}
         >
           ›
@@ -164,4 +141,4 @@ export function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
       </div>
     </footer>
   );
-}
+});

@@ -17,7 +17,7 @@ export function ConfirmModal({ wordChars, onCancel, onSubmit }: ConfirmModalProp
             const c = wordChars[i] ?? "×";
             const isFiller = i >= wordChars.length;
             return (
-              <span key={i} style={{
+              <span key={`char-${i}`} style={{
                 ...styles.confirmChar,
                 ...(isFiller ? { 
                   background: C.gray100, 

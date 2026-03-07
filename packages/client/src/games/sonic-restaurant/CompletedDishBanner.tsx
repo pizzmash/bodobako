@@ -2,13 +2,14 @@
  * 完成メニューバナー
  */
 
+import React from "react";
 import { C } from "./constants";
 
 interface CompletedDishBannerProps {
   dishName: string | null;
 }
 
-export function CompletedDishBanner({ dishName }: CompletedDishBannerProps) {
+export const CompletedDishBanner = React.memo(function CompletedDishBanner({ dishName }: CompletedDishBannerProps) {
   if (!dishName) return null;
 
   return (
@@ -40,4 +41,4 @@ export function CompletedDishBanner({ dishName }: CompletedDishBannerProps) {
       </div>
     </div>
   );
-}
+});

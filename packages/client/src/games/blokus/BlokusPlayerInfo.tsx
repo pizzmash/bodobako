@@ -4,9 +4,10 @@
  * 2人戦では1プレイヤーが2色を持つ。
  */
 
+import { memo } from "react";
 import type { BlokusState, RoomInfo } from "@bodobako/shared";
 import { computeRemainingCells, getCurrentPlayerId } from "@bodobako/shared";
-import { BLOKUS_COLORS, SURFACE, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
+import { BLOKUS_COLORS, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 
 interface BlokusPlayerInfoProps {
   state: BlokusState;
@@ -14,7 +15,7 @@ interface BlokusPlayerInfoProps {
   room: RoomInfo;
 }
 
-export function BlokusPlayerInfo({ state, playerId, room }: BlokusPlayerInfoProps) {
+export const BlokusPlayerInfo = memo(function BlokusPlayerInfo({ state, playerId, room }: BlokusPlayerInfoProps) {
   const currentTurnPlayerId = getCurrentPlayerId(state);
 
   return (
@@ -113,7 +114,7 @@ export function BlokusPlayerInfo({ state, playerId, room }: BlokusPlayerInfoProp
       })}
     </div>
   );
-}
+});
 
 const styles: Record<string, React.CSSProperties> = {
   container: {

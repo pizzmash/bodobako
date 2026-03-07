@@ -34,7 +34,7 @@ interface BlokusMainBoardProps {
 }
 
 const STEP = CELL_SIZE + CELL_GAP; // 30px
-const BOARD_PX = 20 * STEP - CELL_GAP; // 598px
+const SVG_SIZE = 20 * STEP - CELL_GAP; // 598px（SVG/グリッドサイズ。ボード外枠サイズは constants.ts の BOARD_PX を参照）
 
 /* ---------- 連結成分抽出 ---------- */
 
@@ -89,13 +89,13 @@ function extractPieces(grid: number[][]): PieceComponent[] {
 
 /* ---------- SVG ピース描画 ---------- */
 
-function PieceRenderSVG({ grid }: { grid: number[][] }) {
+const PieceRenderSVG = React.memo(function PieceRenderSVG({ grid }: { grid: number[][] }) {
   const pieces = useMemo(() => extractPieces(grid), [grid]);
 
   return (
     <svg
-      width={BOARD_PX}
-      height={BOARD_PX}
+      width={SVG_SIZE}
+      height={SVG_SIZE}
       style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none", zIndex: 1 }}
     >
       <defs>
@@ -141,19 +141,19 @@ function PieceRenderSVG({ grid }: { grid: number[][] }) {
       </defs>
 
       {pieces.map((piece, pi) => (
-        <g key={pi} filter={`url(#pf-${piece.colorIndex})`}>
-          {piece.rects.map(({ x, y, w, h }, i) => (
-            <rect key={i} x={x} y={y} width={w} height={h} fill={BLOKUS_COLORS[piece.colorIndex].fill} />
+        <g key={`${piece.colorIndex}-${pi}`} filter={`url(#pf-${piece.colorIndex})`}>
+          {piece.rects.map(({ x, y, w, h }) => (
+            <rect key={`${x}-${y}`} x={x} y={y} width={w} height={h} fill={BLOKUS_COLORS[piece.colorIndex].fill} />
           ))}
         </g>
       ))}
     </svg>
   );
-}
+});
 
 /* ---------- メインコンポーネント ---------- */
 
-export function BlokusMainBoard({
+export const BlokusMainBoard = React.memo(function BlokusMainBoard({
   grid,
   selectedPieceId,
   validCenterSet,
@@ -229,7 +229,7 @@ export function BlokusMainBoard({
                       inset: 0,
                       borderRadius: 4,
                       background: isGhostValid ? ghostFill : "rgba(120,130,150,0.55)",
-                      opacity: isGhostValid ? 0.5 : 0.5,
+                      opacity: 0.5,
                       boxShadow: isGhostValid
                         ? `0 0 0 1.5px ${ghostFill}88, inset 0 1px 0 rgba(255,255,255,0.35)`
                         : "inset 0 1px 0 rgba(255,255,255,0.15)",
@@ -265,7 +265,7 @@ export function BlokusMainBoard({
       </div>
     </div>
   );
-}
+});
 
 const styles: Record<string, React.CSSProperties> = {
   board: {

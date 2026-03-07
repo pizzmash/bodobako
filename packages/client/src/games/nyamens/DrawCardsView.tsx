@@ -1,12 +1,7 @@
 import type { NyaCard, NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
 import { useEffect, useRef, useState } from "react";
 import { PlayingCard } from "../../components/PlayingCard";
-
-function cardColor(num: number): string {
-  if (num <= 10) return "#BAE6FD";
-  if (num <= 20) return "#BBF7D0";
-  return "#FED7AA";
-}
+import { cardColor } from "./nyaUtils";
 
 // ---- イベントカード情報 ----
 function eventInfo(ev: NyaEventCard): { emoji: string; name: string; desc: string; bg: string } {

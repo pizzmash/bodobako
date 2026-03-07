@@ -6,20 +6,8 @@ import { GameBoard } from "./GameBoard";
 import { RoleSelect } from "./RoleSelect";
 import { SetupPhase } from "./SetupPhase";
 
-export function CitychaseBoard() {
-  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
-    useRoom();
-  if (gameState !== null && gameState.gameId !== "citychase") return null;
-  const state = gameState?.state ?? null;
-
-  const sendTypedMove = useCallback(
-    (move: CitychaseMove) => sendMove(move),
-    [sendMove]
-  );
-
-  if (!state || !playerId || !room) return null;
-
-  const Title = (
+function CityChaseTitle() {
+  return (
     <div className="flex items-center gap-4 mb-6 relative">
       <div
         className="text-3xl"
@@ -36,6 +24,21 @@ export function CitychaseBoard() {
       </div>
     </div>
   );
+}
+
+export function CitychaseBoard() {
+  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
+    useRoom();
+
+  const sendTypedMove = useCallback(
+    (move: CitychaseMove) => sendMove(move),
+    [sendMove]
+  );
+
+  if (gameState !== null && gameState.gameId !== "citychase") return null;
+  const state = gameState?.state ?? null;
+
+  if (!state || !playerId || !room) return null;
 
   return (
     <div
@@ -45,7 +48,7 @@ export function CitychaseBoard() {
       {/* スキャンラインオーバーレイ */}
       <div className="cc-scanlines fixed inset-0 pointer-events-none" style={{ zIndex: Z.scanlines }} />
 
-      {Title}
+      <CityChaseTitle />
 
       {state.phase === "role-select" && (
         <RoleSelect state={state} playerId={playerId} room={room} sendMove={sendTypedMove} />

@@ -9,8 +9,9 @@ import {
     isSamePos,
     posKey,
 } from "@bodobako/shared";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { clsx } from "clsx";
+import { HELI_COLORS } from "./constants";
 
 interface Props {
   state: CitychasePlayerView;
@@ -29,8 +30,6 @@ const GAP = 30;
 const TOTAL = CELL + GAP;
 const PAD = 14;
 const GRID_SIZE = BOARD_SIZE * CELL + (BOARD_SIZE - 1) * GAP + PAD * 2;
-
-const HELI_COLORS = ["#2563eb", "#059669", "#d97706"];
 
 
 export function BoardGrid({
@@ -58,23 +57,38 @@ export function BoardGrid({
     return () => window.removeEventListener("resize", updateScale);
   }, [updateScale]);
 
-  const getTraceInfo = (pos: BuildingPos) =>
-    state.revealedTraces.find((t) => isSamePos(t.pos, pos));
+  const traceInfoMap = useMemo(
+    () => new Map(state.revealedTraces.map((t) => [posKey(t.pos), t])),
+    [state.revealedTraces]
+  );
+  const searchedEmptySet = useMemo(
+    () => new Set(state.searchedEmpty.map(posKey)),
+    [state.searchedEmpty]
+  );
+  const highlightBuildingSet = useMemo(
+    () => new Set(highlightBuildings.map(posKey)),
+    [highlightBuildings]
+  );
+  const searchableBuildingSet = useMemo(
+    () => new Set(searchableBuildings.map(posKey)),
+    [searchableBuildings]
+  );
+  const highlightIntersectionSet = useMemo(
+    () => new Set(highlightIntersections.map(posKey)),
+    [highlightIntersections]
+  );
+  const helicopterMap = useMemo(() => {
+    const map = new Map<string, number>();
+    state.helicopters.forEach((h, i) => { if (h) map.set(posKey(h), i); });
+    return map;
+  }, [state.helicopters]);
 
-  const isSearchedEmpty = (pos: BuildingPos) =>
-    state.searchedEmpty.some((p) => isSamePos(p, pos));
-
-  const isHighlightedBuilding = (pos: BuildingPos) =>
-    highlightBuildings.some((p) => isSamePos(p, pos));
-
-  const isSearchableBuilding = (pos: BuildingPos) =>
-    searchableBuildings.some((p) => isSamePos(p, pos));
-
-  const isHighlightedIntersection = (pos: IntersectionPos) =>
-    highlightIntersections.some((p) => isSamePos(p, pos));
-
-  const getHelicopterAt = (pos: IntersectionPos) =>
-    state.helicopters.findIndex((h) => h && isSamePos(h, pos));
+  const getTraceInfo = (pos: BuildingPos) => traceInfoMap.get(posKey(pos));
+  const isSearchedEmpty = (pos: BuildingPos) => searchedEmptySet.has(posKey(pos));
+  const isHighlightedBuilding = (pos: BuildingPos) => highlightBuildingSet.has(posKey(pos));
+  const isSearchableBuilding = (pos: BuildingPos) => searchableBuildingSet.has(posKey(pos));
+  const isHighlightedIntersection = (pos: IntersectionPos) => highlightIntersectionSet.has(posKey(pos));
+  const getHelicopterAt = (pos: IntersectionPos) => helicopterMap.get(posKey(pos)) ?? -1;
 
   const hasTraces = Object.keys(state.traces).length > 0;
 

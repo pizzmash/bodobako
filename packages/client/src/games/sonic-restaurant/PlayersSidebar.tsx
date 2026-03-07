@@ -2,6 +2,7 @@
  * プレイヤーサイドバー（他プレイヤー情報）
  */
 
+import React from "react";
 import type { RoomInfo, SonicRestaurantState } from "@bodobako/shared";
 import { styles } from "./constants";
 
@@ -11,7 +12,7 @@ interface PlayersSidebarProps {
   room: RoomInfo;
 }
 
-export function PlayersSidebar({
+export const PlayersSidebar = React.memo(function PlayersSidebar({
   state,
   playerId,
   room,
@@ -79,4 +80,4 @@ export function PlayersSidebar({
       </div>
     </aside>
   );
-}
+});

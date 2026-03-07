@@ -4,8 +4,9 @@
  * 回転・反転ボタンを提供する。
  */
 
+import React from "react";
 import { PIECES } from "@bodobako/shared";
-import { BLOKUS_COLORS, PREVIEW_CELL, SURFACE, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
+import { BLOKUS_COLORS, PREVIEW_CELL, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 import { PieceThumbnail } from "./PieceThumbnail";
 
 interface BlokusPieceControlsProps {
@@ -16,7 +17,7 @@ interface BlokusPieceControlsProps {
   onFlip: () => void;
 }
 
-export function BlokusPieceControls({
+export const BlokusPieceControls = React.memo(function BlokusPieceControls({
   selectedPieceId,
   variantIndex,
   colorIndex,
@@ -86,7 +87,7 @@ export function BlokusPieceControls({
       </div>
     </div>
   );
-}
+});
 
 const styles: Record<string, React.CSSProperties> = {
   container: {

@@ -2,6 +2,7 @@
    Global Fonts
    ================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -353,6 +354,15 @@
 @keyframes ab-glow-pulse {
   0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04); }
   50%       { box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06); }
+}
+@keyframes ab-fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes ab-charPop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
 }
 
 /* Blokus */
@@ -730,5 +740,102 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* ---- OrderStartCountdown (音速飯点 カウントダウン) ---- */
+  @keyframes sr-countdown-sparkle {
+    0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(180deg); }
+  }
+
+  .sr-countdown-number {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 10rem;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow:
+      0 0 20px rgba(255, 255, 255, 0.8),
+      0 0 40px rgba(255, 255, 255, 0.6),
+      0 4px 8px rgba(0, 0, 0, 0.8);
+    margin: 0;
+    padding: 0;
+  }
+
+  .sr-impact-text {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    background: linear-gradient(to bottom, #ff5f6d, #b91c1c, #7f1d1d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 0 #450a0a) drop-shadow(0 8px 15px rgba(0,0,0,0.6));
+    letter-spacing: 0.05em;
+    position: relative;
+    font-size: 6rem;
+    font-weight: 900;
+    white-space: nowrap;
+    z-index: 20;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sr-jaggy-burst {
+    background: #fdd835;
+    clip-path: polygon(
+      50% 0%, 63% 18%, 78% 7%, 81% 25%, 98% 18%, 91% 38%, 100% 50%,
+      91% 62%, 98% 82%, 81% 75%, 78% 93%, 63% 82%, 50% 100%, 37% 82%,
+      22% 93%, 19% 75%, 2% 82%, 9% 62%, 0% 50%, 9% 38%, 2% 18%,
+      19% 25%, 22% 7%, 37% 18%
+    );
+    filter:
+      drop-shadow(4px 0 0 #b91c1c)
+      drop-shadow(-4px 0 0 #b91c1c)
+      drop-shadow(0 4px 0 #b91c1c)
+      drop-shadow(0 -4px 0 #b91c1c)
+      drop-shadow(0 15px 25px rgba(0,0,0,0.6))
+      drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+    padding: 4rem 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 550px;
+    min-height: 300px;
+    position: relative;
+  }
+
+  .sr-jaggy-burst::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    right: 15%;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, #fff 0%, #ffeb3b 100%);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    animation: sr-countdown-sparkle 0.8s ease-in-out;
+    pointer-events: none;
+  }
+
+  .sr-jaggy-burst::after {
+    content: '';
+    position: absolute;
+    bottom: 15%;
+    left: 20%;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(45deg, #fff 0%, #ffeb3b 100%);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    animation: sr-countdown-sparkle 0.8s ease-in-out 0.15s;
+    pointer-events: none;
+  }
+
+  .sr-scroll-btn {
+    border: 2px solid #d74242;
+    background: rgba(255, 255, 255, 0.95);
+    color: #d74242;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .sr-scroll-btn:hover {
+    background: #d74242;
+    color: #ffffff;
   }
 }

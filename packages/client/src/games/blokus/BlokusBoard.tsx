@@ -165,7 +165,7 @@ function BlokusBoardContent({
               activeColorIndex={currentColorIndex}
               lastMoveCells={lastMoveCells}
               onCellClick={interaction.handleBoardClick}
-              onCellHover={(r, c) => interaction.setHoverCell({ row: r, col: c })}
+              onCellHover={interaction.handleCellHover}
               onBoardLeave={interaction.handleBoardLeave}
             />
           </div>

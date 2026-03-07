@@ -39,7 +39,7 @@ export const PlayerSheet = memo(function PlayerSheet({
           : {}),
         ...(isCurrent && !gameResult
           ? { 
-              animation: "ab-glowPulse 2s ease-in-out infinite",
+              animation: "ab-glow-pulse 2s ease-in-out infinite",
               transform: "scale(1.02)",
               boxShadow: `0 8px 24px ${accentColor}40, 0 4px 8px rgba(0,0,0,0.08)`,
             }
