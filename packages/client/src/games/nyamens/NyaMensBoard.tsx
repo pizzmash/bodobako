@@ -116,31 +116,36 @@ function Dice3D({
     5: [[1, 1], [3, 1], [2, 2], [1, 3], [3, 3]],
     6: [[1, 1], [3, 1], [1, 2], [3, 2], [1, 3], [3, 3]],
   };
+  const pips = (n: number) => (pipLayout[n] ?? []).map(([col, row]) => pip(col, row));
 
-  const topPips = diceResult && pipLayout[diceResult]
-    ? pipLayout[diceResult].map(([col, row]) => pip(col, row))
-    : [pip(1, 1), pip(3, 1), pip(1, 3), pip(3, 3)]; // fallback: 4
+  // top面の値に応じて全面を動的に決定（標準サイコロ、対面の和=7、右手系）
+  // 前後ロール軸: 1↔2↔5↔6↔1（right=3固定）/ 左右ロール軸: 1↔3↔6↔4↔1（front=2固定）
+  const orientationMap: Record<number, { front: number; right: number }> = {
+    1: { front: 2, right: 3 },
+    2: { front: 6, right: 3 },
+    3: { front: 2, right: 6 },
+    4: { front: 2, right: 1 },
+    5: { front: 1, right: 3 },
+    6: { front: 5, right: 3 },
+  };
+  const topVal = diceResult ?? 4;
+  const { front, right } = orientationMap[topVal] ?? { front: 2, right: 1 };
+  const faces = {
+    top: topVal,    bottom: 7 - topVal,
+    front,          back: 7 - front,
+    right,          left: 7 - right,
+  };
 
   const rollingClass = rollingForResult ? `nya-dice-rolling-${rollingForResult}` : "";
   return (
     <div className="nya-dice-scene" style={{ position: "relative" }}>
       <div className={rollingClass ? `nya-dice-3d ${rollingClass}` : "nya-dice-3d"}>
-        {/* front: 1 */}
-        <div className="nya-dice-face nya-face-front">{pip(2, 2)}</div>
-        {/* back: 6 */}
-        <div className="nya-dice-face nya-face-back">
-          {pip(1, 1)}{pip(3, 1)}{pip(1, 2)}{pip(3, 2)}{pip(1, 3)}{pip(3, 3)}
-        </div>
-        {/* right: 2 */}
-        <div className="nya-dice-face nya-face-right">{pip(3, 1)}{pip(1, 3)}</div>
-        {/* left: 5 */}
-        <div className="nya-dice-face nya-face-left">
-          {pip(1, 1)}{pip(3, 1)}{pip(2, 2)}{pip(1, 3)}{pip(3, 3)}
-        </div>
-        {/* top: diceResult */}
-        <div className="nya-dice-face nya-face-top">{topPips}</div>
-        {/* bottom: 3 */}
-        <div className="nya-dice-face nya-face-bottom">{pip(3, 1)}{pip(2, 2)}{pip(1, 3)}</div>
+        <div className="nya-dice-face nya-face-front">{pips(faces.front)}</div>
+        <div className="nya-dice-face nya-face-back">{pips(faces.back)}</div>
+        <div className="nya-dice-face nya-face-right">{pips(faces.right)}</div>
+        <div className="nya-dice-face nya-face-left">{pips(faces.left)}</div>
+        <div className="nya-dice-face nya-face-top">{pips(faces.top)}</div>
+        <div className="nya-dice-face nya-face-bottom">{pips(faces.bottom)}</div>
       </div>
       {resultOverlay !== undefined && (
         <div
