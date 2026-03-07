@@ -22,8 +22,6 @@ interface Env {
   USER_REGISTRY: DurableObjectNamespace;
   USER_DATA: R2Bucket;
   FIREBASE_PROJECT_ID: string;
-  // 移行エンドポイント保護用シークレット。`wrangler secret put ADMIN_SECRET` で設定する。
-  ADMIN_SECRET: string;
 }
 
 function getUserRegistry(env: Env) {
@@ -468,13 +466,8 @@ app.post("/users/me/friend-requests/:uid/reject", async (c) => {
 // ---------------------------------------------------------------------------
 
 // UserRegistry DO → R2 への一括データ移行（一時エンドポイント・移行完了後に削除）
-// 実行方法: curl -H "X-Admin-Secret: <secret>" https://<worker>/admin/migrate-users
+// 実行方法: curl https://<worker>/admin/migrate-users
 app.get("/admin/migrate-users", async (c) => {
-  const secret = c.req.header("X-Admin-Secret") ?? "";
-  if (!secret || secret !== c.env.ADMIN_SECRET) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
   const userRegistry = getUserRegistry(c.env);
   const exportRes = await userRegistry.fetch(new Request("http://do/export-all"));
   if (!exportRes.ok) return c.json({ error: "DOからのエクスポートに失敗しました" }, 500);
