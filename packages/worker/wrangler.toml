@@ -4,12 +4,8 @@ compatibility_date = "2024-12-05"
 compatibility_flags = ["nodejs_compat"]
 
 [[durable_objects.bindings]]
-name = "ROOM_DO"
-class_name = "RoomDO"
-
-[[durable_objects.bindings]]
-name = "REGISTRY"
-class_name = "RoomRegistry"
+name = "ROOM_SESSION"
+class_name = "RoomSession"
 
 [[durable_objects.bindings]]
 name = "USER_REGISTRY"
@@ -22,6 +18,10 @@ new_sqlite_classes = ["RoomDO", "RoomRegistry"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["UserRegistry"]
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["RoomSession"]
 
 [vars]
 FIREBASE_PROJECT_ID = "bodobako-1c07a"
