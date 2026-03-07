@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canInviteWithFriendRelations } from "../UserRegistry.js";
+import { canInviteWithFriendRelations } from "../lib/r2UserStorage.js";
 
 describe("invite rules", () => {
   it("相互フレンドのときのみ招待可能", () => {

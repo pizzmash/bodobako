@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { RoomSession } from "./RoomSession.js";
 import { UserRegistry } from "./UserRegistry.js";
 import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
+import * as r2UserStorage from "./lib/r2UserStorage.js";
 
 export { RoomSession, UserRegistry };
 
@@ -17,7 +18,9 @@ function generateCode(): string {
 
 interface Env {
   ROOM_SESSION: DurableObjectNamespace;
+  // 移行期間中のみ残す。/admin/migrate-users 実行後に削除し wrangler.toml の v4 migration を有効化する。
   USER_REGISTRY: DurableObjectNamespace;
+  USER_DATA: R2Bucket;
   FIREBASE_PROJECT_ID: string;
 }
 
@@ -136,10 +139,9 @@ app.get("/users/me", async (c) => {
   const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(new Request(`http://do/users/${verified.uid}`));
-  if (res.status === 404) return c.json({ error: "ユーザーが見つかりません" }, 404);
-  return c.json(await res.json());
+  const profile = await r2UserStorage.getProfile(c.env.USER_DATA, verified.uid);
+  if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  return c.json(profile);
 });
 
 app.put("/users/me", async (c) => {
@@ -162,17 +164,13 @@ app.put("/users/me", async (c) => {
     return c.json({ error: "displayName は1〜20文字で入力してください" }, 400);
   }
 
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(new Request("http://do/users", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      uid: verified.uid,
-      displayName: displayName.trim(),
-      photoURL: typeof photoURL === "string" ? photoURL : "",
-    }),
-  }));
-  return c.json(await res.json(), res.status as 200 | 400);
+  const profile = await r2UserStorage.upsertProfile(
+    c.env.USER_DATA,
+    verified.uid,
+    displayName.trim(),
+    typeof photoURL === "string" ? photoURL : "",
+  );
+  return c.json(profile);
 });
 
 // ---------------------------------------------------------------------------
@@ -184,17 +182,9 @@ app.get("/users/:uid/profile", async (c) => {
   const uid = c.req.param("uid");
   if (!uid) return c.json({ error: "uid は必須です" }, 400);
 
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(new Request(`http://do/users/${uid}`));
-  if (res.status === 404) return c.json({ error: "ユーザーが見つかりません" }, 404);
-  if (!res.ok) return c.json({ error: "プロフィール取得に失敗しました" }, 400);
-
-  const profile = await res.json<{ uid: string; displayName: string; photoURL?: string }>();
-  return c.json({
-    uid: profile.uid,
-    displayName: profile.displayName,
-    photoURL: profile.photoURL ?? "",
-  });
+  const profile = await r2UserStorage.getProfile(c.env.USER_DATA, uid);
+  if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  return c.json({ uid: profile.uid, displayName: profile.displayName, photoURL: profile.photoURL });
 });
 
 // フレンドコードでユーザー検索
@@ -209,10 +199,9 @@ app.get("/users/search", async (c) => {
   const rawCode = (c.req.query("friendCode") ?? "").replace(/-/g, "").toUpperCase();
   if (rawCode.length !== 8) return c.json({ error: "フレンドコードは8文字で入力してください" }, 400);
 
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(new Request(`http://do/users/by-friend-code/${rawCode}`));
-  if (res.status === 404) return c.json({ error: "ユーザーが見つかりません" }, 404);
-  return c.json(await res.json(), res.status as 200);
+  const profile = await r2UserStorage.getProfileByFriendCode(c.env.USER_DATA, rawCode);
+  if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  return c.json(profile);
 });
 
 // フレンド追加
@@ -236,22 +225,13 @@ app.post("/users/me/friends", async (c) => {
   const rawCode = friendCode.replace(/-/g, "").toUpperCase();
   if (rawCode.length !== 8) return c.json({ error: "フレンドコードは8文字で入力してください" }, 400);
 
-  const userRegistry = getUserRegistry(c.env);
-
-  // フレンドコードでユーザーを検索
-  const searchRes = await userRegistry.fetch(new Request(`http://do/users/by-friend-code/${rawCode}`));
-  if (searchRes.status === 404) return c.json({ error: "ユーザーが見つかりません" }, 404);
-
-  const friend = await searchRes.json<{ uid: string; displayName: string; friendCode: string }>();
+  const friend = await r2UserStorage.getProfileByFriendCode(c.env.USER_DATA, rawCode);
+  if (!friend) return c.json({ error: "ユーザーが見つかりません" }, 404);
   if (friend.uid === verified.uid) return c.json({ error: "自分自身をフレンドに追加できません" }, 400);
 
-  // フレンド関係を追加
-  const addRes = await userRegistry.fetch(new Request("http://do/friends", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ownerUid: verified.uid, friendUid: friend.uid }),
-  }));
-  return c.json(await addRes.json(), addRes.status as 200 | 400 | 404 | 409);
+  const { alreadyExists } = await r2UserStorage.addFollow(c.env.USER_DATA, verified.uid, friend.uid);
+  if (alreadyExists) return c.json({ error: "すでにフレンドです" }, 409);
+  return c.json(friend);
 });
 
 // UID指定でフレンド申請（自分 -> 相手）
@@ -267,15 +247,12 @@ app.post("/users/me/friend-requests/:uid", async (c) => {
   if (!friendUid) return c.json({ error: "uid は必須です" }, 400);
   if (friendUid === verified.uid) return c.json({ error: "自分自身には申請できません" }, 400);
 
-  const userRegistry = getUserRegistry(c.env);
-  const addRes = await userRegistry.fetch(new Request("http://do/friends", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ownerUid: verified.uid, friendUid }),
-  }));
+  const friendProfile = await r2UserStorage.getProfile(c.env.USER_DATA, friendUid);
+  if (!friendProfile) return c.json({ error: "ユーザーが見つかりません" }, 404);
 
-  if (addRes.status === 409) return c.json({ ok: true });
-  return c.json(await addRes.json(), addRes.status as 200 | 400 | 404);
+  const { alreadyExists } = await r2UserStorage.addFollow(c.env.USER_DATA, verified.uid, friendUid);
+  if (alreadyExists) return c.json({ ok: true });
+  return c.json(friendProfile);
 });
 
 // フレンド一覧取得
@@ -287,9 +264,8 @@ app.get("/users/me/friends", async (c) => {
   const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(new Request(`http://do/friends/${verified.uid}`));
-  return c.json(await res.json());
+  const friends = await r2UserStorage.getFollowing(c.env.USER_DATA, verified.uid);
+  return c.json(friends);
 });
 
 // 招待一覧取得（既定: unread）
@@ -301,20 +277,9 @@ app.get("/users/me/invites", async (c) => {
   const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
-  const status = c.req.query("status") ?? "unread";
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(
-    new Request(`http://do/invites/${verified.uid}?status=${encodeURIComponent(status)}`)
-  );
-  if (!res.ok) return c.json(await res.json(), res.status as 200 | 400);
-
-  const invites = await res.json<Array<{
-    inviteId: string;
-    inviterName: string;
-    roomCode: string;
-    gameId: string;
-    createdAt: number;
-  }>>();
+  const statusParam = c.req.query("status") ?? "unread";
+  const statusFilter = statusParam === "all" ? "all" : "unread";
+  const invites = await r2UserStorage.getInvites(c.env.USER_DATA, verified.uid, statusFilter);
 
   const activeInvites = await Promise.all(invites.map(async (invite) => {
     try {
@@ -342,11 +307,8 @@ app.post("/users/me/invites/:inviteId/read", async (c) => {
   const inviteId = c.req.param("inviteId");
   if (!inviteId) return c.json({ error: "inviteId は必須です" }, 400);
 
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(
-    new Request(`http://do/invites/${verified.uid}/${inviteId}/read`, { method: "POST" })
-  );
-  return c.json(await res.json(), res.status as 200 | 400);
+  await r2UserStorage.markInviteRead(c.env.USER_DATA, verified.uid, inviteId);
+  return c.json({ ok: true });
 });
 
 // ルーム作成後のフレンド招待（Firebase 認証必須）
@@ -398,20 +360,15 @@ app.post("/rooms/:code/invites", async (c) => {
     return c.json({ error: "待機中のルームでのみ招待できます" }, 409);
   }
 
-  const userRegistry = getUserRegistry(c.env);
-  const inviteRes = await userRegistry.fetch(new Request("http://do/invites", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      inviterUid: verified.uid,
-      inviterName: roomMeta.inviterName,
-      roomCode: code,
-      gameId: roomMeta.gameId,
-      invitedUids,
-    }),
-  }));
-
-  return c.json(await inviteRes.json(), inviteRes.status as 200 | 400);
+  const result = await r2UserStorage.addInvites(
+    c.env.USER_DATA,
+    verified.uid,
+    roomMeta.inviterName,
+    code,
+    roomMeta.gameId,
+    invitedUids,
+  );
+  return c.json(result);
 });
 
 // フォロワー一覧取得
@@ -423,9 +380,8 @@ app.get("/users/me/followers", async (c) => {
   const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(new Request(`http://do/followers/${verified.uid}`));
-  return c.json(await res.json());
+  const followers = await r2UserStorage.getFollowers(c.env.USER_DATA, verified.uid);
+  return c.json(followers);
 });
 
 // フレンド削除
@@ -438,11 +394,8 @@ app.delete("/users/me/friends/:uid", async (c) => {
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
   const friendUid = c.req.param("uid");
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(
-    new Request(`http://do/friends/${verified.uid}/${friendUid}`, { method: "DELETE" })
-  );
-  return c.json(await res.json(), res.status as 200);
+  await r2UserStorage.removeFollow(c.env.USER_DATA, verified.uid, friendUid);
+  return c.json({ ok: true });
 });
 
 // フレンド削除（相互）
@@ -455,15 +408,10 @@ app.delete("/users/me/friends/:uid/mutual", async (c) => {
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
   const friendUid = c.req.param("uid");
-  const userRegistry = getUserRegistry(c.env);
-
-  await userRegistry.fetch(
-    new Request(`http://do/friends/${verified.uid}/${friendUid}`, { method: "DELETE" })
-  );
-  await userRegistry.fetch(
-    new Request(`http://do/friends/${friendUid}/${verified.uid}`, { method: "DELETE" })
-  );
-
+  await Promise.all([
+    r2UserStorage.removeFollow(c.env.USER_DATA, verified.uid, friendUid),
+    r2UserStorage.removeFollow(c.env.USER_DATA, friendUid, verified.uid),
+  ]);
   return c.json({ ok: true });
 });
 
@@ -477,11 +425,8 @@ app.delete("/users/me/friend-requests/:uid", async (c) => {
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
   const targetUid = c.req.param("uid");
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(
-    new Request(`http://do/friends/${verified.uid}/${targetUid}`, { method: "DELETE" })
-  );
-  return c.json(await res.json(), res.status as 200);
+  await r2UserStorage.removeFollow(c.env.USER_DATA, verified.uid, targetUid);
+  return c.json({ ok: true });
 });
 
 // 申請承認（自分 -> 申請者 を追加して相互化）
@@ -494,17 +439,12 @@ app.post("/users/me/friend-requests/:uid/approve", async (c) => {
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
   const requesterUid = c.req.param("uid");
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(new Request("http://do/friends", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ownerUid: verified.uid, friendUid: requesterUid }),
-  }));
+  const requesterProfile = await r2UserStorage.getProfile(c.env.USER_DATA, requesterUid);
+  if (!requesterProfile) return c.json({ error: "ユーザーが見つかりません" }, 404);
 
-  if (res.status === 409) {
-    return c.json({ ok: true });
-  }
-  return c.json(await res.json(), res.status as 200 | 400 | 404);
+  const { alreadyExists } = await r2UserStorage.addFollow(c.env.USER_DATA, verified.uid, requesterUid);
+  if (alreadyExists) return c.json({ ok: true });
+  return c.json(requesterProfile);
 });
 
 // 申請拒否（申請者 -> 自分 の一方向解除）
@@ -517,16 +457,27 @@ app.post("/users/me/friend-requests/:uid/reject", async (c) => {
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
   const requesterUid = c.req.param("uid");
-  const userRegistry = getUserRegistry(c.env);
-  const res = await userRegistry.fetch(
-    new Request(`http://do/friends/${requesterUid}/${verified.uid}`, { method: "DELETE" })
-  );
-  return c.json(await res.json(), res.status as 200);
+  await r2UserStorage.removeFollow(c.env.USER_DATA, requesterUid, verified.uid);
+  return c.json({ ok: true });
 });
 
 // ---------------------------------------------------------------------------
 // 管理API
 // ---------------------------------------------------------------------------
+
+// UserRegistry DO → R2 への一括データ移行（一時エンドポイント・移行完了後に削除）
+// 実行方法: curl https://<worker>/admin/migrate-users
+app.get("/admin/migrate-users", async (c) => {
+  const userRegistry = getUserRegistry(c.env);
+  const exportRes = await userRegistry.fetch(new Request("http://do/export-all"));
+  if (!exportRes.ok) return c.json({ error: "DOからのエクスポートに失敗しました" }, 500);
+
+  const data = await exportRes.json<r2UserStorage.DoExportData>();
+  const counts = await r2UserStorage.importFromDo(c.env.USER_DATA, data);
+
+  return c.json({ ok: true, ...counts });
+});
+
 app.get("/admin/api/rooms/:code", async (c) => {
   const code = c.req.param("code").toUpperCase();
   const doId = c.env.ROOM_SESSION.idFromName(code);
