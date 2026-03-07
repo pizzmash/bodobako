@@ -190,7 +190,6 @@ export function RepairArea({
               空
             </div>
           )}
-          <span style={{ color: "#475569", fontSize: "0.6rem" }}>1/1</span>
         </div>
 
         <TrackStack label="ダウン" cards={track.down} color={DOWN_COLOR} arrow="down" />

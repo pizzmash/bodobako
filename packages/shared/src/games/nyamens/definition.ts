@@ -48,7 +48,7 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
       "shirokuma", "shirokuma",
       "tuning", "tuning",
     ] as const;
-    const selectedEvents = [...allEvents].slice(0, eventCardCount);
+    const selectedEvents = shuffleArray([...allEvents]).slice(0, eventCardCount);
 
     // 残り数字カード + イベントカード → シャッフルしてドロー山
     const remainingNumbers = numberedCards.slice(cardIdx);

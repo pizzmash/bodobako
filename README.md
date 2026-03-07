@@ -9,7 +9,7 @@
 | -------------- | --------------------------------------------- |
 | 言語           | TypeScript 5.7 (strict mode)                  |
 | フロントエンド | React 19 + Vite 6 + React Router v7           |
-| バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects |
+| バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects + R2 |
 | 通信           | ネイティブ WebSocket（reqIdベースプロトコル） |
 | 認証           | Firebase Authentication（Google サインイン）  |
 | モジュール     | ES Modules                                    |
