@@ -11,6 +11,11 @@ class_name = "RoomSession"
 name = "USER_REGISTRY"
 class_name = "UserRegistry"
 
+# R2: ユーザーデータストレージ（UserRegistry DO の移行先）
+[[r2_buckets]]
+binding = "USER_DATA"
+bucket_name = "bodobako-user-data"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomDO", "RoomRegistry"]
@@ -23,6 +28,12 @@ new_sqlite_classes = ["UserRegistry"]
 tag = "v3"
 renamed_classes = [{from = "RoomDO", to = "RoomSession"}]
 deleted_classes = ["RoomRegistry"]
+
+# TODO: /admin/migrate-users を実行して R2 へのデータ移行が完了したら以下を有効化し、
+#       USER_REGISTRY バインディングを削除して再デプロイする。
+# [[migrations]]
+# tag = "v4"
+# deleted_classes = ["UserRegistry"]
 
 [vars]
 FIREBASE_PROJECT_ID = "bodobako-1c07a"

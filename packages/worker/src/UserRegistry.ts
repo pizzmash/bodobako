@@ -415,6 +415,14 @@ export class UserRegistry implements DurableObject {
       return Response.json({ ok: true });
     }
 
+    // GET /export-all — 全データエクスポート（R2 移行用・移行完了後に削除）
+    if (url.pathname === "/export-all" && request.method === "GET") {
+      const users = this.db.exec("SELECT * FROM users").toArray();
+      const friends = this.db.exec("SELECT * FROM friends").toArray();
+      const invites = this.db.exec("SELECT * FROM invites").toArray();
+      return Response.json({ users, friends, invites });
+    }
+
     return new Response("Not found", { status: 404 });
   }
 }
