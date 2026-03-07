@@ -4,7 +4,9 @@ import { fileURLToPath } from "url";
 import { getAllGames } from "../packages/shared/src/games/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const readmePath = resolve(__dirname, "..", "README.md");
+
+const START = "<!-- GAMES:START -->";
+const END = "<!-- GAMES:END -->";
 
 function formatPlayers(min: number, max: number): string {
   if (min === max) return `${min}人`;
@@ -23,21 +25,25 @@ function generateTable(): string {
   return lines.join("\n");
 }
 
-const readme = readFileSync(readmePath, "utf-8");
-const startMarker = "<!-- GAMES:START -->";
-const endMarker = "<!-- GAMES:END -->";
-
-const startIdx = readme.indexOf(startMarker);
-const endIdx = readme.indexOf(endMarker);
-
-if (startIdx === -1 || endIdx === -1) {
-  console.error("README.md にマーカーが見つかりません");
-  process.exit(1);
+function generateList(): string {
+  const games = getAllGames();
+  return games
+    .map((g) => `- **${g.name}** - ${formatPlayers(g.minPlayers, g.maxPlayers)}、${g.description}`)
+    .join("\n");
 }
 
-const before = readme.slice(0, startIdx + startMarker.length);
-const after = readme.slice(endIdx);
-const updated = `${before}\n${generateTable()}\n${after}`;
-
-writeFileSync(readmePath, updated, "utf-8");
-console.log("README.md のゲーム一覧を更新しました");
+for (const name of ["README.md", "CLAUDE.md"]) {
+  const filePath = resolve(__dirname, "..", name);
+  const content = readFileSync(filePath, "utf-8");
+  const startIdx = content.indexOf(START);
+  const endIdx = content.indexOf(END);
+  if (startIdx === -1 || endIdx === -1) {
+    console.warn(`${name}: マーカーが見つかりません（スキップ）`);
+    continue;
+  }
+  const before = content.slice(0, startIdx + START.length);
+  const after = content.slice(endIdx);
+  const section = name === "CLAUDE.md" ? generateList() : generateTable();
+  writeFileSync(filePath, `${before}\n${section}\n${after}`, "utf-8");
+  console.log(`${name} のゲーム一覧を更新しました`);
+}

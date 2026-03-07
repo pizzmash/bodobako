@@ -23,9 +23,9 @@ packages/
 ├── worker/        # Cloudflare Workers バックエンド
 │   ├── src/
 │   │   ├── index.ts          # Hono エントリ（HTTP API + WS upgrade）
-│   │   ├── RoomDO.ts         # Durable Object（ルーム管理・WebSocket）
-│   │   ├── UserRegistry.ts   # DO（ユーザープロフィール・フレンドコード）
+│   │   ├── RoomSession.ts    # Durable Object（ルーム管理・WebSocket）
 │   │   └── lib/
+│   │       ├── r2UserStorage.ts        # R2 ユーザーデータ操作
 │   │       └── verifyFirebaseToken.ts  # Firebase JWT 検証（jose）
 │   └── wrangler.toml
 └── client/        # React + Vite フロントエンド
@@ -51,9 +51,8 @@ npm run test:e2e     # E2E テスト（Playwright、dev サーバーを自動起
 ### バックエンド（Cloudflare Workers + Durable Objects）
 
 - **Workers（index.ts）**: Hono による HTTP API。ルーム作成（`POST /rooms`）とWebSocket upgrade（`GET /rooms/:code/ws`）、認証済みユーザー向けプロフィール API（`GET/PUT /users/me`）を担当
-- **RoomDO**: Durable Object クラス。1ルーム = 1 DOインスタンス。WebSocket Hibernation APIで接続管理、DO Alarmsで切断タイマーを実装。`idToken` が付いていれば `verifyFirebaseToken` で検証して `player.userId` を付与
-- **RoomRegistry**: SQLite-backed Durable Object（シングルインスタンス）。ルームコードの登録・重複確認・一覧管理を担当。KVの代替
-- **UserRegistry**: SQLite-backed Durable Object（シングルインスタンス）。ログイン済みユーザーのアプリ独自表示名とフレンドコード（8文字、ユニーク）を管理。`GET /users/:uid` / `POST /users`（内部 fetch）
+- **RoomSession**: Durable Object クラス。1ルーム = 1 DOインスタンス。WebSocket Hibernation APIで接続管理、DO Alarmsで切断タイマーを実装。`idToken` が付いていれば `verifyFirebaseToken` で検証して `player.userId` を付与
+- **R2（USER_DATA バインディング）**: ログイン済みユーザーのプロフィール・フォロー関係・招待データを Cloudflare R2 に保存。`lib/r2UserStorage.ts` が操作を担当。楽観的ロック（etag CAS）で同時書き込みを制御する
 
 ### WebSocket通信プロトコル（ネイティブWS）
 
@@ -144,12 +143,15 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 
 ## 実装済みゲーム
 
-- **Othello（オセロ）** - 2人対戦、8x8盤面
-- **Aiuebattle（あいうえバトル）** - 2-5人、ひらがなボードを使った単語推理ゲーム（3フェーズ: topic-select → word-input → battle）
-- **Citychase（シティチェイス）** - 2-4人、犯人と警察に分かれた非対称追跡ゲーム
-- **SonicRestaurant（音速飯点）** - 2-6人、中華料理カードを重ねるスピードゲーム
-- **Blokus（ブロックス）** - 2-4人、20×20盤面にピースを角で繋げて配置する陣取りゲーム
-- **Nana（ナナ）** - 2-5人、7をねらえ！3枚ペアの神経衰弱ゲーム
+<!-- GAMES:START -->
+- **オセロ** - 2人、8x8 盤面で石を挟んでひっくり返す定番ゲーム
+- **あいうえバトル** - 2〜5人、お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル
+- **シティチェイス** - 2〜4人、犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム
+- **音速飯点** - 2〜6人、中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！
+- **ブロックス** - 2〜4人、20×20 の盤面にピースを角で繋げて配置する陣取りゲーム
+- **ナナ** - 2〜5人、7をねらえ！3枚ペアの神経衰弱ゲーム
+- **ニャーメンズ** - 2〜5人、アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！
+<!-- GAMES:END -->
 
 ## 新しいゲームの追加手順
 
