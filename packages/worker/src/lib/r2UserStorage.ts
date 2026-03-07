@@ -397,7 +397,7 @@ export async function importFromDo(bucket: R2Bucket, data: DoExportData): Promis
     followersMap.get(f.friend_uid)!.push(f.owner_uid);
   }
 
-  const followWrites: Promise<R2Object>[] = [];
+  const followWrites: Promise<R2Object | null>[] = [];
   for (const [uid, uids] of followingMap) {
     followWrites.push(
       bucket.put(followingKey(uid), JSON.stringify({ uids, updatedAt: Date.now() })),
@@ -428,7 +428,7 @@ export async function importFromDo(bucket: R2Bucket, data: DoExportData): Promis
     });
   }
 
-  const inviteWrites: Promise<R2Object>[] = [];
+  const inviteWrites: Promise<R2Object | null>[] = [];
   for (const [uid, invites] of inviteMap) {
     inviteWrites.push(
       bucket.put(invitesKey(uid), JSON.stringify({ invites, updatedAt: Date.now() })),
