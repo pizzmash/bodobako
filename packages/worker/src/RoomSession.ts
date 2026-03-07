@@ -61,18 +61,18 @@ interface RoomState {
   pendingRemovals: Record<string, number>;
 }
 
-interface RoomDOEnv {
+interface RoomSessionEnv {
   FIREBASE_PROJECT_ID?: string;
 }
 
-export class RoomDO implements DurableObject {
+export class RoomSession implements DurableObject {
   private state: DurableObjectState;
-  private env: RoomDOEnv;
+  private env: RoomSessionEnv;
   private room: RoomState | null = null;
   /** WebSocket -> playerId のマッピング（インメモリのみ、hibarnation復帰時に再構築） */
   private wsToPlayer = new Map<WebSocket, string>();
 
-  constructor(state: DurableObjectState, env: RoomDOEnv) {
+  constructor(state: DurableObjectState, env: RoomSessionEnv) {
     this.state = state;
     this.env = env;
   }
@@ -84,6 +84,10 @@ export class RoomDO implements DurableObject {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
+    if (url.pathname === "/exists" && request.method === "GET") {
+      const room = await this.state.storage.get("room");
+      return new Response(null, { status: room ? 200 : 404 });
+    }
     if (url.pathname === "/ws") {
       return this.handleWebSocket(request, url);
     }
