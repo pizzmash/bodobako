@@ -17,8 +17,7 @@ function CityChaseTitle() {
       </div>
       <h2 className="cc-text-title text-3xl font-extrabold m-0">CITY CHASE</h2>
       <div
-        className="absolute right-0 text-[#258cf4]/60 tracking-[0.15em] uppercase font-semibold"
-        style={{ fontSize: "0.7rem", bottom: "-0.5rem" }}
+        className="absolute right-0 bottom-[-0.5rem] text-[0.7rem] text-[#258cf4]/60 tracking-[0.15em] uppercase font-semibold"
       >
         Tactical Command
       </div>

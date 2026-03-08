@@ -528,17 +528,62 @@
     transform: scale(1.07);
     box-shadow: 0 2px 10px rgba(100,120,180,0.2);
   }
+  .blk-piece-controls-container {
+    background: rgba(255,255,255,0.88);
+    border-radius: 16px;
+    padding: 0.85rem 0.75rem;
+    border: 1px solid rgba(0,0,0,0.07);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(100,120,180,0.1), 0 1px 4px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 120px;
+    justify-content: center;
+  }
   .blk-ctrl-btn { transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease; }
+  .blk-ctrl-btn-base {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    border: 1px solid;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
   .blk-ctrl-btn:not(:disabled):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(100,120,180,0.22);
   }
   .blk-ctrl-btn:not(:disabled):active { transform: translateY(0); }
-  .blk-board-outer { overflow: visible; flex-shrink: 0; }
   .blk-player-card { transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease; }
+  .blk-player-card-base {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    min-width: 130px;
+    transition: border-color 0.2s, opacity 0.3s, box-shadow 0.2s;
+  }
   .blk-player-card:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 24px rgba(100,120,180,0.18);
+  }
+  .blk-main-board {
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255,255,255,0.65);
+    border-radius: 14px;
+    box-shadow: 0 16px 56px rgba(100,120,180,0.22), 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
   }
   .blk-cell-last-piece {
     position: absolute;
@@ -630,6 +675,7 @@
   .cc-dot-primary { background: var(--cc-primary); box-shadow: 0 0 8px rgba(37,140,244,0.6); }
   .cc-dot-danger { background: var(--cc-danger); box-shadow: 0 0 8px rgba(220,38,38,0.6); }
   .cc-dot-success { background: var(--cc-success); box-shadow: 0 0 8px rgba(0,230,118,0.6); }
+  .cc-you-badge { font-size: 0.55rem; font-weight: 800; color: #258cf4; background: rgba(37, 140, 244, 0.15); padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.3rem; vertical-align: middle; border: 1px solid rgba(37, 140, 244, 0.3); letter-spacing: 0.05em; }
 
   /* ---- Nana ---- */
   .nana-field-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }

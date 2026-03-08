@@ -9,6 +9,7 @@
  */
 
 import React, { useMemo } from "react";
+import { Z } from "../../styles/tokens";
 import {
   BLOKUS_COLORS,
   BOARD_PADDING,
@@ -96,7 +97,8 @@ const PieceRenderSVG = React.memo(function PieceRenderSVG({ grid }: { grid: numb
     <svg
       width={SVG_SIZE}
       height={SVG_SIZE}
-      style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none", zIndex: 1 }}
+      className="absolute inset-0 overflow-visible pointer-events-none"
+      style={{ zIndex: Z.blkBoardSvg }}
     >
       <defs>
         {BLOKUS_COLORS.map((bc, ci) => (
@@ -169,8 +171,21 @@ export const BlokusMainBoard = React.memo(function BlokusMainBoard({
   const ghostFill = BLOKUS_COLORS[activeColorIndex]?.fill ?? BLOKUS_COLORS[0].fill;
 
   return (
-    <div style={styles.board} onMouseLeave={onBoardLeave}>
-      <div style={styles.grid}>
+    <div
+      className="blk-main-board inline-flex select-none"
+      style={{ padding: BOARD_PADDING }}
+      onMouseLeave={onBoardLeave}
+    >
+      <div
+        className="relative"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(20, ${CELL_SIZE}px)`,
+          gridTemplateRows: `repeat(20, ${CELL_SIZE}px)`,
+          gap: CELL_GAP,
+          background: "rgba(120,145,185,0.22)",
+        }}
+      >
         <PieceRenderSVG grid={grid} />
 
         {Array.from({ length: 20 }, (_, row) =>
@@ -188,7 +203,7 @@ export const BlokusMainBoard = React.memo(function BlokusMainBoard({
             );
             const isCorner = cornerColorIndex !== -1 && !isPlaced;
 
-            const className =
+            const cellClassName =
               isValidCenter && isMyTurn && selectedPieceId !== null
                 ? "blk-cell-valid"
                 : undefined;
@@ -196,10 +211,13 @@ export const BlokusMainBoard = React.memo(function BlokusMainBoard({
             return (
               <div
                 key={cellKey}
-                className={className}
+                className={cellClassName}
                 style={{
-                  ...styles.cell,
-                  zIndex: 2,
+                  width: CELL_SIZE,
+                  height: CELL_SIZE,
+                  position: "relative",
+                  flexShrink: 0,
+                  zIndex: Z.blkBoardCell,
                   cursor:
                     isValidCenter && isMyTurn && selectedPieceId !== null
                       ? "pointer"
@@ -211,10 +229,8 @@ export const BlokusMainBoard = React.memo(function BlokusMainBoard({
                 {/* 空セル背景 */}
                 {!isPlaced && !isGhost && (
                   <div
+                    className="absolute inset-0 rounded-[4px]"
                     style={{
-                      position: "absolute",
-                      inset: 0,
-                      borderRadius: 4,
                       background: EMPTY_CELL_COLOR,
                       boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
                     }}
@@ -224,24 +240,32 @@ export const BlokusMainBoard = React.memo(function BlokusMainBoard({
                 {/* ゴーストオーバーレイ（配置プレビュー） */}
                 {isGhost && (
                   <div
+                    className="absolute inset-0 rounded-[4px] pointer-events-none"
                     style={{
-                      position: "absolute",
-                      inset: 0,
-                      borderRadius: 4,
                       background: isGhostValid ? ghostFill : "rgba(120,130,150,0.55)",
                       opacity: 0.5,
                       boxShadow: isGhostValid
                         ? `0 0 0 1.5px ${ghostFill}88, inset 0 1px 0 rgba(255,255,255,0.35)`
                         : "inset 0 1px 0 rgba(255,255,255,0.15)",
-                      pointerEvents: "none",
-                      zIndex: 1,
+                      zIndex: Z.blkCellOverlay,
                     }}
                   />
                 )}
 
                 {/* 有効センタードット */}
                 {isValidCenter && !isGhost && selectedPieceId !== null && (
-                  <div style={styles.validDot} />
+                  <div
+                    className="absolute rounded-full pointer-events-none"
+                    style={{
+                      width: 6,
+                      height: 6,
+                      background: VALID_DOT_COLOR,
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      zIndex: Z.blkCellOverlay,
+                    }}
+                  />
                 )}
 
                 {/* 直近配置ピースのぴかぴかオーバーレイ */}
@@ -252,9 +276,16 @@ export const BlokusMainBoard = React.memo(function BlokusMainBoard({
                 {/* スタートコーナーマーカー */}
                 {isCorner && !isGhost && (
                   <div
+                    className="absolute rounded-full pointer-events-none"
                     style={{
-                      ...styles.cornerDot,
+                      width: 7,
+                      height: 7,
                       background: BLOKUS_COLORS[cornerColorIndex].fill,
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      opacity: 0.65,
+                      zIndex: Z.blkCellOverlay,
                     }}
                   />
                 )}
@@ -266,57 +297,4 @@ export const BlokusMainBoard = React.memo(function BlokusMainBoard({
     </div>
   );
 });
-
-const styles: Record<string, React.CSSProperties> = {
-  board: {
-    display: "inline-flex",
-    background: "rgba(255,255,255,0.35)",
-    backdropFilter: "blur(20px)",
-    WebkitBackdropFilter: "blur(20px)",
-    border: "1.5px solid rgba(255,255,255,0.65)",
-    borderRadius: 14,
-    padding: BOARD_PADDING,
-    userSelect: "none",
-    boxShadow:
-      "0 16px 56px rgba(100,120,180,0.22), 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
-  },
-  grid: {
-    position: "relative",
-    display: "grid",
-    gridTemplateColumns: `repeat(20, ${CELL_SIZE}px)`,
-    gridTemplateRows: `repeat(20, ${CELL_SIZE}px)`,
-    gap: CELL_GAP,
-    background: "rgba(120,145,185,0.22)",
-  },
-  cell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
-    position: "relative",
-    flexShrink: 0,
-  },
-  validDot: {
-    position: "absolute",
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    background: VALID_DOT_COLOR,
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    pointerEvents: "none",
-    zIndex: 1,
-  },
-  cornerDot: {
-    position: "absolute",
-    width: 7,
-    height: 7,
-    borderRadius: "50%",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    pointerEvents: "none",
-    opacity: 0.65,
-    zIndex: 1,
-  },
-};
 

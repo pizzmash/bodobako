@@ -2,8 +2,6 @@
  * 音速飯点 - UIスタイル定数とレイアウト定義
  */
 
-import type { CSSProperties } from "react";
-
 /**
  * カラーパレット（サンプルHTMLから）
  */
@@ -33,28 +31,12 @@ export const LAYOUT = {
 } as const;
 
 /**
- * 共通スタイル
+ * 動的値を含む共通スタイル（固定値のみのものはTailwindクラスへ移行済み）
  */
+import type { CSSProperties } from "react";
+
 export const styles: Record<string, CSSProperties> = {
-  // サイドバー共通
-  sidebar: {
-    width: LAYOUT.sidebarWidth,
-    height: "100%",
-    minHeight: 0,
-    backgroundColor: C.white,
-    display: "flex",
-    flexDirection: "column",
-    padding: "1rem 0.375rem 0.5rem",
-    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-    zIndex: 40,
-  },
-
-  sidebarTitle: {
-    marginBottom: "0.125rem",
-    padding: "0",
-  },
-
-  // ゲームタイトル看板
+  // ゲームタイトル看板（動的な色定数を使用）
   titleSign: {
     backgroundColor: C.primary,
     padding: "0.1875rem",
@@ -90,7 +72,7 @@ export const styles: Record<string, CSSProperties> = {
     textTransform: "uppercase",
   },
 
-  // カード共通
+  // カード共通（動的な色定数を使用）
   card: {
     position: "relative",
     backgroundColor: C.white,
@@ -119,7 +101,7 @@ export const styles: Record<string, CSSProperties> = {
     color: `${C.primary}4D`, // 30% opacity
   },
 
-  // メニューアイテム
+  // メニューアイテム（動的な色定数を使用）
   menuHeader: {
     display: "flex",
     alignItems: "center",
@@ -136,16 +118,6 @@ export const styles: Record<string, CSSProperties> = {
     fontWeight: 800,
     fontStyle: "italic",
     color: C.gray700,
-  },
-
-  menuList: {
-    flex: 1,
-    minHeight: 0,
-    overflowY: "auto",
-    paddingRight: "0.125rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.1875rem",
   },
 
   menuItem: {
@@ -201,7 +173,7 @@ export const styles: Record<string, CSSProperties> = {
     color: C.gray500,
   },
 
-  // プレイヤーアイテム
+  // プレイヤーアイテム（動的な色定数を使用）
   playerItem: {
     display: "flex",
     alignItems: "center",
@@ -224,13 +196,6 @@ export const styles: Record<string, CSSProperties> = {
     transition: "width 0.5s ease",
   },
 
-  playerInfo: {
-    flex: 1,
-    minWidth: 0,
-    position: "relative",
-    zIndex: 10,
-  },
-
   playerName: {
     fontSize: "0.75rem",
     fontWeight: 800,
@@ -247,18 +212,7 @@ export const styles: Record<string, CSSProperties> = {
     marginTop: "0.25rem",
   },
 
-  // 中央テーブル
-  centerContainer: {
-    flex: 1,
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fdf2f2",
-    overflow: "hidden",
-  },
-
+  // 中央テーブル（動的な色定数を使用）
   table: {
     position: "relative",
     width: LAYOUT.tableSize,
@@ -270,7 +224,6 @@ export const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 10,
   },
 
   tableInnerCircle: {
@@ -283,7 +236,7 @@ export const styles: Record<string, CSSProperties> = {
     border: `1px solid ${C.primary}33`,
   },
 
-  // 手札エリア
+  // 手札エリア（動的な色定数と計算値を使用）
   handContainer: {
     position: "fixed",
     bottom: 0,
@@ -293,7 +246,6 @@ export const styles: Record<string, CSSProperties> = {
     backdropFilter: "blur(12px)",
     borderTop: `4px solid ${C.primary}`,
     height: LAYOUT.handHeight,
-    zIndex: 50,
     display: "flex",
     alignItems: "center",
     gap: "1rem",

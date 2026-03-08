@@ -5,6 +5,7 @@
 import type { Card } from "@bodobako/shared";
 import type { CSSProperties } from "react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Z } from "../../styles/tokens";
 import { LAYOUT, styles } from "./constants";
 
 interface CardComponentProps {
@@ -75,7 +76,7 @@ export const CardComponent = React.memo(function CardComponent({
 
   const contentStyle: CSSProperties = {
     ...styles.cardContent,
-    fontSize: isSmall 
+    fontSize: isSmall
       ? (isTorikeshi ? "0.875rem" : "1.25rem")
       : (isTorikeshi ? "1.25rem" : "1.875rem"),
     ...(isTorikeshi
@@ -83,7 +84,7 @@ export const CardComponent = React.memo(function CardComponent({
           color: "#ffffff",
           textShadow: "0 2px 2px rgba(0,0,0,0.5)",
           position: "relative",
-          zIndex: 10,
+          zIndex: Z.srPlayerInfo,
         }
       : {}),
   };
@@ -94,7 +95,7 @@ export const CardComponent = React.memo(function CardComponent({
     ...(isTorikeshi
       ? {
           color: "rgba(255, 255, 255, 0.5)",
-          zIndex: 10,
+          zIndex: Z.srPlayerInfo,
         }
       : {}),
   };
@@ -112,15 +113,8 @@ export const CardComponent = React.memo(function CardComponent({
         {!hideLogo && <div style={logoStyle}>音速飯点</div>}
         {isTorikeshi && !isSmall && (
           <div
-            style={{
-              position: "absolute",
-              bottom: "0.5rem",
-              right: "0.5rem",
-              fontSize: "1rem",
-              color: "white",
-              opacity: 0.5,
-              zIndex: 10,
-            }}
+            className="absolute bottom-2 right-2 text-base text-white opacity-50"
+            style={{ zIndex: Z.srPlayerInfo }}
           >
             ⊗
           </div>
@@ -136,15 +130,8 @@ export const CardComponent = React.memo(function CardComponent({
       {!hideLogo && <div style={logoStyle}>音速飯点</div>}
       {isTorikeshi && !isSmall && (
         <div
-          style={{
-            position: "absolute",
-            bottom: "0.5rem",
-            right: "0.5rem",
-            fontSize: "1rem",
-            color: "white",
-            opacity: 0.5,
-            zIndex: 10,
-          }}
+          className="absolute bottom-2 right-2 text-base text-white opacity-50"
+          style={{ zIndex: Z.srPlayerInfo }}
         >
           ⊗
         </div>

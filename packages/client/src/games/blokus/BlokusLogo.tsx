@@ -19,43 +19,38 @@ interface BlokusLogoProps {
 
 export function BlokusLogo({ size = "md" }: BlokusLogoProps) {
   const fontSize = size === "sm" ? "2rem" : size === "lg" ? "5rem" : "3rem";
+  const blockSize = size === "sm" ? 6 : 8;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem" }}>
+    <div className="flex flex-col items-center gap-[0.3rem]">
       <div
-        className="blk-logo"
+        className="blk-logo flex items-baseline select-none leading-[1.1] tracking-[-0.02em]"
         style={{
-          display: "flex",
-          alignItems: "baseline",
           fontFamily: "'Fredoka', sans-serif",
           fontWeight: 600,
           fontSize,
-          letterSpacing: "-0.02em",
-          userSelect: "none",
-          lineHeight: 1.1,
         }}
       >
         {LETTERS.map(({ char, color, cls }) => (
           <span
             key={cls}
-            className={`blk-logo-letter ${cls}`}
-            style={{ color, position: "relative", display: "inline-block" }}
+            className={`blk-logo-letter ${cls} relative inline-block`}
+            style={{ color }}
           >
             {char}
           </span>
         ))}
       </div>
       {/* デコレーティブブロック */}
-      <div style={{ display: "flex", gap: "0.2rem" }}>
+      <div className="flex gap-[0.2rem]">
         {LETTERS.slice(0, 4).map(({ color, cls }) => (
           <div
             key={cls}
+            className="rounded-[2px] opacity-70"
             style={{
-              width: size === "sm" ? 6 : 8,
-              height: size === "sm" ? 6 : 8,
+              width: blockSize,
+              height: blockSize,
               background: color,
-              borderRadius: 2,
-              opacity: 0.7,
             }}
           />
         ))}

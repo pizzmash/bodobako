@@ -19,7 +19,7 @@ export const BlokusPlayerInfo = memo(function BlokusPlayerInfo({ state, playerId
   const currentTurnPlayerId = getCurrentPlayerId(state);
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-wrap gap-[0.4rem] justify-center w-full max-w-[680px]">
       {room.players.map((player) => {
         const isMe = player.id === playerId;
         const isCurrentTurn = !state.finished && player.id === currentTurnPlayerId;
@@ -53,9 +53,8 @@ export const BlokusPlayerInfo = memo(function BlokusPlayerInfo({ state, playerId
         return (
           <div
             key={player.id}
-            className="blk-player-card"
+            className="blk-player-card blk-player-card-base"
             style={{
-              ...styles.card,
               border: isCurrentTurn
                 ? `1.5px solid ${BLOKUS_COLORS[state.currentColorIndex].fill}`
                 : `1.5px solid ${SURFACE_BORDER}`,
@@ -69,39 +68,32 @@ export const BlokusPlayerInfo = memo(function BlokusPlayerInfo({ state, playerId
             {/* 手番パルスドット */}
             {isCurrentTurn && (
               <div
-                className="blk-turn-dot"
-                style={{
-                  ...styles.turnDot,
-                  background: BLOKUS_COLORS[state.currentColorIndex].fill,
-                }}
+                className="blk-turn-dot w-2 h-2 rounded-full shrink-0"
+                style={{ background: BLOKUS_COLORS[state.currentColorIndex].fill }}
               />
             )}
 
             {/* 名前 + スコア */}
-            <div style={styles.nameArea}>
-              <span style={styles.name}>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-[0.82rem] font-semibold truncate" style={{ color: TEXT_PRIMARY }}>
                 {player.name}
-                {isMe && <span style={styles.meLabel}> (あなた)</span>}
+                {isMe && <span className="text-[0.7rem] font-normal" style={{ color: TEXT_MUTED }}> (あなた)</span>}
               </span>
               {/* 色ごとの残りマス数 */}
-              <div style={styles.scoreRow}>
+              <div className="flex gap-[0.4rem] flex-wrap items-center">
                 {remainingPerColor.map((rc) => {
                   const accentColor = BLOKUS_COLORS[rc.colorIndex].fill;
                   return (
                     <span
                       key={rc.colorIndex}
-                      style={{
-                        ...styles.scoreItem,
-                        opacity: rc.isEliminated ? 0.35 : 1,
-                      }}
+                      className="flex items-center gap-[3px]"
+                      style={{ opacity: rc.isEliminated ? 0.35 : 1 }}
                     >
                       <span
-                        style={{
-                          ...styles.scoreDot,
-                          background: accentColor,
-                        }}
+                        className="inline-block w-2 h-2 rounded-[2px] shrink-0"
+                        style={{ background: accentColor }}
                       />
-                      <span style={styles.scoreNum}>
+                      <span className="text-[0.7rem]" style={{ color: TEXT_MUTED }}>
                         {rc.remaining}マス
                       </span>
                     </span>
@@ -115,72 +107,3 @@ export const BlokusPlayerInfo = memo(function BlokusPlayerInfo({ state, playerId
     </div>
   );
 });
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "0.4rem",
-    justifyContent: "center",
-    width: "100%",
-    maxWidth: 680,
-  },
-  card: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    padding: "0.45rem 0.8rem",
-    borderRadius: 12,
-    backdropFilter: "blur(12px)",
-    minWidth: 130,
-    transition: "border-color 0.2s, opacity 0.3s, box-shadow 0.2s",
-    boxShadow: "0 2px 8px rgba(100,120,180,0.1), 0 1px 3px rgba(0,0,0,0.05)",
-  },
-  turnDot: {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    flexShrink: 0,
-  },
-  nameArea: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 2,
-    minWidth: 0,
-  },
-  name: {
-    fontSize: "0.82rem",
-    fontWeight: 600,
-    color: TEXT_PRIMARY,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  meLabel: {
-    fontSize: "0.7rem",
-    color: TEXT_MUTED,
-    fontWeight: 400,
-  },
-  scoreRow: {
-    display: "flex",
-    gap: "0.4rem",
-    flexWrap: "wrap" as const,
-    alignItems: "center",
-  },
-  scoreItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 3,
-  },
-  scoreDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 2,
-    flexShrink: 0,
-    display: "inline-block",
-  },
-  scoreNum: {
-    fontSize: "0.7rem",
-    color: TEXT_MUTED,
-  },
-};

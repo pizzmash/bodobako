@@ -1,5 +1,6 @@
 import { BOARD_CHARS } from "@bodobako/shared";
 import type React from "react";
+import { Z } from "../../styles/tokens";
 
 /* ── Design System ── */
 
@@ -436,7 +437,7 @@ export const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1000,
+    zIndex: Z.modal,
     padding: SPACING.lg,
   },
   confirmCard: {

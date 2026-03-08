@@ -1,6 +1,7 @@
 import type { NyaCard, NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
 import { useEffect, useRef, useState } from "react";
 import { PlayingCard } from "../../components/PlayingCard";
+import { Z } from "../../styles/tokens";
 import { cardColor } from "./nyaUtils";
 
 // ---- イベントカード情報 ----
@@ -49,7 +50,7 @@ function EventCardOverlay({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.7)",
-        zIndex: 800,
+        zIndex: Z.modal,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -97,7 +98,7 @@ function NumberCardOverlay({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.65)",
-        zIndex: 800,
+        zIndex: Z.modal,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

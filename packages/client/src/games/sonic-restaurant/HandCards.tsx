@@ -5,6 +5,7 @@
 import type { Card, SonicRestaurantState } from "@bodobako/shared";
 import { canPlayCard } from "@bodobako/shared";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Z } from "../../styles/tokens";
 import { CardComponent } from "./CardComponent";
 import { styles } from "./constants";
 
@@ -17,7 +18,7 @@ interface HandCardsProps {
 export const HandCards = React.memo(function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
   const myHand = state.hands[playerId] || [];
   const isFinished = state.finishedOrder.includes(playerId);
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -49,30 +50,19 @@ export const HandCards = React.memo(function HandCards({ state, playerId, onCard
   }, []);
 
   return (
-    <footer style={styles.handContainer}>
+    <footer style={{ ...styles.handContainer, zIndex: Z.srHandArea }}>
       {/* 手札ラベル */}
       <div style={styles.handLabel}>自分の手札</div>
 
       {/* 左スクロールボタン */}
       {canScrollLeft && (
         <button
-          className="sr-scroll-btn"
+          type="button"
+          className="sr-scroll-btn absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full text-2xl cursor-pointer flex items-center justify-center"
           onClick={() => scroll("left")}
           style={{
-            position: "absolute",
-            left: "0.5rem",
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: "3rem",
-            height: "3rem",
-            borderRadius: "50%",
-            fontSize: "1.5rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-            zIndex: 60,
+            zIndex: Z.srScrollBtn,
           }}
         >
           ‹
@@ -82,23 +72,12 @@ export const HandCards = React.memo(function HandCards({ state, playerId, onCard
       {/* 右スクロールボタン */}
       {canScrollRight && (
         <button
-          className="sr-scroll-btn"
+          type="button"
+          className="sr-scroll-btn absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full text-2xl cursor-pointer flex items-center justify-center"
           onClick={() => scroll("right")}
           style={{
-            position: "absolute",
-            right: "0.5rem",
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: "3rem",
-            height: "3rem",
-            borderRadius: "50%",
-            fontSize: "1.5rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-            zIndex: 60,
+            zIndex: Z.srScrollBtn,
           }}
         >
           ›
@@ -127,14 +106,7 @@ export const HandCards = React.memo(function HandCards({ state, playerId, onCard
         })}
 
         {myHand.length === 0 && (
-          <div
-            style={{
-              padding: "2rem",
-              fontSize: "1rem",
-              color: "#999",
-              fontWeight: 600,
-            }}
-          >
+          <div className="p-8 text-base font-semibold" style={{ color: "#999" }}>
             {isFinished ? "上がりました！" : "手札がありません"}
           </div>
         )}

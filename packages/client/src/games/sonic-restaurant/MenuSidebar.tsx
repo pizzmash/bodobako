@@ -5,7 +5,8 @@
 import type { SonicRestaurantState } from "@bodobako/shared";
 import { MENUS } from "@bodobako/shared";
 import React from "react";
-import { C, styles } from "./constants";
+import { Z } from "../../styles/tokens";
+import { C, LAYOUT, styles } from "./constants";
 
 interface MenuSidebarProps {
   state: SonicRestaurantState;
@@ -16,20 +17,20 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
   const possibleMenus = state.currentNode.possibleMenus || [];
 
   return (
-    <aside style={styles.sidebar}>
+    <aside
+      className="h-full min-h-0 flex flex-col shadow-lg"
+      style={{
+        width: LAYOUT.sidebarWidth,
+        backgroundColor: "#ffffff",
+        padding: "1rem 0.375rem 0.5rem",
+        zIndex: Z.srGameSidebar,
+      }}
+    >
       {/* ゲームタイトル看板 */}
-      <div style={styles.sidebarTitle}>
+      <div className="mb-0.5">
         <div style={styles.titleSign}>
           <div style={styles.titleInner}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.125rem",
-                marginBottom: "0.015625rem",
-              }}
-            >
+            <div className="flex items-center justify-center gap-0.5 mb-0">
               <span style={{ fontSize: "0.625rem" }}>🍜</span>
               <span
                 style={{
@@ -44,31 +45,15 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
               <span style={{ fontSize: "0.625rem" }}>🥘</span>
             </div>
             <h1 style={styles.titleMain}>音速飯点</h1>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "0.1875rem",
-                marginTop: "0.015625rem",
-              }}
-            >
+            <div className="flex justify-center items-center gap-0.5 mt-0">
               <div
-                style={{
-                  height: "1px",
-                  width: "0.375rem",
-                  backgroundColor: C.accentYellow,
-                  opacity: 0.5,
-                }}
+                className="h-px opacity-50"
+                style={{ width: "0.375rem", backgroundColor: C.accentYellow }}
               />
               <span style={styles.titleSub}>Sonic Chinese Restaurant</span>
               <div
-                style={{
-                  height: "1px",
-                  width: "0.375rem",
-                  backgroundColor: C.accentYellow,
-                  opacity: 0.5,
-                }}
+                className="h-px opacity-50"
+                style={{ width: "0.375rem", backgroundColor: C.accentYellow }}
               />
             </div>
           </div>
@@ -82,7 +67,7 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
       </div>
 
       {/* メニューリスト */}
-      <div style={styles.menuList}>
+      <div className="flex-1 min-h-0 overflow-y-auto pr-0.5 flex flex-col gap-0.5">
         {MENUS.map(([cards, menuName]) => {
           const canMake = possibleMenus.includes(menuName);
 

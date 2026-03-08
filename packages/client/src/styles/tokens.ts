@@ -17,4 +17,19 @@ export const Z = {
   inviteModal: 1300,
   roomError: 2000,
   scanlines: 9999,
+
+  // 音速飯点ゲーム内 z-index
+  srGameSidebar: 40,
+  srTableCard: 15,
+  srDishBanner: 20,
+  srPlayerInfo: 10,
+  srHandArea: 50,
+  srScrollBtn: 60,
+  srCountdownOverlay: 9997,
+  srCountdown: 9998,
+
+  // ブロックスゲーム内ボードセル z-index（ボードの stacking context 内）
+  blkBoardSvg: 1,   // SVGピース描画レイヤー
+  blkBoardCell: 2,  // インタラクション用セルレイヤー
+  blkCellOverlay: 1, // セル内のゴースト・ドット等のオーバーレイ
 } as const;

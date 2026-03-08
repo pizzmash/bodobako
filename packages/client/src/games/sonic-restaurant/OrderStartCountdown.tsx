@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { Z } from "../../styles/tokens";
 
 interface OrderStartCountdownProps {
   /** カウントダウン完了時のコールバック */
@@ -93,31 +94,14 @@ export function OrderStartCountdown({ onComplete }: OrderStartCountdownProps) {
     <>
       {/* 背景オーバーレイ */}
       <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          zIndex: 9998,
-        }}
+        className="fixed inset-0 bg-black/40"
+        style={{ zIndex: Z.srCountdownOverlay }}
       />
 
       {/* カウントダウン表示 */}
       <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-          pointerEvents: "none",
-        }}
+        className="fixed inset-0 flex items-center justify-center pointer-events-none"
+        style={{ zIndex: Z.srCountdown }}
       >
         {isOrderText ? (
           /* 「注文〜！」は吹き出しで表示 */
@@ -125,7 +109,7 @@ export function OrderStartCountdown({ onComplete }: OrderStartCountdownProps) {
             className="sr-jaggy-burst"
             style={{
               ...getOrderStyle(),
-              transition: orderPhase === "settle" 
+              transition: orderPhase === "settle"
                 ? "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" // バウンス効果
                 : "all 0.3s ease-out",
             }}

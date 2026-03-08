@@ -4,6 +4,7 @@
 
 import type { Card, SonicRestaurantState } from "@bodobako/shared";
 import React from "react";
+import { Z } from "../../styles/tokens";
 import { CardComponent } from "./CardComponent";
 import { LAYOUT, styles } from "./constants";
 
@@ -42,16 +43,10 @@ export const CenterTable = React.memo(function CenterTable({ state, lastPlayedCa
   const currentPath = state.currentPath;
 
   return (
-    <div style={styles.centerContainer}>
+    <div className="flex-1 relative flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: "#fdf2f2" }}>
       {/* 中華風背景パターン */}
       <div
-        className="sr-chinese-pattern"
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.05,
-          pointerEvents: "none",
-        }}
+        className="sr-chinese-pattern absolute inset-0 opacity-5 pointer-events-none"
       />
 
       {/* 回転テーブル */}
@@ -60,15 +55,7 @@ export const CenterTable = React.memo(function CenterTable({ state, lastPlayedCa
         <div style={styles.tableInnerCircle} />
 
         {/* 現在構築中のメニューカード */}
-        <div
-          style={{
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1rem",
-          }}
-        >
+        <div className="relative flex flex-col items-center gap-4">
           {/* カードを重ねて表示 */}
           {displayPath.length > 0 ? (
             <div
@@ -96,14 +83,7 @@ export const CenterTable = React.memo(function CenterTable({ state, lastPlayedCa
               ))}
             </div>
           ) : (
-            <div
-              style={{
-                fontSize: "1rem",
-                color: "#999",
-                fontWeight: 600,
-                textAlign: "center",
-              }}
-            >
+            <div className="text-base font-semibold text-center" style={{ color: "#999" }}>
               カードを出してください
             </div>
           )}
@@ -113,20 +93,8 @@ export const CenterTable = React.memo(function CenterTable({ state, lastPlayedCa
       {/* 下部: 現在のパス履歴（小さく表示） */}
       {currentPath.length > 0 && (
         <div
-          style={{
-            position: "absolute",
-            bottom: "1.5rem",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            gap: "0.25rem",
-            padding: "0.5rem 0.75rem",
-            background: "rgba(255, 255, 255, 0.95)",
-            borderRadius: "0.5rem",
-            border: "2px solid #e5e7eb",
-            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-            zIndex: 15,
-          }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1 px-3 py-2 bg-white/95 rounded-lg border-2 border-gray-200 shadow"
+          style={{ zIndex: Z.srTableCard }}
         >
           {currentPath.map((card, index) => (
             <CardComponent key={`history-${index}`} card={card} size="small" hideLogo />
