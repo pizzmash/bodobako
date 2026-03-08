@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { useRoom } from "../context/RoomContext";
-import { Z } from "../styles/tokens";
 import { GameView } from "./GameView";
 import { NameEntryModal } from "./NameEntryModal";
 import { Room } from "./Room";
@@ -74,37 +73,14 @@ export function RoomPage() {
   // エラー → Lobby の上に fixed でオーバーレイ
   if (errorMsg) {
     return (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 16,
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(4px)",
-          zIndex: Z.roomError,
-          fontFamily: "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif",
-        }}
-      >
-        <div style={{ color: "#dc2626", fontSize: 16 }}>{errorMsg}</div>
+      <div className="fixed inset-0 z-room-error flex flex-col items-center justify-center gap-4 bg-white/90 px-6 text-center font-inter backdrop-blur-sm">
+        <div className="text-base text-red-600">{errorMsg}</div>
         <button
           onClick={() => {
             clearError();
             navigate("/");
           }}
-          style={{
-            padding: "8px 24px",
-            background: "#6366f1",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontSize: 15,
-            fontFamily: "inherit",
-          }}
+          className="cursor-pointer rounded-lg border-0 bg-indigo-600 px-6 py-2 text-[15px] text-white transition-colors hover:bg-indigo-500 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
         >
           ロビーに戻る
         </button>

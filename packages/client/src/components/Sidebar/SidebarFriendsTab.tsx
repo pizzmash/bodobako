@@ -84,7 +84,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
       </div>
       <div className="flex gap-2 items-center">
         <input
-          className="sidebar-friend-code-input flex-1 px-3 py-2.5 text-[0.9rem] rounded-xl border border-indigo-200/50 outline-none box-border font-mono text-indigo-600 font-semibold bg-indigo-50/40 tracking-[0.06em]"
+          className="flex-1 rounded-xl border border-indigo-200/50 bg-indigo-50/40 px-3 py-2.5 font-mono text-[0.9rem] font-semibold tracking-[0.06em] text-indigo-600 outline-none transition duration-150 focus:border-indigo-500 focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1)]"
           value={addCode}
           onChange={(e) => {
             setAddCode(e.target.value);
@@ -99,7 +99,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
           aria-label="追加するフレンドのコード"
         />
         <button
-          className="sidebar-friend-add-btn flex items-center gap-1 px-3.5 py-2.5 rounded-xl border-0 bg-indigo-500 text-white text-[0.85rem] font-semibold font-poppins min-h-[40px] min-w-[64px] justify-center shrink-0"
+          className="flex min-h-[40px] min-w-[64px] shrink-0 items-center justify-center gap-1 rounded-xl border-0 bg-indigo-500 px-3.5 py-2.5 font-poppins text-[0.85rem] font-semibold text-white transition duration-200 hover:bg-indigo-600 hover:shadow-[0_4px_12px_rgba(99,102,241,0.3)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => void handleAddFriend()}
           disabled={isAdding || addCode.trim() === ""}
           aria-busy={isAdding}
@@ -180,7 +180,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
           return (
             <button
               key={tab}
-              className={`sidebar-sub-tab flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-0 text-[0.82rem] font-poppins ${
+              className={`flex items-center gap-1.5 rounded-full border-0 px-3.5 py-1.5 text-[0.82rem] font-poppins transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
                 active
                   ? "bg-indigo-500 text-white font-bold shadow-[0_2px_8px_rgba(99,102,241,0.25)]"
                   : "bg-[rgba(238,242,255,0.7)] text-indigo-400 font-medium"
@@ -214,7 +214,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
             emptySubTitle="申請を承認するとフレンドになります"
             renderActions={(f) => (
               <button
-                className="sidebar-remove-btn flex items-center justify-center w-8 h-8 rounded-lg border-0 bg-transparent text-slate-300 p-0 shrink-0"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-slate-300 transition duration-150 hover:bg-red-500/10 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={() => void handleRemove(f.uid)}
                 disabled={removingUid === f.uid}
                 aria-label={`${f.displayName} をフレンド削除`}
@@ -237,7 +237,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
             emptySubTitle="フレンドコードで申請できます"
             renderActions={(f) => (
               <button
-                className="sidebar-remove-btn flex items-center justify-center w-8 h-8 rounded-lg border-0 bg-transparent text-slate-300 p-0 shrink-0"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-slate-300 transition duration-150 hover:bg-red-500/10 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={() => void handleCancelRequest(f.uid)}
                 disabled={cancelingUid === f.uid}
                 aria-label={`${f.displayName} への申請を取り下げ`}
@@ -261,7 +261,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
             renderActions={(f) => (
               <div className="flex gap-2">
                 <button
-                  className="sidebar-follow-back-btn flex items-center gap-1 px-2.5 py-1.5 rounded-lg border-0 bg-indigo-500 text-white text-[0.78rem] font-semibold font-poppins min-h-[30px] shrink-0"
+                  className="flex min-h-[30px] shrink-0 items-center gap-1 rounded-lg border-0 bg-indigo-500 px-2.5 py-1.5 font-poppins text-[0.78rem] font-semibold text-white transition duration-150 hover:bg-indigo-600 hover:shadow-[0_2px_8px_rgba(99,102,241,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => void handleApproveRequest(f as Follower)}
                   disabled={approvingUid === f.uid}
                   aria-label={`${f.displayName} の申請を承認`}
@@ -273,7 +273,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
                   承認
                 </button>
                 <button
-                  className="sidebar-remove-btn flex items-center justify-center w-8 h-8 rounded-lg border-0 bg-transparent text-slate-300 p-0 shrink-0"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-slate-300 transition duration-150 hover:bg-red-500/10 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-40"
                   onClick={() => void handleRejectRequest(f.uid)}
                   disabled={rejectingUid === f.uid}
                   aria-label={`${f.displayName} の申請を拒否`}

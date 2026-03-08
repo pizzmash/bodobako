@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 function hashCode(str: string): number {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -11,6 +13,10 @@ export function GameIdenticon({ gameId }: { gameId: string }) {
   const hue = h % 360;
   const color = `hsl(${hue}, 65%, 55%)`;
   const bgColor = `hsl(${hue}, 45%, 95%)`;
+  const identiconStyle = {
+    "--identicon-bg": bgColor,
+    "--identicon-color": color,
+  } as CSSProperties;
 
   // 3 columns × 5 rows = 15 bits → mirror cols 0,1 to get 4,3
   const cells: boolean[] = [];
@@ -25,27 +31,13 @@ export function GameIdenticon({ gameId }: { gameId: string }) {
 
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(5, 1fr)",
-        gap: 2,
-        width: 64,
-        height: 64,
-        padding: 8,
-        background: bgColor,
-        borderRadius: 12,
-        flexShrink: 0,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-      }}
+      style={identiconStyle}
+      className="grid h-16 w-16 shrink-0 grid-cols-5 gap-0.5 rounded-xl bg-[var(--identicon-bg)] p-2 shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
     >
       {cells.map((on, i) => (
         <div
           key={i}
-          style={{
-            borderRadius: 2,
-            background: on ? color : "transparent",
-            transition: "background 0.3s ease",
-          }}
+          className={`rounded-[2px] transition-colors duration-300 ${on ? "bg-[var(--identicon-color)]" : "bg-transparent"}`}
         />
       ))}
     </div>

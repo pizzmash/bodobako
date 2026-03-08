@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 interface AvatarProps {
   photoURL?: string;
   displayName: string;
@@ -27,10 +29,14 @@ const PersonIcon = ({ size }: { size: number }) => (
  * なければイニシャル or PersonIcon にフォールバックする。
  */
 export function Avatar({ photoURL, displayName, size = 32 }: AvatarProps) {
+  const avatarStyle = {
+    "--avatar-size": `${size}px`,
+  } as CSSProperties;
+
   return (
     <div
-      style={{ width: size, height: size }}
-      className="rounded-full border border-indigo-300/35 bg-white/90 flex items-center justify-center text-indigo-500 overflow-hidden shrink-0"
+      style={avatarStyle}
+      className="flex h-[var(--avatar-size)] w-[var(--avatar-size)] shrink-0 items-center justify-center overflow-hidden rounded-full border border-indigo-300/35 bg-white/90 text-indigo-500"
     >
       {photoURL ? (
         <img

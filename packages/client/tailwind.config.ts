@@ -4,6 +4,30 @@ const config: Config = {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      backgroundImage: {
+        "error-banner":
+          "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.1) 100%)",
+        "green-gradient": "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+        "indigo-gradient": "linear-gradient(135deg, #6366F1 0%, #818CF8 100%)",
+        "indigo-gradient-deep": "linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)",
+        "lobby-divider":
+          "linear-gradient(to right, transparent, rgba(129,140,248,0.3) 20%, rgba(129,140,248,0.3) 80%, transparent)",
+        "lobby-orb-indigo": "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)",
+        "lobby-orb-violet": "radial-gradient(circle, rgba(129,140,248,0.08) 0%, transparent 70%)",
+        "lobby-shell": "linear-gradient(135deg, #EEF2FF 0%, #F8FAFE 50%, #FAF5FF 100%)",
+        "result-win":
+          "linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(129,140,248,0.1) 50%, rgba(250,245,255,0.95) 100%)",
+      },
+      boxShadow: {
+        "action-green": "0 4px 12px rgba(34,197,94,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset",
+        "action-indigo": "0 4px 12px rgba(99,102,241,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset",
+        "card-indigo": "0 8px 24px rgba(99,102,241,0.15), 0 0 0 1px rgba(255,255,255,0.2) inset",
+        "card-indigo-strong": "0 12px 32px rgba(99,102,241,0.25), 0 0 0 1px rgba(255,255,255,0.3) inset",
+        "modal-indigo": "0 24px 64px rgba(99,102,241,0.25), 0 0 0 1px rgba(129,140,248,0.3)",
+      },
+      colors: {
+        "room-host": "#4a6fa5",
+      },
       fontFamily: {
         poppins: ["Poppins", "Segoe UI", "Hiragino Sans", "Noto Sans JP", "sans-serif"],
         inter: ["Inter", "Open Sans", "Segoe UI", "Hiragino Sans", "Noto Sans JP", "sans-serif"],
@@ -110,6 +134,7 @@ const config: Config = {
       },
       zIndex: {
         header: "900",
+        "header-popover": "930",
         modal: "950",
         overlay: "1090",
         sidebar: "1100",

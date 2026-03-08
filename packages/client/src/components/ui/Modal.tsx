@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import { Z } from "../../styles/tokens";
 
 interface ModalProps {
@@ -13,10 +13,14 @@ interface ModalProps {
  * onClose を渡すと backdrop クリックで閉じられる。
  */
 export function Modal({ onClose, children, zIndex = Z.modal }: ModalProps) {
+  const modalStyle = {
+    "--modal-z": `${zIndex}`,
+  } as CSSProperties;
+
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center"
-      style={{ zIndex }}
+      className="fixed inset-0 z-[var(--modal-z)] flex items-center justify-center"
+      style={modalStyle}
       onClick={onClose}
     >
       {/* backdrop */}

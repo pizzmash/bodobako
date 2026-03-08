@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import { MAX_PLAYER_NAME_LENGTH } from "../lib/constants";
-import { Z } from "../styles/tokens";
 import { Spinner } from "./ui/Spinner";
 
 export function NameEntryModal() {
@@ -34,19 +33,9 @@ export function NameEntryModal() {
   const isLoading = isAuthLoading || isProfileLoading;
 
   return (
-    <div
-      className="fixed inset-0 bg-indigo-600/15 backdrop-blur-2xl animate-fade-in"
-      style={{ zIndex: Z.modal }}
-    >
+    <div className="fixed inset-0 z-modal bg-indigo-600/15 backdrop-blur-2xl animate-fade-in">
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-xl rounded-3xl flex flex-col items-center gap-2 border-2 border-indigo-300/20 animate-slide-down"
-        style={{
-          width: 380,
-          maxWidth: "calc(100% - 48px)",
-          padding: "48px 40px 36px",
-          boxShadow: "0 24px 64px rgba(99,102,241,0.25), 0 0 0 1px rgba(129,140,248,0.3)",
-          color: "#312E81",
-        }}
+        className="absolute left-1/2 top-1/2 flex w-[380px] max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 rounded-3xl border-2 border-indigo-300/20 bg-white/95 px-10 pb-9 pt-12 text-[#312E81] shadow-modal-indigo backdrop-blur-xl animate-slide-down"
       >
         {isLoading ? (
           <div className="flex items-center justify-center py-8 min-h-[80px]" aria-live="polite" aria-label="読み込み中">
@@ -55,10 +44,7 @@ export function NameEntryModal() {
         ) : (
           <>
             {/* SVGアイコン */}
-            <div
-              className="name-entry-icon mb-2"
-              style={{ filter: "drop-shadow(0 4px 12px rgba(99,102,241,0.3))" }}
-            >
+            <div className="mb-2 drop-shadow-[0_4px_12px_rgba(99,102,241,0.3)]">
               <svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#6366F1" stroke="#4F46E5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M2 17L12 22L22 17" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -77,7 +63,7 @@ export function NameEntryModal() {
 
             <input
               ref={inputRef}
-              className={`name-entry-input w-full px-[18px] py-[14px] text-[1.05rem] rounded-2xl border-2 border-indigo-300/30 bg-white/70 backdrop-blur-lg text-indigo-600 font-medium text-center font-poppins transition-all duration-200 outline-none${shake ? " animate-shake border-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.15),0_4px_12px_rgba(239,68,68,0.2)]" : ""}`}
+              className={`w-full rounded-2xl border-2 border-indigo-300/30 bg-white/70 px-[18px] py-[14px] text-center font-poppins text-[1.05rem] font-medium text-indigo-600 outline-none transition-all duration-200 backdrop-blur-lg focus:border-indigo-500 focus:outline focus:outline-3 focus:outline-offset-2 focus:outline-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1),0_4px_12px_rgba(99,102,241,0.15)] ${shake ? "animate-shake border-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.15),0_4px_12px_rgba(239,68,68,0.2)]" : ""}`}
               placeholder="名前を入力..."
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -88,11 +74,7 @@ export function NameEntryModal() {
             />
 
             <button
-              className="name-entry-btn w-full py-[14px] text-[1.05rem] font-semibold font-poppins rounded-2xl border-0 text-white cursor-pointer mt-3 min-h-[52px] bg-indigo-gradient"
-              style={{
-                boxShadow: "0 4px 12px rgba(99,102,241,0.3), 0 0 0 1px rgba(255,255,255,0.2) inset",
-                opacity: draft.trim() ? 1 : 0.5,
-              }}
+              className="mt-3 min-h-[52px] w-full cursor-pointer rounded-2xl border-0 bg-indigo-gradient py-[14px] font-poppins text-[1.05rem] font-semibold text-white shadow-[0_4px_12px_rgba(99,102,241,0.3),0_0_0_1px_rgba(255,255,255,0.2)_inset] transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-gradient-deep hover:shadow-[0_8px_24px_rgba(99,102,241,0.4),0_0_0_1px_rgba(129,140,248,0.5)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={handleSubmit}
               disabled={!draft.trim()}
               aria-label="ゲームを始める"
@@ -109,8 +91,7 @@ export function NameEntryModal() {
                 </div>
 
                 <button
-                  className="name-google-btn w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl border border-indigo-300/30 bg-[rgba(238,242,255,0.6)] text-indigo-700 text-[0.95rem] font-semibold font-poppins min-h-[48px]"
-                  style={{ boxShadow: "0 2px 8px rgba(99,102,241,0.08)" }}
+                  className="flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-indigo-300/30 bg-[rgba(238,242,255,0.6)] py-3 font-poppins text-[0.95rem] font-semibold text-indigo-700 shadow-[0_2px_8px_rgba(99,102,241,0.08)] transition duration-200 hover:-translate-y-px hover:bg-indigo-gradient-deep hover:text-white hover:shadow-[0_6px_20px_rgba(99,102,241,0.35)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:translate-y-0"
                   onClick={signInWithGoogle}
                   aria-label="Googleアカウントでサインイン"
                 >
