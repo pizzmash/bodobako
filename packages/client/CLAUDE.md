@@ -137,15 +137,47 @@ Tailwind JIT は `animate-*` クラスが JSX に登場しない keyframe を出
 
 ## スタイリング
 
-### スタイリング手法の選択（1ファイル内で混在させない）
+### スタイリング手法の使い分け（値の性質で判断する）
 
-| 手法                      | 向いているケース                                     |
-| ------------------------- | ---------------------------------------------------- |
-| **Tailwind クラス**       | 共通 UI、シンプルなレスポンシブ                      |
-| **inline style**          | 動的計算値（`cardW`, `cardH` 等）が多いゲームボード  |
-| **ゲーム固有 CSS クラス** | 複雑なグラスモーフィズム等テーマの一貫性が重要な場面 |
+| 値の性質 | 手法 | 例 |
+| -------- | ---- | -- |
+| **固定値**（条件分岐なし・props 非依存） | **Tailwind クラス** | `flex`, `items-center`, `p-4`, `text-sm` |
+| **動的値**（props・state・計算値に依存） | **inline style** | `style={{ width: cardW, color: playerColor }}` |
+| **複雑な hover/active/アニメーション** | **ゲーム固有 CSS クラス** | `.cc-glass-panel:hover { ... }` |
 
-推奨パターン: ゲームボード内部は inline style、外枠・共通 UI 部品は Tailwind クラス。
+同一コンポーネント内で固定値と動的値が混在する場合は、**固定値を className に、動的値のみ style に**分離する：
+
+```tsx
+// ✅ 正しい分離
+<div
+  className="flex items-center gap-2 rounded-lg p-3"
+  style={{ borderColor: dynamicColor, background: `${playerColor}20` }}
+/>
+
+// ❌ 固定値を inline style に書かない
+<div style={{ display: "flex", alignItems: "center", gap: "0.5rem", borderColor: dynamicColor }} />
+```
+
+### ❌ `constants.ts` に固定値 styles オブジェクトを作らない
+
+`CSSProperties` 型のオブジェクトを定義してコンポーネントに `style={styles.xxx}` で渡すパターンは**アンチパターン**。Tailwind の恩恵（PurgeCSS・一貫性）が失われる。
+
+```ts
+// ❌ NG: 固定値を CSSProperties オブジェクトにまとめない
+export const styles = {
+  container: {
+    display: "flex",
+    flexDirection: "column",
+    padding: "1rem",
+    background: "#fff",
+  },
+};
+
+// ✅ OK: 動的値のみ constants で持ち、className に直接 Tailwind クラスを書く
+// コンポーネント側: <div className="flex flex-col p-4 bg-white" style={{ background: C.primary }} />
+```
+
+`constants.ts` に定義してよいもの: カラートークン（`C`）、レイアウト計算値（`LAYOUT.cardWidth`）、フォント文字列（`FONT`）。
 
 ### z-index は必ず `styles/tokens.ts` の `Z` 定数を使う
 
@@ -170,6 +202,20 @@ Z.invite      = 1200  ← 招待通知
 Z.inviteModal = 1300  ← 招待モーダル
 Z.roomError   = 2000  ← ルームエラー表示
 ```
+
+ゲームボード内部で独自のレイヤー制御（SVG レイヤー・セル重なり等）が必要な場合は、`styles/tokens.ts` にゲームプレフィックス付きの定数を追加する：
+
+```ts
+// tokens.ts に追加する例
+export const Z = {
+  // ...共通定数...
+  blkBoardSvg:  1,  // blokus: SVG 描画レイヤー
+  blkBoardCell: 2,  // blokus: インタラクション用セル
+  srTableCard:  15, // sonic-restaurant: テーブルカード
+} as const;
+```
+
+> 汎用モーダルには既存の `Z.modal` を使い、新しい定数は**ゲーム固有のレイヤー制御にのみ**追加する。
 
 ---
 
@@ -260,7 +306,9 @@ sendMove({ type: "place" } as MyMove);
 □ client: constants.ts でプレフィックスとカラートークンを定義
 □ client: アニメーション keyframe の置き場所を決定（tailwind.config or index.css、両方に書かない）
 □ client: フックはすべて条件リターンより前に宣言（Hooks ルール）
-□ client: z-index は Z 定数を使用
+□ client: z-index は Z 定数を使用（magic number 禁止）
+□ client: 固定値 inline style がない（固定値は Tailwind クラス、動的値のみ style={{}} に残す）
+□ client: constants.ts に固定値の CSSProperties オブジェクトを作っていない
 □ client: モバイルレイアウト動作確認（useIsMobile）
 □ client: GameResultCard でゲーム終了表示を実装
 □ npm run build でビルドが通ることを確認
