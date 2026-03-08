@@ -6,6 +6,34 @@ import { ROOM_HOST_COLOR } from "../lib/constants";
 import { Z } from "../styles/tokens";
 import { InviteModal } from "./Room/InviteModal";
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="sidebar-copy-btn flex items-center justify-center w-[30px] h-[30px] rounded-md border-0 bg-transparent text-indigo-400 p-0 shrink-0"
+      aria-label={copied ? "コピーしました" : "ルームコードをコピー"}
+    >
+      {copied ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export function Room() {
   const { room, playerId, startGame, leaveRoom, isCreatingRoom, creatingGameId } = useRoom();
   const { idToken } = useAuth();
@@ -66,8 +94,9 @@ export function Room() {
 
           {/* ルームコード */}
           <div className="text-[0.8rem] text-gray-500 uppercase tracking-[0.1em]">ルームコード</div>
-          <div className="text-[2.2rem] font-bold tracking-[0.3em] px-6 py-2 bg-gray-100 rounded-xl text-gray-700">
+          <div className="flex items-center text-[2.2rem] font-bold tracking-[0.3em] px-6 py-2 bg-gray-100 rounded-xl text-gray-700">
             {room.code}
+            <CopyButton text={room.code} />
           </div>
           <p className="text-gray-400 text-[0.82rem] m-0 mb-2">
             このコードを相手に伝えてください
