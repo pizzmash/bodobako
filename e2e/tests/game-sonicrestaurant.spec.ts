@@ -45,8 +45,8 @@ test.describe("音速飯店", () => {
     await startBtn.click();
 
     // カウントダウン（3, 2, 1 のいずれか）が両タブで表示される
-    await expect(pageA.locator(".countdown-number")).toBeVisible({ timeout: 10_000 });
-    await expect(pageB.locator(".countdown-number")).toBeVisible({ timeout: 10_000 });
+    await expect(pageA.locator(".sr-countdown-number")).toBeVisible({ timeout: 10_000 });
+    await expect(pageB.locator(".sr-countdown-number")).toBeVisible({ timeout: 10_000 });
 
     await contextA.close();
     await contextB.close();
