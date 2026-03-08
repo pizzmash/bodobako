@@ -16,7 +16,7 @@ export function ConfirmModal({ wordChars, onCancel, onSubmit }: ConfirmModalProp
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-2xl p-6 text-center shadow-2xl w-full max-w-xs"
+        className="bg-white rounded-2xl p-6 text-center shadow-2xl max-w-[90%]"
         onClick={(e) => e.stopPropagation()}
       >
         <div style={styles.confirmTitle}>この回答でよろしいですか？</div>
