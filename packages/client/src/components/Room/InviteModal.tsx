@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Z } from "../../styles/tokens";
 import { Avatar } from "../ui/Avatar";
 import { useFriends } from "./hooks/useFriends";
 import { useSendInvites } from "./hooks/useSendInvites";
@@ -59,10 +58,7 @@ export function InviteModal({ isOpen, onClose, idToken, roomCode }: InviteModalP
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/25 backdrop-blur"
-      style={{ zIndex: Z.inviteModal }}
-    >
+    <div className="fixed inset-0 z-invite-modal flex items-center justify-center bg-slate-900/25 p-4 backdrop-blur">
       <div className="w-[min(620px,100%)] max-h-[min(760px,calc(100vh-32px))] bg-white rounded-2xl border border-blue-100 shadow-[0_24px_56px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden">
         {/* ヘッダー */}
         <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3 border-b border-gray-200">
@@ -82,7 +78,7 @@ export function InviteModal({ isOpen, onClose, idToken, roomCode }: InviteModalP
 
         {/* 検索 */}
         <input
-          className="room-invite-search mx-4 mt-3 w-[calc(100%-32px)] rounded-xl border-[1.5px] border-gray-300 min-h-[44px] px-3 py-2.5 text-[0.92rem] box-border"
+          className="mx-4 mt-3 min-h-[44px] w-[calc(100%-32px)] rounded-xl border-[1.5px] border-gray-300 px-3 py-2.5 text-[0.92rem] outline-none transition duration-150 focus:border-indigo-500 focus:outline focus:outline-3 focus:outline-offset-2 focus:outline-indigo-500"
           placeholder="フレンド名 / コードで検索"
           value={friendSearch}
           onChange={(e) => setFriendSearch(e.target.value)}
@@ -121,7 +117,7 @@ export function InviteModal({ isOpen, onClose, idToken, roomCode }: InviteModalP
             filteredFriends.map((friend) => (
               <label
                 key={friend.uid}
-                className="room-invite-item flex items-center gap-2.5 border border-gray-200 rounded-xl px-3 py-2.5 bg-white cursor-pointer"
+                className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 transition duration-150 hover:border-indigo-300 hover:bg-indigo-50"
               >
                 <input
                   type="checkbox"

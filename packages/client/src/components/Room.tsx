@@ -2,9 +2,9 @@ import { getAllGames, getGameDefinition } from "@bodobako/shared";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
-import { ROOM_HOST_COLOR } from "../lib/constants";
 import { Z } from "../styles/tokens";
 import { InviteModal } from "./Room/InviteModal";
+import { Modal } from "./ui/Modal";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -17,7 +17,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="sidebar-copy-btn flex items-center justify-center w-[30px] h-[30px] rounded-md border-0 bg-transparent text-indigo-400 p-0 shrink-0"
+      className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md border-0 bg-transparent p-0 text-indigo-400 transition duration-150 hover:bg-indigo-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.92]"
       aria-label={copied ? "コピーしました" : "ルームコードをコピー"}
     >
       {copied ? (
@@ -44,10 +44,7 @@ export function Room() {
     const allGames = getAllGames();
     const pendingGame = creatingGameId ? allGames.find((g) => g.id === creatingGameId) : null;
     return (
-      <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center animate-fade-in"
-        style={{ zIndex: Z.modal }}
-      >
+      <Modal zIndex={Z.modal}>
         <div className="bg-white rounded-2xl px-10 py-9 w-[400px] max-w-[calc(100%-48px)] shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col items-center gap-2 text-gray-700 animate-bounce-in">
           <div className="text-xl font-bold mb-1">{pendingGame?.name ?? "ゲーム"}</div>
 
@@ -65,7 +62,7 @@ export function Room() {
             サーバーに接続しています
           </div>
         </div>
-      </div>
+      </Modal>
     );
   }
 
@@ -84,10 +81,7 @@ export function Room() {
 
   return (
     <>
-      <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-md animate-fade-in flex items-center justify-center"
-        style={{ zIndex: Z.modal }}
-      >
+      <Modal zIndex={Z.modal}>
         <div className="bg-white rounded-2xl px-10 py-9 w-[400px] max-w-[calc(100%-48px)] shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col items-center gap-2 text-gray-700 animate-bounce-in">
           {/* ゲーム名 */}
           <div className="text-xl font-bold mb-1">{gameName}</div>
@@ -115,7 +109,7 @@ export function Room() {
                 >
                   {p.name}
                   {p.id === room.hostId && (
-                    <span className="text-[0.7rem] font-semibold text-white rounded-md px-1.5 py-px" style={{ backgroundColor: ROOM_HOST_COLOR }}>
+                    <span className="rounded-md bg-room-host px-1.5 py-px text-[0.7rem] font-semibold text-white">
                       ホスト
                     </span>
                   )}
@@ -132,8 +126,7 @@ export function Room() {
             {isHost ? (
               <>
                 <button
-                  className="room-start-btn w-full py-3 text-base font-semibold rounded-xl border-0 text-white transition-[filter,transform] duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: ROOM_HOST_COLOR }}
+                  className="w-full rounded-xl border-0 bg-room-host py-3 text-base font-semibold text-white transition-[filter,transform] duration-150 hover:brightness-110 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-room-host active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={startGame}
                   disabled={!canStart}
                 >
@@ -141,7 +134,7 @@ export function Room() {
                 </button>
                 {idToken && (
                   <button
-                    className="w-full py-2.5 text-[0.92rem] font-semibold rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 cursor-pointer min-h-[44px]"
+                    className="min-h-[44px] w-full cursor-pointer rounded-xl border border-indigo-200 bg-indigo-50 py-2.5 text-[0.92rem] font-semibold text-indigo-700 transition duration-150 hover:bg-indigo-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                     onClick={openInviteModal}
                   >
                     フレンドを招待
@@ -154,14 +147,14 @@ export function Room() {
               </div>
             )}
             <button
-              className="room-leave-btn w-full py-2.5 text-[0.9rem] font-medium rounded-xl border border-gray-200 bg-transparent text-gray-500 cursor-pointer transition-[background,color] duration-150"
+              className="w-full cursor-pointer rounded-xl border border-gray-200 bg-transparent py-2.5 text-[0.9rem] font-medium text-gray-500 transition-[background,color] duration-150 hover:bg-red-100 hover:text-red-600 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-500"
               onClick={leaveRoom}
             >
               退出する
             </button>
           </div>
         </div>
-      </div>
+      </Modal>
 
       {isInviteModalOpen && (
         <InviteModal

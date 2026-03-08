@@ -10,6 +10,7 @@ export const NYAMENS_ACCENT = "#0EA5E9";
 /** z-index 階層定数 */
 export const Z = {
   header: 900,
+  headerPopover: 930,
   modal: 950,
   overlay: 1090,
   sidebar: 1100,

@@ -46,7 +46,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Drawer */}
       <aside
-        className="sidebar-drawer fixed top-0 right-0 bottom-0 w-80 max-w-[90vw] bg-[rgba(255,255,255,0.97)] backdrop-blur-xl border-l border-indigo-200/25 shadow-[-8px_0_40px_rgba(99,102,241,0.15)] z-sidebar flex flex-col font-poppins animate-slide-in-right"
+        className="sidebar-drawer fixed bottom-0 right-0 top-0 z-sidebar flex w-80 max-w-[90vw] flex-col border-l border-indigo-200/25 bg-[rgba(255,255,255,0.97)] font-poppins shadow-[-8px_0_40px_rgba(99,102,241,0.15)] backdrop-blur-xl animate-slide-in-right"
         role="dialog"
         aria-label="アカウントメニュー"
       >
@@ -81,7 +81,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               return (
                 <button
                   key={tab}
-                  className={`sidebar-main-tab flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border-0 text-[0.85rem] font-poppins ${
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2.5 text-[0.85rem] font-poppins transition duration-200 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
                     active
                       ? "bg-white text-indigo-600 font-bold shadow-[0_2px_8px_rgba(99,102,241,0.15)]"
                       : "bg-transparent text-slate-400 font-medium"
@@ -166,7 +166,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 ログインするとプロフィールとフレンド機能が使えます
               </p>
               <button
-                className="sidebar-sign-in-btn w-full flex items-center justify-center gap-2.5 py-3 rounded-xl border-0 text-white text-[0.95rem] font-semibold font-poppins shadow-[0_4px_12px_rgba(99,102,241,0.3)] min-h-[48px] bg-indigo-gradient"
+                className="flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border-0 bg-indigo-gradient py-3 font-poppins text-[0.95rem] font-semibold text-white shadow-[0_4px_12px_rgba(99,102,241,0.3)] transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-gradient-deep hover:shadow-[0_8px_24px_rgba(99,102,241,0.4)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:translate-y-0"
                 onClick={signInWithGoogle}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

@@ -4,7 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import { MAX_PLAYER_NAME_LENGTH } from "../lib/constants";
 import { API_BASE } from "../lib/socket";
-import { Z } from "../styles/tokens";
 import type { FriendRelation } from "./AppHeader/hooks/useFriendRelations";
 import { useFriendRelations } from "./AppHeader/hooks/useFriendRelations";
 import { useParticipantProfiles } from "./AppHeader/hooks/useParticipantProfiles";
@@ -200,26 +199,20 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
 
   return (
     <header
-      className="sticky top-0 w-full bg-white/75 backdrop-blur-xl border-b border-indigo-300/20 shadow-[0_4px_16px_rgba(99,102,241,0.08)] font-poppins animate-slide-down"
-      style={{ zIndex: Z.header }}
+      className="sticky top-0 z-header w-full border-b border-indigo-300/20 bg-white/75 font-poppins shadow-[0_4px_16px_rgba(99,102,241,0.08)] backdrop-blur-xl animate-slide-down"
     >
-      <div className="app-header-inner flex items-center justify-between max-w-[800px] mx-auto px-6 py-3.5 box-border gap-4">
-        {/* Brand */}
-        <div
-          className="app-header-brand flex items-center gap-2.5 cursor-default select-none"
-          role="heading"
-          aria-level={1}
-        >
-          <GameIcon />
-          <span
-            className="text-[1.4rem] font-bold tracking-[0.01em] text-indigo-gradient"
-          >
-            ボド箱
-          </span>
-        </div>
+      <div className="relative mx-auto max-w-[800px]">
+        <div className="flex flex-wrap items-center justify-center gap-2 px-4 py-2.5 sm:justify-between sm:gap-4 sm:px-6 sm:py-3.5">
+          {/* Brand */}
+          <div className="flex w-full select-none items-center justify-center gap-2.5 sm:w-auto sm:justify-start" role="heading" aria-level={1}>
+            <GameIcon />
+            <span className="text-[1.4rem] font-bold tracking-[0.01em] text-indigo-gradient">
+              ボド箱
+            </span>
+          </div>
 
-        {/* Right side */}
-        <div className="app-header-right flex items-center gap-2">
+          {/* Right side */}
+          <div className="flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-end">
           {/* Room context pills */}
           {room && (
             <div className="flex items-center gap-2.5 animate-slide-down">
@@ -256,7 +249,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           {/* Player name pill */}
           {playerName && !editing && (
             <button
-              className={`flex items-center gap-2 px-3.5 py-1.5 text-[0.85rem] font-medium rounded-full bg-indigo-50/80 backdrop-blur-sm text-indigo-700 whitespace-nowrap min-h-[32px] border-none shadow-[0_2px_8px_rgba(99,102,241,0.08)] ${canEdit ? "app-header-name cursor-pointer" : "cursor-default"}`}
+              className={`flex min-h-[32px] items-center gap-2 whitespace-nowrap rounded-full border-none bg-indigo-50/80 px-3.5 py-1.5 text-[0.85rem] font-medium text-indigo-700 shadow-[0_2px_8px_rgba(99,102,241,0.08)] backdrop-blur-sm transition-[background,transform,box-shadow] duration-200 ${canEdit ? "cursor-pointer hover:-translate-y-px hover:bg-indigo-300/15 hover:shadow-[0_2px_8px_rgba(99,102,241,0.15)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500" : "cursor-default"}`}
               onClick={startEdit}
               disabled={!canEdit}
               title={canEdit ? "クリックで名前を変更" : displayName}
@@ -292,7 +285,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
 
           {/* メニューボタン */}
           <button
-            className="app-header-menu-btn flex items-center justify-center w-9 h-9 rounded-full border-[1.5px] border-indigo-300/30 bg-indigo-50/80 backdrop-blur-sm text-indigo-500 cursor-pointer p-0 shrink-0 shadow-[0_2px_8px_rgba(99,102,241,0.08)] overflow-hidden"
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-[1.5px] border-indigo-300/30 bg-indigo-50/80 p-0 text-indigo-500 shadow-[0_2px_8px_rgba(99,102,241,0.08)] backdrop-blur-sm transition-[background,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-indigo-300/15 hover:shadow-[0_2px_8px_rgba(99,102,241,0.2)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             onClick={onMenuClick}
             aria-label="アカウントメニューを開く"
           >
@@ -302,79 +295,79 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
               size={36}
             />
           </button>
+          </div>
         </div>
-      </div>
 
-      {/* 参加者ポップオーバー */}
-      {room && activePlayer && (
-        <div
-          ref={popoverRef}
-          className="absolute w-[280px] rounded-2xl border border-indigo-300/[35%] bg-[rgba(255,255,255,0.98)] backdrop-blur-[10px] shadow-[0_14px_32px_rgba(79,70,229,0.2)] p-3"
-          style={{ top: 56, right: "max(calc(50% - 400px), 16px)", zIndex: Z.header + 30 }}
-          role="dialog"
-          aria-label="参加者情報"
-        >
-          <div className="flex items-center gap-2.5">
-            <Avatar
-              photoURL={activeProfile?.photoURL}
-              displayName={activeProfile?.displayName ?? activePlayer.name}
-              size={38}
-            />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="text-[0.9rem] font-bold text-indigo-900 truncate">
-                  {activeProfile?.displayName ?? activePlayer.name}
+        {/* 参加者ポップオーバー */}
+        {room && activePlayer && (
+          <div
+            ref={popoverRef}
+            className="absolute right-4 top-14 z-header-popover w-[280px] rounded-2xl border border-indigo-300/[35%] bg-[rgba(255,255,255,0.98)] p-3 shadow-[0_14px_32px_rgba(79,70,229,0.2)] backdrop-blur-[10px] sm:right-6"
+            role="dialog"
+            aria-label="参加者情報"
+          >
+            <div className="flex items-center gap-2.5">
+              <Avatar
+                photoURL={activeProfile?.photoURL}
+                displayName={activeProfile?.displayName ?? activePlayer.name}
+                size={38}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="truncate text-[0.9rem] font-bold text-indigo-900">
+                    {activeProfile?.displayName ?? activePlayer.name}
+                  </div>
+                  {activeRelation === "friend" && (
+                    <span className="shrink-0 rounded-full border border-green-300 bg-green-50 px-2 py-px text-[0.72rem] font-bold leading-[1.4] text-green-800">
+                      フレンド
+                    </span>
+                  )}
                 </div>
-                {activeRelation === "friend" && (
-                  <span className="text-[0.72rem] font-bold text-green-800 bg-green-50 border border-green-300 rounded-full px-2 py-px leading-[1.4] shrink-0">
-                    フレンド
-                  </span>
-                )}
               </div>
             </div>
-          </div>
-
-          {idToken && activeUid && activeUid !== firebaseUser?.uid && (
-            <div className="mt-2.5 flex flex-col gap-2">
-              {activeRelation === "none" && (
-                <button
-                  type="button"
-                  className="min-h-[36px] rounded-xl border-0 bg-indigo-700 text-white text-[0.82rem] font-bold cursor-pointer disabled:opacity-60"
-                  onClick={() => void sendFriendRequest(activeUid)}
-                  disabled={requestingUid === activeUid}
-                >
-                  {requestingUid === activeUid ? "申請中..." : "フレンド申請"}
-                </button>
-              )}
-              {activeRelation === "outgoing" && (
-                <div className="text-[0.82rem] font-semibold text-indigo-700 bg-indigo-50/90 rounded-xl px-2.5 py-2">
-                  フレンド申請中です
-                </div>
-              )}
-              {activeRelation === "incoming" && (
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 text-[0.82rem] font-semibold text-indigo-700 bg-indigo-50/90 rounded-xl px-2.5 py-2">
-                    相手からフレンド申請が届いています
-                  </div>
+ 
+            {idToken && activeUid && activeUid !== firebaseUser?.uid && (
+              <div className="mt-2.5 flex flex-col gap-2">
+                {activeRelation === "none" && (
                   <button
                     type="button"
-                    className="min-h-[34px] rounded-xl border-0 bg-indigo-700 text-white text-[0.78rem] font-bold px-2.5 py-[7px] cursor-pointer shrink-0 disabled:opacity-60"
-                    onClick={() => void approveFriendRequest(activeUid)}
-                    disabled={approvingUid === activeUid}
+                    className="min-h-[36px] cursor-pointer rounded-xl border-0 bg-indigo-700 text-[0.82rem] font-bold text-white disabled:opacity-60"
+                    onClick={() => void sendFriendRequest(activeUid)}
+                    disabled={requestingUid === activeUid}
                   >
-                    {approvingUid === activeUid ? "承認中..." : "承認"}
+                    {requestingUid === activeUid ? "申請中..." : "フレンド申請"}
                   </button>
-                </div>
-              )}
-              {requestError && (
-                <div className="text-[0.78rem] font-semibold text-red-600 bg-red-50 rounded-xl px-2 py-1.5">
-                  {requestError}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+                )}
+                {activeRelation === "outgoing" && (
+                  <div className="rounded-xl bg-indigo-50/90 px-2.5 py-2 text-[0.82rem] font-semibold text-indigo-700">
+                    フレンド申請中です
+                  </div>
+                )}
+                {activeRelation === "incoming" && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 rounded-xl bg-indigo-50/90 px-2.5 py-2 text-[0.82rem] font-semibold text-indigo-700">
+                      相手からフレンド申請が届いています
+                    </div>
+                    <button
+                      type="button"
+                      className="min-h-[34px] shrink-0 cursor-pointer rounded-xl border-0 bg-indigo-700 px-2.5 py-[7px] text-[0.78rem] font-bold text-white disabled:opacity-60"
+                      onClick={() => void approveFriendRequest(activeUid)}
+                      disabled={approvingUid === activeUid}
+                    >
+                      {approvingUid === activeUid ? "承認中..." : "承認"}
+                    </button>
+                  </div>
+                )}
+                {requestError && (
+                  <div className="rounded-xl bg-red-50 px-2 py-1.5 text-[0.78rem] font-semibold text-red-600">
+                    {requestError}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </header>
   );
 }

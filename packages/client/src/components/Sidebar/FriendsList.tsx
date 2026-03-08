@@ -64,7 +64,7 @@ export function FriendsList({ loading, items, emptyTitle, emptySubTitle, renderA
       {items.map((f) => (
         <li
           key={f.uid}
-          className="sidebar-friend-item flex items-center gap-2.5 p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100/30"
+          className="flex items-center gap-2.5 rounded-xl border border-indigo-100/30 bg-indigo-50/50 p-2.5 transition duration-150 hover:bg-indigo-50/80"
         >
           <Avatar photoURL={f.photoURL} displayName={f.displayName} size={36} />
           <div className="flex-1 min-w-0">

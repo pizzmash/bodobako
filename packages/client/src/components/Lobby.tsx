@@ -89,14 +89,14 @@ export function Lobby() {
             )}
             <div className="flex justify-end gap-2.5 mt-0.5">
               <button
-                className="lobby-modal-btn border border-indigo-200/60 rounded-xl px-3.5 py-2.5 bg-white text-indigo-600 font-semibold font-poppins min-h-[44px] cursor-pointer"
+                className="min-h-[44px] cursor-pointer rounded-xl border border-indigo-200/60 bg-white px-3.5 py-2.5 font-poppins font-semibold text-indigo-600 transition duration-200 hover:-translate-y-px hover:bg-indigo-50/90 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 onClick={() => void dismissCurrentInvite(currentInvite)}
                 disabled={isLoadingInvites}
               >
                 閉じる
               </button>
               <button
-                className="lobby-modal-btn border-0 rounded-xl px-4 py-2.5 text-white font-bold font-poppins min-h-[44px] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)] bg-indigo-gradient"
+                className="min-h-[44px] cursor-pointer rounded-xl border-0 bg-indigo-gradient px-4 py-2.5 font-poppins font-bold text-white shadow-[0_4px_12px_rgba(99,102,241,0.3)] transition duration-200 hover:-translate-y-px hover:bg-indigo-gradient-deep hover:shadow-[0_8px_24px_rgba(99,102,241,0.4)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 onClick={() => void handleJoinFromInvite()}
                 disabled={!playerName.trim()}
               >
@@ -107,46 +107,15 @@ export function Lobby() {
         </div>
       )}
 
-      <div
-        className="flex flex-col items-center min-h-screen pt-6 relative overflow-hidden text-indigo-900"
-        style={{
-          background: "linear-gradient(135deg, #EEF2FF 0%, #F8FAFE 50%, #FAF5FF 100%)",
-        }}
-      >
+      <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-lobby-shell pt-6 text-indigo-900">
         {/* Background decorations */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: "-10%",
-            right: "-5%",
-            width: 500,
-            height: 500,
-            background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)",
-            borderRadius: "50%",
-            zIndex: 0,
-          }}
-        />
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            bottom: "-15%",
-            left: "-8%",
-            width: 600,
-            height: 600,
-            background: "radial-gradient(circle, rgba(129,140,248,0.08) 0%, transparent 70%)",
-            borderRadius: "50%",
-            zIndex: 0,
-          }}
-        />
+        <div className="pointer-events-none absolute -right-[5%] -top-[10%] z-0 h-[500px] w-[500px] rounded-full bg-lobby-orb-indigo" />
+        <div className="pointer-events-none absolute -bottom-[15%] -left-[8%] z-0 h-[600px] w-[600px] rounded-full bg-lobby-orb-violet" />
 
         {/* Error banner */}
         {errorMsg && (
           <div
-            className="backdrop-blur-xl text-red-800 px-6 py-3 rounded-2xl cursor-pointer max-w-[752px] w-[calc(100%-48px)] text-center text-[0.95rem] font-semibold border-2 border-red-300/30 mb-4 shadow-[0_4px_12px_rgba(239,68,68,0.15)] relative z-10"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.1) 100%)",
-            }}
+            className="relative z-10 mb-4 w-[calc(100%-48px)] max-w-[752px] cursor-pointer rounded-2xl border-2 border-red-300/30 bg-error-banner px-6 py-3 text-center text-[0.95rem] font-semibold text-red-800 shadow-[0_4px_12px_rgba(239,68,68,0.15)] backdrop-blur-xl"
             onClick={clearError}
           >
             {errorMsg}（クリックで閉じる）
@@ -173,7 +142,7 @@ export function Lobby() {
               />
             </svg>
             <input
-              className="lobby-search-input w-full py-3.5 pl-12 pr-4 text-base rounded-2xl border-2 border-indigo-200/20 outline-none bg-white/70 backdrop-blur-xl text-indigo-900 shadow-[0_4px_12px_rgba(99,102,241,0.08)] box-border"
+              className="w-full rounded-2xl border-2 border-indigo-200/20 bg-white/70 py-3.5 pl-12 pr-4 text-base text-indigo-900 shadow-[0_4px_12px_rgba(99,102,241,0.08)] outline-none backdrop-blur-xl transition duration-200 focus:border-indigo-500 focus:outline focus:outline-3 focus:outline-offset-2 focus:outline-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1),0_4px_12px_rgba(99,102,241,0.15)]"
               placeholder="ゲームを検索..."
               value={searchQuery}
               onChange={(e) => {
@@ -187,11 +156,11 @@ export function Lobby() {
         </div>
 
         {/* Game cards grid */}
-        <div className="flex flex-wrap gap-4 w-full max-w-[800px] px-6 box-border relative z-10">
+        <div className="relative z-10 flex w-full max-w-[800px] flex-wrap gap-4 px-6">
           {pagedGames.map((g, i) => (
             <div
               key={g.id}
-              className="lobby-card bg-white/80 backdrop-blur-xl rounded-[20px] border-2 border-indigo-200/20 p-6 w-[360px] max-w-full box-border shadow-[0_8px_24px_rgba(99,102,241,0.12),0_0_0_1px_rgba(255,255,255,0.5)_inset] flex flex-col gap-3.5 animate-fade-in-up cursor-pointer relative overflow-hidden"
+              className="relative flex w-[360px] max-w-full cursor-pointer flex-col gap-3.5 overflow-hidden rounded-[20px] border-2 border-indigo-200/20 bg-white/80 p-6 shadow-[0_8px_24px_rgba(99,102,241,0.12),0_0_0_1px_rgba(255,255,255,0.5)_inset] backdrop-blur-xl animate-fade-in-up transition duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-indigo-500/40 hover:bg-white/95 hover:shadow-[0_20px_40px_rgba(99,102,241,0.25),0_0_0_1px_rgba(129,140,248,0.3)] focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-indigo-500"
               style={{ animationDelay: `${i * 0.06}s` }}
             >
               <div className="flex items-center gap-3.5">
@@ -211,7 +180,7 @@ export function Lobby() {
                 {g.description}
               </p>
               <button
-                className="lobby-create-btn py-3.5 text-base font-semibold font-poppins rounded-xl border-0 text-white cursor-pointer mt-auto min-h-[48px] shadow-[0_4px_12px_rgba(99,102,241,0.3),0_0_0_1px_rgba(255,255,255,0.2)_inset] relative overflow-hidden bg-indigo-gradient"
+                className="relative mt-auto min-h-[48px] cursor-pointer overflow-hidden rounded-xl border-0 bg-indigo-gradient py-3.5 font-poppins text-base font-semibold text-white shadow-[0_4px_12px_rgba(99,102,241,0.3),0_0_0_1px_rgba(255,255,255,0.2)_inset] transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-gradient-deep hover:shadow-[0_8px_24px_rgba(99,102,241,0.4),0_0_0_1px_rgba(129,140,248,0.5)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:translate-y-0"
                 onClick={() => handleCreate(g.id)}
                 aria-label={`${g.name}のルームを作成`}
               >
@@ -230,7 +199,7 @@ export function Lobby() {
         {totalPages > 1 && (
           <div className="flex items-center gap-1.5 mt-2 relative z-10">
             <button
-              className="lobby-page-btn w-10 h-10 rounded-xl border border-indigo-200/50 bg-white/70 backdrop-blur-md text-indigo-600 text-base font-semibold font-poppins cursor-pointer flex items-center justify-center shadow-[0_2px_6px_rgba(99,102,241,0.08)]"
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-indigo-200/50 bg-white/70 font-poppins text-base font-semibold text-indigo-600 shadow-[0_2px_6px_rgba(99,102,241,0.08)] transition duration-150 hover:-translate-y-px hover:bg-indigo-500/10 hover:text-indigo-600 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-default disabled:opacity-35 backdrop-blur-md"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               aria-label="前のページ"
@@ -241,7 +210,7 @@ export function Lobby() {
               page === currentPage ? (
                 <button
                   key={page}
-                  className="lobby-page-btn w-10 h-10 rounded-xl border-0 text-white text-base font-semibold font-poppins cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(99,102,241,0.35)] bg-indigo-gradient"
+                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border-0 bg-indigo-gradient font-poppins text-base font-semibold text-white shadow-[0_4px_12px_rgba(99,102,241,0.35)] transition duration-150 hover:-translate-y-px hover:bg-indigo-gradient-deep focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                   onClick={() => setCurrentPage(page)}
                   aria-label={`${page}ページ目`}
                   aria-current="page"
@@ -251,7 +220,7 @@ export function Lobby() {
               ) : (
                 <button
                   key={page}
-                  className="lobby-page-btn w-10 h-10 rounded-xl border border-indigo-200/50 bg-white/70 backdrop-blur-md text-indigo-600 text-base font-semibold font-poppins cursor-pointer flex items-center justify-center shadow-[0_2px_6px_rgba(99,102,241,0.08)]"
+                  className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-indigo-200/50 bg-white/70 font-poppins text-base font-semibold text-indigo-600 shadow-[0_2px_6px_rgba(99,102,241,0.08)] transition duration-150 hover:-translate-y-px hover:bg-indigo-500/10 hover:text-indigo-600 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 backdrop-blur-md"
                   onClick={() => setCurrentPage(page)}
                   aria-label={`${page}ページ目`}
                 >
@@ -260,7 +229,7 @@ export function Lobby() {
               ),
             )}
             <button
-              className="lobby-page-btn w-10 h-10 rounded-xl border border-indigo-200/50 bg-white/70 backdrop-blur-md text-indigo-600 text-base font-semibold font-poppins cursor-pointer flex items-center justify-center shadow-[0_2px_6px_rgba(99,102,241,0.08)]"
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-indigo-200/50 bg-white/70 font-poppins text-base font-semibold text-indigo-600 shadow-[0_2px_6px_rgba(99,102,241,0.08)] transition duration-150 hover:-translate-y-px hover:bg-indigo-500/10 hover:text-indigo-600 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-default disabled:opacity-35 backdrop-blur-md"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               aria-label="次のページ"
@@ -271,30 +240,18 @@ export function Lobby() {
         )}
 
         {/* Separator */}
-        <div className="flex items-center gap-4 w-full max-w-[800px] px-6 py-6 box-border relative z-10">
-          <div
-            className="flex-1 h-0.5 rounded-sm"
-            style={{
-              background:
-                "linear-gradient(to right, transparent, rgba(129,140,248,0.3) 20%, rgba(129,140,248,0.3) 80%, transparent)",
-            }}
-          />
+        <div className="relative z-10 flex w-full max-w-[800px] items-center gap-4 px-6 py-6">
+          <div className="h-0.5 flex-1 rounded-sm bg-lobby-divider" />
           <span className="text-[0.9rem] text-indigo-400 shrink-0 font-semibold px-2">
             ルームコードで参加
           </span>
-          <div
-            className="flex-1 h-0.5 rounded-sm"
-            style={{
-              background:
-                "linear-gradient(to right, transparent, rgba(129,140,248,0.3) 20%, rgba(129,140,248,0.3) 80%, transparent)",
-            }}
-          />
+          <div className="h-0.5 flex-1 rounded-sm bg-lobby-divider" />
         </div>
 
         {/* Join room section */}
-        <div className="lobby-join-section flex gap-2.5 w-full max-w-[480px] px-6 box-border relative z-10">
+        <div className="relative z-10 flex w-full max-w-[480px] flex-col gap-2.5 px-6 sm:flex-row">
           <input
-            className="lobby-join-input flex-1 min-w-0 py-3.5 px-4 text-[1.1rem] rounded-2xl border-2 border-indigo-200/50 outline-none box-border text-center tracking-[0.2em] font-semibold font-poppins text-indigo-600 min-h-[48px] uppercase bg-white/70 backdrop-blur-xl shadow-[0_4px_12px_rgba(99,102,241,0.08)]"
+            className="min-h-[48px] min-w-0 flex-1 rounded-2xl border-2 border-indigo-200/50 bg-white/70 px-4 py-3.5 text-center font-poppins text-[1.1rem] font-semibold uppercase tracking-[0.2em] text-indigo-600 shadow-[0_4px_12px_rgba(99,102,241,0.08)] outline-none backdrop-blur-xl transition duration-200 focus:border-indigo-500 focus:outline focus:outline-3 focus:outline-offset-2 focus:outline-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1),0_4px_12px_rgba(99,102,241,0.15)]"
             placeholder="例: A3K9"
             value={roomCode}
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
@@ -305,8 +262,7 @@ export function Lobby() {
             inputMode="text"
           />
           <button
-            className="lobby-join-btn py-3.5 px-8 text-base font-semibold font-poppins rounded-2xl border-0 text-white cursor-pointer whitespace-nowrap shrink-0 min-h-[48px] shadow-[0_4px_12px_rgba(34,197,94,0.35),0_0_0_1px_rgba(255,255,255,0.2)_inset]"
-            style={{ background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)" }}
+            className="min-h-[48px] shrink-0 cursor-pointer whitespace-nowrap rounded-2xl border-0 bg-green-gradient px-8 py-3.5 font-poppins text-base font-semibold text-white shadow-[0_4px_12px_rgba(34,197,94,0.35),0_0_0_1px_rgba(255,255,255,0.2)_inset] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(34,197,94,0.35)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-green-500 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
             onClick={handleJoin}
             disabled={!roomCode.trim()}
             aria-label="ルームに参加"

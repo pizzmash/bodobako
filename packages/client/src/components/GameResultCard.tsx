@@ -30,36 +30,20 @@ export function GameResultCard({
 }: GameResultCardProps) {
   const isWin = result === "win";
   const isDraw = result === "draw";
+  const cardClass = isWin
+    ? "bg-result-win border-indigo-300/40 shadow-card-indigo-strong text-indigo-600"
+    : "bg-slate-50/85 border-indigo-300/20 shadow-card-indigo text-indigo-900";
+  const primaryButtonClass =
+    "min-h-[48px] min-w-[120px] whitespace-nowrap rounded-2xl px-7 py-3.5 font-poppins text-base font-semibold text-white transition duration-200 ease-out focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:translate-y-0";
 
   return (
     <div
-      className="my-2 mb-4 px-10 py-8 rounded-3xl text-center flex flex-col items-center gap-4 backdrop-blur-xl animate-bounce-in"
-      style={
-        isWin
-          ? {
-              background:
-                "linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(129,140,248,0.1) 50%, rgba(250,245,255,0.95) 100%)",
-              border: "2px solid rgba(129,140,248,0.4)",
-              boxShadow:
-                "0 12px 32px rgba(99,102,241,0.25), 0 0 0 1px rgba(255,255,255,0.3) inset",
-              color: "#4F46E5",
-            }
-          : {
-              background: "rgba(248,250,252,0.85)",
-              border: "2px solid rgba(129,140,248,0.2)",
-              boxShadow:
-                "0 8px 24px rgba(99,102,241,0.15), 0 0 0 1px rgba(255,255,255,0.2) inset",
-              color: "#312E81",
-            }
-      }
+      className={`my-2 mb-4 flex flex-col items-center gap-4 rounded-3xl border-2 px-10 py-8 text-center backdrop-blur-xl animate-bounce-in ${cardClass}`}
       role="status"
       aria-live="polite"
     >
       {isWin && (
-        <div
-          className="mb-2 animate-icon-float"
-          style={{ filter: "drop-shadow(0 4px 12px rgba(99,102,241,0.3))" }}
-        >
+        <div className="mb-2 animate-icon-float drop-shadow-[0_4px_12px_rgba(99,102,241,0.3)]">
           <TrophyIcon />
         </div>
       )}
@@ -73,13 +57,7 @@ export function GameResultCard({
       <div className="flex gap-3 justify-center mt-2 w-full flex-nowrap items-center">
         {isHost && (
           <button
-            className="gr-action-btn px-7 py-3.5 text-base rounded-2xl font-semibold font-poppins text-white cursor-pointer whitespace-nowrap min-h-[48px] min-w-[120px]"
-            style={{
-              background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
-              boxShadow:
-                "0 4px 12px rgba(34,197,94,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset",
-              border: "none",
-            }}
+            className={`${primaryButtonClass} border-0 bg-green-gradient shadow-action-green hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(34,197,94,0.35)]`}
             onClick={onRematch}
             aria-label="再戦する"
           >
@@ -87,12 +65,7 @@ export function GameResultCard({
           </button>
         )}
         <button
-          className="gr-action-btn px-7 py-3.5 text-base rounded-2xl font-semibold font-poppins text-white cursor-pointer whitespace-nowrap min-h-[48px] min-w-[120px] bg-indigo-gradient"
-          style={{
-            boxShadow:
-              "0 4px 12px rgba(99,102,241,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset",
-            border: "none",
-          }}
+          className={`${primaryButtonClass} border-0 bg-indigo-gradient shadow-action-indigo hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(99,102,241,0.35)]`}
           onClick={onLeave}
           aria-label="ロビーに戻る"
         >

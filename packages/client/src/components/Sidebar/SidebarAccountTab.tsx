@@ -105,7 +105,7 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
         <input
           id="sidebar-display-name"
           ref={inputRef}
-          className="sidebar-name-input w-full px-3.5 py-2.5 text-[0.95rem] rounded-xl border border-indigo-200/50 outline-none box-border font-poppins text-indigo-600 font-medium bg-indigo-50/40"
+          className="w-full rounded-xl border border-indigo-200/50 bg-indigo-50/40 px-3.5 py-2.5 font-poppins text-[0.95rem] font-medium text-indigo-600 outline-none transition duration-150 focus:border-indigo-500 focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1)]"
           value={nameDraft}
           onChange={(e) => {
             setNameDraft(e.target.value);
@@ -130,7 +130,7 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
           </p>
         )}
         <button
-          className="sidebar-save-btn w-full py-2.5 rounded-xl border-0 bg-indigo-500 text-white text-[0.9rem] font-semibold font-poppins mt-3 min-h-[44px]"
+          className="mt-3 min-h-[44px] w-full rounded-xl border-0 bg-indigo-500 py-2.5 font-poppins text-[0.9rem] font-semibold text-white transition duration-200 hover:-translate-y-px hover:bg-indigo-600 hover:shadow-[0_4px_12px_rgba(99,102,241,0.3)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => void handleSave()}
           disabled={!isDirty || isSaving}
           aria-busy={isSaving}
@@ -154,7 +154,7 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
               {friendCode.slice(0, 4)}-{friendCode.slice(4)}
             </span>
             <button
-              className="sidebar-copy-btn flex items-center justify-center w-[30px] h-[30px] rounded-md border-0 bg-transparent text-indigo-400 p-0 shrink-0"
+              className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md border-0 bg-transparent p-0 text-indigo-400 transition duration-150 hover:bg-indigo-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.92]"
               onClick={() => void handleCopy()}
               aria-label={copied ? "コピーしました" : "フレンドコードをコピー"}
             >
@@ -202,7 +202,7 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
 
       <div className="px-5 py-3.5">
         <button
-          className="sidebar-sign-out-btn w-full py-2.5 rounded-xl border border-red-200/50 bg-transparent text-red-500 text-[0.9rem] font-semibold font-poppins min-h-[44px]"
+          className="min-h-[44px] w-full rounded-xl border border-red-200/50 bg-transparent py-2.5 font-poppins text-[0.9rem] font-semibold text-red-500 transition duration-200 hover:border-red-500 hover:bg-red-500/10 hover:text-red-500 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-500"
           onClick={signOut}
         >
           サインアウト
@@ -220,7 +220,7 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
             <img
               src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
               alt="Buy Me A Coffee"
-              style={{ height: 38, width: "auto", display: "block" }}
+              className="block h-[38px] w-auto"
             />
           </a>
         </div>
