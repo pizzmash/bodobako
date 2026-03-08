@@ -3,7 +3,9 @@
  */
 
 import type { RoomInfo, SonicRestaurantState } from "@bodobako/shared";
-import { styles } from "./constants";
+import React from "react";
+import { Z } from "../../styles/tokens";
+import { LAYOUT, styles } from "./constants";
 
 interface PlayersSidebarProps {
   state: SonicRestaurantState;
@@ -11,7 +13,7 @@ interface PlayersSidebarProps {
   room: RoomInfo;
 }
 
-export function PlayersSidebar({
+export const PlayersSidebar = React.memo(function PlayersSidebar({
   state,
   playerId,
   room,
@@ -23,7 +25,15 @@ export function PlayersSidebar({
   const initialHandSize = Math.ceil(60 / state.playerIds.length);
 
   return (
-    <aside style={styles.sidebar}>
+    <aside
+      className="h-full min-h-0 flex flex-col shadow-lg"
+      style={{
+        width: LAYOUT.sidebarWidth,
+        backgroundColor: "#ffffff",
+        padding: "1rem 0.375rem 0.5rem",
+        zIndex: Z.srGameSidebar,
+      }}
+    >
       {/* ヘッダー */}
       <div style={styles.menuHeader}>
         <span style={{ fontSize: "0.875rem" }}>👥</span>
@@ -31,7 +41,7 @@ export function PlayersSidebar({
       </div>
 
       {/* プレイヤーリスト */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", flex: 1, overflowY: "auto", minHeight: 0, paddingRight: "0.125rem" }}>
+      <div className="flex flex-col gap-4 flex-1 overflow-y-auto min-h-0 pr-0.5">
         {otherPlayers.map((player) => {
           const handCount = state.hands[player.id]?.length || 0;
           const isFinished = state.finishedOrder.includes(player.id);
@@ -48,16 +58,9 @@ export function PlayersSidebar({
               />
 
               {/* プレイヤー情報 */}
-              <div style={styles.playerInfo}>
+              <div className="flex-1 min-w-0 relative" style={{ zIndex: Z.srPlayerInfo }}>
                 <p style={styles.playerName}>{player.name}</p>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.25rem",
-                    marginTop: "0.25rem",
-                  }}
-                >
+                <div className="flex items-center gap-1 mt-1">
                   {isFinished ? (
                     <span
                       style={{
@@ -79,4 +82,4 @@ export function PlayersSidebar({
       </div>
     </aside>
   );
-}
+});

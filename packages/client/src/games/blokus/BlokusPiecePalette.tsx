@@ -7,8 +7,8 @@
 
 import type { BlokusState } from "@bodobako/shared";
 import { NUM_PIECES, PIECES, getValidPlacements } from "@bodobako/shared";
-import { useMemo } from "react";
-import { BLOKUS_COLORS, MINI_CELL, MINI_CELL_GAP, SURFACE, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
+import React, { useMemo } from "react";
+import { BLOKUS_COLORS, MINI_CELL, MINI_CELL_GAP, SURFACE_BORDER, TEXT_MUTED, TEXT_PRIMARY } from "./constants";
 import { PieceThumbnail } from "./PieceThumbnail";
 
 interface BlokusPiecePaletteProps {
@@ -22,7 +22,7 @@ interface BlokusPiecePaletteProps {
   onSelectPiece: (pieceId: number) => void;
 }
 
-export function BlokusPiecePalette({
+export const BlokusPiecePalette = React.memo(function BlokusPiecePalette({
   state,
   myColorIndices,
   activeColorIndex,
@@ -185,7 +185,7 @@ export function BlokusPiecePalette({
       })}
     </div>
   );
-}
+});
 
 const styles: Record<string, React.CSSProperties> = {
   container: {

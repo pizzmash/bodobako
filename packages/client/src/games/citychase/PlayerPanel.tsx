@@ -1,13 +1,12 @@
 import type { CitychasePlayerView, RoomInfo } from "@bodobako/shared";
 import { getHelicoptersForPlayer } from "@bodobako/shared";
+import { HELI_COLORS } from "./constants";
 
 interface Props {
   state: CitychasePlayerView;
   playerId: string;
   room: RoomInfo;
 }
-
-const HELI_COLORS = ["#2563eb", "#059669", "#d97706"];
 
 export function PlayerPanel({ state, playerId, room }: Props) {
   const isPolicePhase = state.phase === "police-turn" || state.phase === "police-setup";
@@ -16,7 +15,7 @@ export function PlayerPanel({ state, playerId, room }: Props) {
     : state.criminalId;
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col gap-2 w-full mb-4">
       {/* 犯人カード */}
       {state.criminalId && (
         <PlayerCard
@@ -26,7 +25,6 @@ export function PlayerPanel({ state, playerId, room }: Props) {
           playerId={playerId}
           isCurrentTurn={currentTurnId === state.criminalId}
           heliIndices={[]}
-          helicopterAssignments={state.helicopterAssignments}
         />
       )}
 
@@ -42,7 +40,6 @@ export function PlayerPanel({ state, playerId, room }: Props) {
             playerId={playerId}
             isCurrentTurn={currentTurnId === pid}
             heliIndices={helis}
-            helicopterAssignments={state.helicopterAssignments}
             activeHelicopterIndex={
               isPolicePhase && currentTurnId === pid
                 ? state.currentHelicopterIndex
@@ -62,7 +59,6 @@ interface PlayerCardProps {
   playerId: string;
   isCurrentTurn: boolean;
   heliIndices: number[];
-  helicopterAssignments: string[];
   activeHelicopterIndex?: number;
 }
 
@@ -84,36 +80,38 @@ function PlayerCard({
     <div
       className={isCriminal ? "cc-glass-panel-danger" : "cc-glass-panel"}
       style={{
-        ...styles.card,
+        borderRadius: 10,
+        padding: "0.6rem 0.9rem",
+        transition: "all 0.3s",
         borderLeft: `4px solid ${accentColor}`,
         boxShadow: isCurrentTurn
           ? `0 0 0 1px ${accentColor}, 0 4px 16px ${accentColor}44`
           : "0 2px 8px rgba(0,0,0,.3)",
       }}
     >
-      <div style={styles.cardHeader}>
-        <div style={styles.nameRow}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
           <span
             className={isCurrentTurn ? (isCriminal ? "cc-dot-danger cc-pulse-danger" : "cc-dot-primary cc-pulse") : ""}
             style={{
-              ...styles.dot,
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              flexShrink: 0,
               background: isCurrentTurn ? accentColor : "rgba(100, 116, 139, 0.4)",
               boxShadow: isCurrentTurn ? `0 0 8px ${accentColor}` : "none",
             }}
           />
-          <span style={styles.name}>
+          <span className="text-[0.9rem] font-bold text-white tracking-[0.02em]">
             {player?.name ?? pid}
             {isMe && (
-              <span style={styles.youLabel}>YOU</span>
+              <span className="cc-you-badge">YOU</span>
             )}
           </span>
           {isCurrentTurn && (
             <span
-              className="cc-text-tactical"
-              style={{
-                ...styles.turnLabel,
-                color: accentColor,
-              }}
+              className="cc-text-tactical text-[0.65rem] font-bold"
+              style={{ color: accentColor }}
             >
               ◀ TURN
             </span>
@@ -128,105 +126,38 @@ function PlayerCard({
 
       {/* ヘリ担当表示（警察のみ） */}
       {heliIndices.length > 0 && (
-        <div style={styles.heliRow}>
-          {heliIndices.map((hi) => (
+        <div className="flex gap-[0.4rem] mt-[0.4rem]">
+          {heliIndices.map((hi) => {
+            const color = HELI_COLORS[hi % HELI_COLORS.length];
+            return (
             <span
               key={hi}
               style={{
-                ...styles.heliBadge,
+                fontSize: "0.65rem",
+                padding: "0.15rem 0.5rem",
+                borderRadius: 6,
+                transition: "all 0.2s",
+                fontFamily: "'Orbitron', monospace",
+                letterSpacing: "0.05em",
                 background:
                   activeHelicopterIndex === hi
-                    ? HELI_COLORS[hi % HELI_COLORS.length]
-                    : `${HELI_COLORS[hi % HELI_COLORS.length]}33`,
+                    ? color
+                    : `${color}33`,
                 color:
                   activeHelicopterIndex === hi
                     ? "white"
-                    : HELI_COLORS[hi % HELI_COLORS.length],
-                border: `1px solid ${HELI_COLORS[hi % HELI_COLORS.length]}99`,
+                    : color,
+                border: `1px solid ${color}99`,
                 fontWeight: activeHelicopterIndex === hi ? 800 : 600,
-                boxShadow: activeHelicopterIndex === hi ? `0 0 12px ${HELI_COLORS[hi % HELI_COLORS.length]}66` : "none",
+                boxShadow: activeHelicopterIndex === hi ? `0 0 12px ${color}66` : "none",
               }}
             >
               H{hi + 1}
             </span>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-    width: "100%",
-    marginBottom: "1rem",
-  },
-  card: {
-    borderRadius: 10,
-    padding: "0.6rem 0.9rem",
-    transition: "all 0.3s",
-  },
-  cardHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  nameRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    flexShrink: 0,
-  },
-  name: {
-    fontSize: "0.9rem",
-    fontWeight: 700,
-    color: "#ffffff",
-    letterSpacing: "0.02em",
-  },
-  youLabel: {
-    fontSize: "0.55rem",
-    fontWeight: 800,
-    color: "#258cf4",
-    background: "rgba(37, 140, 244, 0.15)",
-    padding: "0.15rem 0.4rem",
-    borderRadius: 4,
-    marginLeft: "0.3rem",
-    verticalAlign: "middle",
-    border: "1px solid rgba(37, 140, 244, 0.3)",
-    letterSpacing: "0.05em",
-  },
-  turnLabel: {
-    fontSize: "0.65rem",
-    fontWeight: 700,
-  },
-  roleBadge: {
-    fontSize: "0.65rem",
-    fontWeight: 700,
-    padding: "0.2rem 0.6rem",
-    borderRadius: 6,
-    letterSpacing: "0.05em",
-    textTransform: "uppercase",
-  },
-  heliRow: {
-    display: "flex",
-    gap: "0.4rem",
-    marginTop: "0.4rem",
-  },
-  heliBadge: {
-    fontSize: "0.65rem",
-    padding: "0.15rem 0.5rem",
-    borderRadius: 6,
-    transition: "all 0.2s",
-    fontFamily: "'Orbitron', monospace",
-    letterSpacing: "0.05em",
-    fontWeight: 700,
-  },
-};

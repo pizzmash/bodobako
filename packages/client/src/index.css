@@ -2,6 +2,7 @@
    Global Fonts
    ================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -354,6 +355,15 @@
   0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04); }
   50%       { box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06); }
 }
+@keyframes ab-fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes ab-charPop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);   opacity: 1; }
+}
 
 /* Blokus */
 @keyframes blk-turn-pulse {
@@ -518,17 +528,62 @@
     transform: scale(1.07);
     box-shadow: 0 2px 10px rgba(100,120,180,0.2);
   }
+  .blk-piece-controls-container {
+    background: rgba(255,255,255,0.88);
+    border-radius: 16px;
+    padding: 0.85rem 0.75rem;
+    border: 1px solid rgba(0,0,0,0.07);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(100,120,180,0.1), 0 1px 4px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 120px;
+    justify-content: center;
+  }
   .blk-ctrl-btn { transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease; }
+  .blk-ctrl-btn-base {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    border: 1px solid;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
   .blk-ctrl-btn:not(:disabled):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(100,120,180,0.22);
   }
   .blk-ctrl-btn:not(:disabled):active { transform: translateY(0); }
-  .blk-board-outer { overflow: visible; flex-shrink: 0; }
   .blk-player-card { transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease; }
+  .blk-player-card-base {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    min-width: 130px;
+    transition: border-color 0.2s, opacity 0.3s, box-shadow 0.2s;
+  }
   .blk-player-card:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 24px rgba(100,120,180,0.18);
+  }
+  .blk-main-board {
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255,255,255,0.65);
+    border-radius: 14px;
+    box-shadow: 0 16px 56px rgba(100,120,180,0.22), 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
   }
   .blk-cell-last-piece {
     position: absolute;
@@ -620,6 +675,7 @@
   .cc-dot-primary { background: var(--cc-primary); box-shadow: 0 0 8px rgba(37,140,244,0.6); }
   .cc-dot-danger { background: var(--cc-danger); box-shadow: 0 0 8px rgba(220,38,38,0.6); }
   .cc-dot-success { background: var(--cc-success); box-shadow: 0 0 8px rgba(0,230,118,0.6); }
+  .cc-you-badge { font-size: 0.55rem; font-weight: 800; color: #258cf4; background: rgba(37, 140, 244, 0.15); padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.3rem; vertical-align: middle; border: 1px solid rgba(37, 140, 244, 0.3); letter-spacing: 0.05em; }
 
   /* ---- Nana ---- */
   .nana-field-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
@@ -730,5 +786,102 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* ---- OrderStartCountdown (音速飯点 カウントダウン) ---- */
+  @keyframes sr-countdown-sparkle {
+    0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(180deg); }
+  }
+
+  .sr-countdown-number {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 10rem;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow:
+      0 0 20px rgba(255, 255, 255, 0.8),
+      0 0 40px rgba(255, 255, 255, 0.6),
+      0 4px 8px rgba(0, 0, 0, 0.8);
+    margin: 0;
+    padding: 0;
+  }
+
+  .sr-impact-text {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    background: linear-gradient(to bottom, #ff5f6d, #b91c1c, #7f1d1d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 0 #450a0a) drop-shadow(0 8px 15px rgba(0,0,0,0.6));
+    letter-spacing: 0.05em;
+    position: relative;
+    font-size: 6rem;
+    font-weight: 900;
+    white-space: nowrap;
+    z-index: 20;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sr-jaggy-burst {
+    background: #fdd835;
+    clip-path: polygon(
+      50% 0%, 63% 18%, 78% 7%, 81% 25%, 98% 18%, 91% 38%, 100% 50%,
+      91% 62%, 98% 82%, 81% 75%, 78% 93%, 63% 82%, 50% 100%, 37% 82%,
+      22% 93%, 19% 75%, 2% 82%, 9% 62%, 0% 50%, 9% 38%, 2% 18%,
+      19% 25%, 22% 7%, 37% 18%
+    );
+    filter:
+      drop-shadow(4px 0 0 #b91c1c)
+      drop-shadow(-4px 0 0 #b91c1c)
+      drop-shadow(0 4px 0 #b91c1c)
+      drop-shadow(0 -4px 0 #b91c1c)
+      drop-shadow(0 15px 25px rgba(0,0,0,0.6))
+      drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+    padding: 4rem 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 550px;
+    min-height: 300px;
+    position: relative;
+  }
+
+  .sr-jaggy-burst::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    right: 15%;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, #fff 0%, #ffeb3b 100%);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    animation: sr-countdown-sparkle 0.8s ease-in-out;
+    pointer-events: none;
+  }
+
+  .sr-jaggy-burst::after {
+    content: '';
+    position: absolute;
+    bottom: 15%;
+    left: 20%;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(45deg, #fff 0%, #ffeb3b 100%);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    animation: sr-countdown-sparkle 0.8s ease-in-out 0.15s;
+    pointer-events: none;
+  }
+
+  .sr-scroll-btn {
+    border: 2px solid #d74242;
+    background: rgba(255, 255, 255, 0.95);
+    color: #d74242;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .sr-scroll-btn:hover {
+    background: #d74242;
+    color: #ffffff;
   }
 }

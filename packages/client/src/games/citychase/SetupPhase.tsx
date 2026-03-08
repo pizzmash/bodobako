@@ -25,7 +25,7 @@ export function SetupPhase({ state, playerId, room, sendMove }: Props) {
   );
 
   return (
-    <div style={styles.section}>
+    <div className="text-center p-2 w-full max-w-[900px]">
       {/* プレイヤーパネル */}
       <PlayerPanel state={state} playerId={playerId} room={room} />
 
@@ -33,7 +33,12 @@ export function SetupPhase({ state, playerId, room, sendMove }: Props) {
       <div
         className={isMyTurn ? "cc-glass-panel cc-pulse" : "cc-glass-panel"}
         style={{
-          ...styles.turnGuide,
+          padding: "0.7rem 1.2rem",
+          borderRadius: 10,
+          fontSize: "0.85rem",
+          fontWeight: 600,
+          marginBottom: "1rem",
+          border: "1px solid",
           borderColor: isMyTurn
             ? state.phase === "criminal-setup"
               ? "rgba(220, 38, 38, 0.5)"
@@ -78,19 +83,3 @@ export function SetupPhase({ state, playerId, room, sendMove }: Props) {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  section: {
-    textAlign: "center",
-    padding: "0.5rem",
-    width: "100%",
-    maxWidth: 900,
-  },
-  turnGuide: {
-    padding: "0.7rem 1.2rem",
-    borderRadius: 10,
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    marginBottom: "1rem",
-    border: "1px solid",
-  },
-};

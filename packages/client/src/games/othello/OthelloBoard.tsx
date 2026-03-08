@@ -68,13 +68,13 @@ export function OthelloBoard() {
 
       <div className="flex flex-col border-[3px] border-[#1a5c1a] rounded-sm">
         {Array.from({ length: BOARD_SIZE }, (_, row) => (
-          <div key={row} className="flex">
+          <div key={`row-${row}`} className="flex">
             {Array.from({ length: BOARD_SIZE }, (_, col) => {
               const cell = state.board[row][col];
               const isValid = validSet.has(`${row},${col}`);
               return (
                 <div
-                  key={col}
+                  key={`${row}-${col}`}
                   data-valid={isValid}
                   className="w-14 h-14 border border-[#1a5c1a] flex items-center justify-center"
                   style={{

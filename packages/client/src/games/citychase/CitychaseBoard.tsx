@@ -6,20 +6,8 @@ import { GameBoard } from "./GameBoard";
 import { RoleSelect } from "./RoleSelect";
 import { SetupPhase } from "./SetupPhase";
 
-export function CitychaseBoard() {
-  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
-    useRoom();
-  if (gameState !== null && gameState.gameId !== "citychase") return null;
-  const state = gameState?.state ?? null;
-
-  const sendTypedMove = useCallback(
-    (move: CitychaseMove) => sendMove(move),
-    [sendMove]
-  );
-
-  if (!state || !playerId || !room) return null;
-
-  const Title = (
+function CityChaseTitle() {
+  return (
     <div className="flex items-center gap-4 mb-6 relative">
       <div
         className="text-3xl"
@@ -29,13 +17,27 @@ export function CitychaseBoard() {
       </div>
       <h2 className="cc-text-title text-3xl font-extrabold m-0">CITY CHASE</h2>
       <div
-        className="absolute right-0 text-[#258cf4]/60 tracking-[0.15em] uppercase font-semibold"
-        style={{ fontSize: "0.7rem", bottom: "-0.5rem" }}
+        className="absolute right-0 bottom-[-0.5rem] text-[0.7rem] text-[#258cf4]/60 tracking-[0.15em] uppercase font-semibold"
       >
         Tactical Command
       </div>
     </div>
   );
+}
+
+export function CitychaseBoard() {
+  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
+    useRoom();
+
+  const sendTypedMove = useCallback(
+    (move: CitychaseMove) => sendMove(move),
+    [sendMove]
+  );
+
+  if (gameState !== null && gameState.gameId !== "citychase") return null;
+  const state = gameState?.state ?? null;
+
+  if (!state || !playerId || !room) return null;
 
   return (
     <div
@@ -45,7 +47,7 @@ export function CitychaseBoard() {
       {/* スキャンラインオーバーレイ */}
       <div className="cc-scanlines fixed inset-0 pointer-events-none" style={{ zIndex: Z.scanlines }} />
 
-      {Title}
+      <CityChaseTitle />
 
       {state.phase === "role-select" && (
         <RoleSelect state={state} playerId={playerId} room={room} sendMove={sendTypedMove} />

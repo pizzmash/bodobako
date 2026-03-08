@@ -13,8 +13,8 @@ import {
     topicBadgeStyle,
     topicCardStyle,
     topicTextStyle,
-    useIsWideBoard,
 } from "./constants";
+import { useIsWideBoard } from "./hooks/useIsWideBoard";
 
 interface WordInputProps {
   state: AiueBattleState;
@@ -43,12 +43,7 @@ export function WordInput({
 
   if (hasSubmitted) {
     return (
-      <div style={{ 
-        animation: "ab-fadeIn .4s ease-out", 
-        textAlign: "center" as const,
-        width: "100%",
-        maxWidth: "400px",
-      }}>
+      <div className="w-full max-w-sm text-center" style={{ animation: "ab-fadeIn .4s ease-out" }}>
         <p style={styles.waiting}>
           <span style={{ animation: "ab-pulse 1.5s ease-in-out infinite", display: "inline-block" }}>
             他のプレイヤーを待っています... ({state.submittedPlayers.length}/
@@ -99,11 +94,7 @@ export function WordInput({
   }
 
   return (
-    <div style={{ 
-      animation: "ab-fadeIn .4s ease-out",
-      width: "100%",
-      maxWidth: "700px",
-    }}>
+    <div className="w-full max-w-[700px]" style={{ animation: "ab-fadeIn .4s ease-out" }}>
       {/* お題カード - 共通スタイルを使用 */}
       <div style={topicCardStyle}>
         <div style={topicBadgeStyle}>Topic</div>

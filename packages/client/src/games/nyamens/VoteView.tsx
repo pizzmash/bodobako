@@ -1,14 +1,7 @@
 import type { NyaMensPlayerView } from "@bodobako/shared";
+import { Avatar } from "../../components/ui/Avatar";
 import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
-
-const DANGER = "#DC2626";
-
-const PersonIcon = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" />
-  </svg>
-);
+import { DANGER } from "./nyaUtils";
 
 interface VoteViewProps {
   state: NyaMensPlayerView;
@@ -84,28 +77,8 @@ export function VoteView({ state, myId, playerNames, photoURLs = {}, onVote }: V
                 boxShadow: isSelected ? `0 0 10px ${DANGER}50` : "none",
               }}
             >
-              {/* アバター（ヘッダーと同じスタイル） */}
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  border: "1px solid rgba(99,102,241,0.35)",
-                  background: "rgba(255,255,255,0.9)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#6366F1",
-                  overflow: "hidden",
-                  flexShrink: 0,
-                }}
-              >
-                {photoURL ? (
-                  <img src={photoURL} alt={name} referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-                ) : (
-                  <PersonIcon size={20} />
-                )}
-              </div>
+              {/* アバター */}
+              <Avatar photoURL={photoURL} displayName={name} size={36} />
               <span
                 style={{
                   maxWidth: "100%",

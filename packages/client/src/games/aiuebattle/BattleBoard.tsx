@@ -14,8 +14,8 @@ import {
     topicCardStyle,
     topicTextStyle,
     TYPOGRAPHY,
-    useIsWideBoard,
 } from "./constants";
+import { useIsWideBoard } from "./hooks/useIsWideBoard";
 import { PlayerSheet } from "./PlayerSheet";
 
 interface BattleBoardProps {
@@ -91,7 +91,7 @@ export function BattleBoard({
                 ? {
                     background: C.primary,
                     color: C.textMain,
-                    animation: "ab-turnPulse 2s ease-in-out infinite",
+                    animation: "ab-turn-pulse 2s ease-in-out infinite",
                     boxShadow: `0 8px 24px ${C.primary}40, 0 4px 8px rgba(0,0,0,0.1)`,
                   }
                 : isEliminated
@@ -147,7 +147,7 @@ export function BattleBoard({
                       fontSize: TYPOGRAPHY.sm.fontSize,
                       fontWeight: 800,
                       boxShadow: "0 2px 8px rgba(255, 107, 53, 0.3)",
-                      animation: "ab-comboFlash 0.6s ease-in-out infinite",
+                      animation: "ab-combo-flash 0.6s ease-in-out infinite",
                     }}
                   >
                     <span style={{
@@ -200,7 +200,7 @@ export function BattleBoard({
               : {
                   background: C.gray200,
                   boxShadow: SHADOWS.sm,
-                  animation: attackAnim === "miss" ? "ab-missFade .5s ease-out" : undefined,
+                  animation: attackAnim === "miss" ? "ab-miss-fade .5s ease-out" : undefined,
                 }),
           }}
         >
@@ -329,15 +329,15 @@ export function BattleBoard({
       >
         <div style={isWide ? styles.boardGridH : styles.boardGrid}>
           {layout.map((row, ri) => (
-            <div key={ri} style={isWide ? styles.boardRowH : styles.boardRow}>
+            <div key={`row-${ri}`} style={isWide ? styles.boardRowH : styles.boardRow}>
               {row.map((char, ci) => {
-                if (!char) return <div key={ci} style={isWide ? styles.charEmptyH : styles.charEmpty} />;
+                if (!char) return <div key={`empty-${ri}-${ci}`} style={isWide ? styles.charEmptyH : styles.charEmpty} />;
                 const idx = charToIndex(char);
                 const used = state.usedChars[idx];
                 
                 return (
                   <button
-                    key={ci}
+                    key={`${ri}-${ci}`}
                     className={used || !isMyTurn ? "" : "ab-battle-char"}
                     style={{
                       ...(isWide ? styles.charButtonH : styles.charButton),

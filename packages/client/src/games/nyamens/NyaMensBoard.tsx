@@ -1,5 +1,5 @@
 import type { NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { PlayingCard } from "../../components/PlayingCard";
 import { Avatar } from "../../components/ui/Avatar";
@@ -10,15 +10,9 @@ import { DrawCardsView } from "./DrawCardsView";
 import { PlayerHandArea } from "./PlayerHandArea";
 import { RepairArea } from "./RepairArea";
 import { VoteView } from "./VoteView";
+import { DANGER, cardColor } from "./nyaUtils";
 
 const BG_CARD = "rgba(255,255,255,0.06)";
-const DANGER = "#DC2626";
-
-function cardColor(num: number): string {
-  if (num <= 10) return "#BAE6FD";
-  if (num <= 20) return "#BBF7D0";
-  return "#FED7AA";
-}
 
 // ---- プレイヤーバー ----
 function PlayerBar({
@@ -214,8 +208,7 @@ function WaitingDots() {
 // ---- メインコンポーネント ----
 export function NyaMensBoard() {
   const { gameState, sendMove, playerId, room, startGame, leaveRoom } = useRoom();
-  if (gameState !== null && gameState.gameId !== "nyamens") return null;
-  const state = gameState?.state ?? null;
+  const state = (gameState?.gameId === "nyamens" ? gameState.state : null) as NyaMensPlayerView | null;
   const [selectedRevealedCard, setSelectedRevealedCard] = useState<number | null>(null);
   const [diceAnimating, setDiceAnimating] = useState(false);
   const [diceShowingResult, setDiceShowingResult] = useState(false);
@@ -233,6 +226,9 @@ export function NyaMensBoard() {
   // ロール検知用（全員共通 — 自分がロールした場合もサーバー応答後にアニメーション開始）
   const prevPhaseRef = useRef<string | null>(null);
   const prevDutyIndexRef = useRef<number | null>(null);
+  // state.diceResult を ref で追跡（effect deps から除外するため）
+  const diceResultRef = useRef<number | null>(null);
+  diceResultRef.current = state?.diceResult ?? null;
 
   // 誰かがロールしたときにアニメーションを再生（全員共通）
   useEffect(() => {
@@ -249,7 +245,7 @@ export function NyaMensBoard() {
 
     if (rollJustHappened) {
       // 結果をキャプチャしてから出目に対応するアニメーションを再生
-      setCapturedDiceResult(state.diceResult);
+      setCapturedDiceResult(diceResultRef.current);
       setDiceKey((k) => k + 1);
       setDiceAnimating(true);
       setDiceShowingResult(false);
@@ -260,7 +256,6 @@ export function NyaMensBoard() {
       const t2 = setTimeout(() => setDiceShowingResult(false), 2300);
       return () => { clearTimeout(t1); clearTimeout(t2); };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.phase, state?.repairDutyIndex]);
 
   // playerId → 表示名のマップ
@@ -273,7 +268,7 @@ export function NyaMensBoard() {
     }
     return names;
   }, [room]);
-  const nameOf = (id: string) => playerNames[id] ?? id.slice(0, 10);
+  const nameOf = useCallback((id: string) => playerNames[id] ?? id.slice(0, 10), [playerNames]);
 
   // プロフィール写真を取得（ヘッダーと同じ API）
   useEffect(() => {
@@ -306,6 +301,7 @@ export function NyaMensBoard() {
     return () => { canceled = true; };
   }, [room]);
 
+  if (gameState !== null && gameState.gameId !== "nyamens") return null;
   if (!state || !playerId) {
     return (
       <div style={{ color: "#94a3b8", textAlign: "center", padding: 40, fontSize: "0.9rem" }}>
@@ -319,7 +315,7 @@ export function NyaMensBoard() {
   const isDuty = dutyPlayer === myId;
   const dutyName = nameOf(dutyPlayer);
 
-  const send = (move: object) => sendMove(move);
+  const send = useCallback((move: object) => sendMove(move), [sendMove]);
 
   // ---- role-reveal ----
   if (state.phase === "role-reveal") {
@@ -461,7 +457,7 @@ export function NyaMensBoard() {
           <span style={{ color: "#64748b", fontSize: "0.72rem" }}>次のイベント:</span>
           {state.eventQueue.map((ev: NyaEventCard, i: number) => (
             <span
-              key={i}
+              key={`${ev}-${i}`}
               style={{
                 background: "rgba(255,255,255,0.08)",
                 borderRadius: 6,

@@ -9,15 +9,6 @@ export const C = {
   border: "#e2e8f0",
 } as const;
 
-export const CARD_BACK_STYLE = {
-  backgroundColor: C.primary,
-  backgroundImage:
-    "radial-gradient(#ffffff 10%, transparent 10%), radial-gradient(#ffffff 10%, transparent 10%)",
-  backgroundSize: "20px 20px",
-  backgroundPosition: "0 0, 10px 10px",
-  border: "2px solid rgba(255,255,255,0.5)",
-};
-
 export const FONT = `'Spline Sans', 'Hiragino Sans', 'Noto Sans JP', sans-serif`;
 export const APP_HEADER_HEIGHT = 76;
 export const NANA_HAND_FOOTER_HEIGHT_DESKTOP = 143;

@@ -1,12 +1,8 @@
 import type { NyaCard, NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
 import { useEffect, useRef, useState } from "react";
 import { PlayingCard } from "../../components/PlayingCard";
-
-function cardColor(num: number): string {
-  if (num <= 10) return "#BAE6FD";
-  if (num <= 20) return "#BBF7D0";
-  return "#FED7AA";
-}
+import { Z } from "../../styles/tokens";
+import { cardColor } from "./nyaUtils";
 
 // ---- イベントカード情報 ----
 function eventInfo(ev: NyaEventCard): { emoji: string; name: string; desc: string; bg: string } {
@@ -54,7 +50,7 @@ function EventCardOverlay({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.7)",
-        zIndex: 800,
+        zIndex: Z.modal,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -102,7 +98,7 @@ function NumberCardOverlay({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.65)",
-        zIndex: 800,
+        zIndex: Z.modal,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

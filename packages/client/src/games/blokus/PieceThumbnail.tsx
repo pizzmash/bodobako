@@ -5,6 +5,7 @@
  */
 
 import type { PieceVariant } from "@bodobako/shared";
+import { memo } from "react";
 import { MINI_CELL, MINI_CELL_GAP } from "./constants";
 
 interface PieceThumbnailProps {
@@ -14,7 +15,7 @@ interface PieceThumbnailProps {
   cellGap?: number;
 }
 
-export function PieceThumbnail({
+export const PieceThumbnail = memo(function PieceThumbnail({
   variant,
   color,
   cellSize = MINI_CELL,
@@ -66,4 +67,4 @@ export function PieceThumbnail({
       )}
     </div>
   );
-}
+});

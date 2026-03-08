@@ -1,4 +1,5 @@
 import type { NanaStateView } from "@bodobako/shared";
+import { useMemo } from "react";
 import { withAlpha } from "../../lib/color";
 import { C, FONT } from "./constants";
 
@@ -21,10 +22,13 @@ export function OpponentArea({
 }) {
   const hand = state.hands[pid] ?? [];
   const pendingResult = state.pendingResult ?? null;
-  const flippedIds = state.turnFlips.map((f) => f.cardId);
-  const activeCards = hand.filter((c) => !flippedIds.includes(c.id));
+  const flippedIdsSet = useMemo(
+    () => new Set(state.turnFlips.map((f) => f.cardId)),
+    [state.turnFlips]
+  );
+  const activeCards = hand.filter((c) => !flippedIdsSet.has(c.id));
   const hasMin = activeCards.length > 0;
-  const hasMax = activeCards.length > 0;
+  const hasMax = activeCards.length > 1;
   const sets = state.collectedSets[pid] ?? [];
 
   return (

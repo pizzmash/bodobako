@@ -1,15 +1,11 @@
 import type { NyaMensPlayerView } from "@bodobako/shared";
 import { PlayingCard } from "../../components/PlayingCard";
 import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
+import { cardColor } from "./nyaUtils";
+
 const PLAYER_COLORS = [
   "#0EA5E9", "#10B981", "#F59E0B", "#A855F7", "#EC4899",
 ];
-
-function cardColor(num: number): string {
-  if (num <= 10) return "#BAE6FD";
-  if (num <= 20) return "#BBF7D0";
-  return "#FED7AA";
-}
 
 interface PlayerHandAreaProps {
   state: NyaMensPlayerView;
@@ -147,7 +143,7 @@ export function PlayerHandArea({ state, myId, playerNames, onSelectCards, onConf
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {playerOrder
           .filter((pid: string) => pid !== myId)
-          .map((pid: string, i: number) => {
+          .map((pid: string) => {
             const globalIdx = playerOrder.indexOf(pid);
             const color = PLAYER_COLORS[globalIdx % PLAYER_COLORS.length]!;
             const selectedCount = otherSelectedCounts[pid] ?? 0;

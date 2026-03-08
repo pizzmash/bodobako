@@ -95,6 +95,7 @@ export interface BlokusInteraction {
   handleFlip: () => void;
   handleBoardClick: (row: number, col: number) => void;
   handleBoardLeave: () => void;
+  handleCellHover: (r: number, c: number) => void;
 }
 
 export function useBlokusInteraction({
@@ -199,6 +200,10 @@ export function useBlokusInteraction({
     setHoverCell(null);
   }, []);
 
+  const handleCellHover = useCallback((r: number, c: number) => {
+    setHoverCell({ row: r, col: c });
+  }, []);
+
   return {
     selectedPieceId,
     variantIndex,
@@ -214,5 +219,6 @@ export function useBlokusInteraction({
     handleFlip,
     handleBoardClick,
     handleBoardLeave,
+    handleCellHover,
   };
 }

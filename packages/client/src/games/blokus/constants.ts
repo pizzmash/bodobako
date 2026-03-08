@@ -25,9 +25,6 @@ export const MINI_CELL_GAP = 1;
 /** 空セルの色 (ガラス感: ほぼ透明な白) */
 export const EMPTY_CELL_COLOR = "rgba(255,255,255,0.72)";
 
-/** ボード背景色（セル間・縁の溝色） */
-export const BOARD_BG = "rgba(180,195,220,0.35)";
-
 /** セル間ギャップ px */
 export const CELL_GAP = 2;
 
@@ -38,17 +35,13 @@ export const BOARD_PADDING = 6;
 export const VALID_DOT_COLOR = "rgba(30,41,59,0.45)";
 
 /** ゴースト（有効配置）のオーバーレイ色 */
-export const GHOST_VALID_BG = "rgba(255,255,255,0.65)";
+// export const GHOST_VALID_BG = "rgba(255,255,255,0.65)";
 
 /** ゴースト（無効配置）のオーバーレイ色 */
-export const GHOST_INVALID_BG = "rgba(239,68,68,0.5)";
+// export const GHOST_INVALID_BG = "rgba(239,68,68,0.5)";
 
-/** フォントスタック */
-export const FONT =
-  "'Inter', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
-
-/** ボードの論理サイズ (px)：(CELL_SIZE + CELL_GAP) × 20 − CELL_GAP + BOARD_PADDING × 2 */
-export const BOARD_PX = CELL_SIZE * 20 + 2 * 20 + 2 * 6; // 572
+/** ボードの論理サイズ (px)：CELL_SIZE×20 + CELL_GAP×19 + BOARD_PADDING×2 */
+export const BOARD_PX = CELL_SIZE * 20 + CELL_GAP * 19 + BOARD_PADDING * 2;
 
 /** 各色のスタートコーナー [row, col] */
 export const CORNER_POSITIONS: readonly [number, number][] = [
@@ -62,7 +55,6 @@ export const CORNER_POSITIONS: readonly [number, number][] = [
 // レイアウト・サーフェスカラー（ライトテーマ）
 // ---------------------------------------------------------------------------
 
-export const BG_BASE     = "#f0f4ff";
 export const BG_GRADIENT = "linear-gradient(145deg, #eef2ff 0%, #fafaff 60%, #fff7f0 100%)";
 export const SURFACE        = "rgba(255,255,255,0.92)";
 export const SURFACE_BORDER = "rgba(0,0,0,0.07)";

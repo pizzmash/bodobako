@@ -2,6 +2,7 @@ import type {
     BuildingPos,
     CitychaseMove,
     CitychasePlayerView,
+    CitychaseState,
     GameResult,
     IntersectionPos,
     RoomInfo,
@@ -12,6 +13,8 @@ import {
     getValidCriminalMoves,
     isSamePos,
 } from "@bodobako/shared";
+import { clsx } from "clsx";
+import { useCallback, useMemo } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { BoardGrid } from "./BoardGrid";
 import { PlayerPanel } from "./PlayerPanel";
@@ -46,29 +49,36 @@ export function GameBoard({
   const currentHeli = state.helicopters[state.currentHelicopterIndex];
 
   // 移動可能な交差点（警察）
-  const moveTargets: IntersectionPos[] =
-    isMyPoliceTurn && currentHeli
-      ? getAdjacentIntersections(currentHeli).filter(
-          (p) =>
-            !state.helicopters.some(
-              (h, i) =>
-                h &&
-                i !== state.currentHelicopterIndex &&
-                isSamePos(h, p)
-            )
-        )
-      : [];
+  const moveTargets = useMemo<IntersectionPos[]>(
+    () =>
+      isMyPoliceTurn && currentHeli
+        ? getAdjacentIntersections(currentHeli).filter(
+            (p) =>
+              !state.helicopters.some(
+                (h, i) =>
+                  h &&
+                  i !== state.currentHelicopterIndex &&
+                  isSamePos(h, p)
+              )
+          )
+        : [],
+    [isMyPoliceTurn, currentHeli, state.helicopters, state.currentHelicopterIndex]
+  );
 
   // 捜索可能なビル（警察）
-  const searchTargets: BuildingPos[] =
-    isMyPoliceTurn && currentHeli ? getSurroundingBuildings(currentHeli) : [];
+  const searchTargets = useMemo<BuildingPos[]>(
+    () => (isMyPoliceTurn && currentHeli ? getSurroundingBuildings(currentHeli) : []),
+    [isMyPoliceTurn, currentHeli]
+  );
 
   // 犯人の移動先候補
-  const criminalMoveTargets: BuildingPos[] = isMyCriminalTurn
-    ? getValidCriminalMoves(
-        state as unknown as Parameters<typeof getValidCriminalMoves>[0]
-      )
-    : [];
+  const criminalMoveTargets = useMemo<BuildingPos[]>(
+    () =>
+      isMyCriminalTurn
+        ? getValidCriminalMoves(state as CitychaseState)
+        : [],
+    [isMyCriminalTurn, state]
+  );
 
   const currentPlayer = room.players.find(
     (p) => p.id === (isPolicePhase ? currentPoliceId : state.criminalId)
@@ -76,7 +86,7 @@ export function GameBoard({
 
   const searchResult = state.lastSearchResult;
 
-  const handleIntersectionClick = (pos: IntersectionPos) => {
+  const handleIntersectionClick = useCallback((pos: IntersectionPos) => {
     if (isMyPoliceTurn) {
       sendMove({
         type: "move-helicopter",
@@ -84,9 +94,9 @@ export function GameBoard({
         pos,
       });
     }
-  };
+  }, [isMyPoliceTurn, sendMove, state.currentHelicopterIndex]);
 
-  const handleBuildingClick = (pos: BuildingPos) => {
+  const handleBuildingClick = useCallback((pos: BuildingPos) => {
     if (isMyPoliceTurn) {
       sendMove({
         type: "search-building",
@@ -97,7 +107,7 @@ export function GameBoard({
     if (isMyCriminalTurn) {
       sendMove({ type: "move-criminal", pos });
     }
-  };
+  }, [isMyPoliceTurn, isMyCriminalTurn, sendMove, state.currentHelicopterIndex]);
 
   // ゲーム結果のresult計算
   const getResultType = (): "win" | "lose" => {
@@ -116,19 +126,18 @@ export function GameBoard({
   };
 
   return (
-    <div style={styles.section}>
+    <div className="text-center p-2 w-full max-w-[900px]">
       {/* プレイヤーパネル */}
       <PlayerPanel state={state} playerId={playerId} room={room} />
 
       {/* ステータスバー */}
-      <div style={styles.statusBar}>
-        <div className="cc-status-badge" style={styles.roundBadge}>
-          <span className="cc-dot-primary" style={{ width: 6, height: 6 }}></span>
+      <div className="flex justify-center gap-3 mb-3 flex-wrap">
+        <div className="cc-status-badge flex items-center gap-2">
+          <span className="cc-dot-primary w-1.5 h-1.5"></span>
           ROUND {state.round} / 11
         </div>
         <div
-          className={`cc-status-badge ${isPolicePhase ? "cc-status-badge-primary" : "cc-status-badge-danger"}`}
-        >
+          className={clsx("cc-status-badge", isPolicePhase ? "cc-status-badge-primary" : "cc-status-badge-danger")}>
           {isPolicePhase ? "[P] POLICE PHASE" : "[T] FUGITIVE PHASE"}
         </div>
       </div>
@@ -136,12 +145,11 @@ export function GameBoard({
       {/* 捜索結果バナー */}
       {searchResult && !searchResult.found && (
         <div
-          className={searchResult.traceFound ? "cc-glass-panel" : "cc-glass-panel"}
+          className="cc-glass-panel px-4 py-2 rounded-[10px] mb-3 text-[0.85rem] font-semibold border flex items-center justify-center gap-[0.3rem]"
           style={{
-            ...styles.searchBanner,
             borderColor: searchResult.traceFound ? "#d97706" : "rgba(37, 140, 244, 0.3)",
             color: searchResult.traceFound ? "#fbbf24" : "#64c3ff",
-            boxShadow: searchResult.traceFound 
+            boxShadow: searchResult.traceFound
               ? "0 0 20px rgba(217, 119, 6, 0.3), 0 2px 8px rgba(0,0,0,.3)"
               : "0 2px 8px rgba(0,0,0,.3)",
           }}
@@ -164,9 +172,8 @@ export function GameBoard({
       {/* ターン案内（ゲーム終了時は非表示） */}
       {!isFinished && (
         <div
-          className={isMyPoliceTurn || isMyCriminalTurn ? "cc-glass-panel cc-pulse" : "cc-glass-panel"}
+          className={clsx("cc-glass-panel px-[1.2rem] py-[0.6rem] rounded-[10px] text-[0.85rem] font-semibold mb-3 border", { "cc-pulse": isMyPoliceTurn || isMyCriminalTurn })}
           style={{
-            ...styles.turnGuide,
             borderColor: isMyPoliceTurn || isMyCriminalTurn
               ? isCriminal
                 ? "rgba(220, 38, 38, 0.5)"
@@ -199,7 +206,7 @@ export function GameBoard({
       )}
 
       {/* ボード */}
-      <div style={{ marginTop: "1rem" }}>
+      <div className="mt-4">
         <BoardGrid
           state={state}
           playerId={playerId}
@@ -221,7 +228,7 @@ export function GameBoard({
       </div>
 
       {/* 凡例 */}
-      <div style={styles.legend}>
+      <div className="flex justify-center gap-4 mt-4 flex-wrap">
         {isMyPoliceTurn && (
           <>
             <LegendItem color="#00e676" label="移動先" glow />
@@ -264,15 +271,10 @@ function LegendItem({
   badge?: boolean;
 }) {
   return (
-    <div style={styles.legendItem}>
+    <div className="flex items-center gap-1">
       <span
+        className="inline-flex items-center justify-center w-4 h-4 rounded-sm"
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 16,
-          height: 16,
-          borderRadius: badge ? 3 : 3,
           background: badge ? "rgba(16, 25, 34, 0.8)" : glow ? "rgba(100, 116, 139, 0.3)" : color,
           fontSize: icon === "···" ? "0.7rem" : badge ? "0.55rem" : "0.65rem",
           fontWeight: badge ? 900 : icon === "!" ? 900 : 700,
@@ -285,69 +287,8 @@ function LegendItem({
       >
         {icon ?? ""}
       </span>
-      <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 500 }}>{label}</span>
+      <span className="text-[0.7rem] text-slate-400 font-medium">{label}</span>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  section: {
-    textAlign: "center",
-    padding: "0.5rem",
-    width: "100%",
-    maxWidth: 900,
-  },
-  statusBar: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "0.75rem",
-    marginBottom: "0.75rem",
-    flexWrap: "wrap",
-  },
-  badge: {
-    display: "inline-block",
-    padding: "0.25rem 0.75rem",
-    borderRadius: 8,
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    letterSpacing: "0.05em",
-    textTransform: "uppercase",
-  },
-  roundBadge: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-  },
-  searchBanner: {
-    padding: "0.5rem 1rem",
-    borderRadius: 10,
-    margin: "0 0 0.75rem",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    border: "1px solid",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "0.3rem",
-  },
-  turnGuide: {
-    padding: "0.6rem 1.2rem",
-    borderRadius: 10,
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    marginBottom: "0.75rem",
-    border: "1px solid",
-  },
-  legend: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "1rem",
-    marginTop: "1rem",
-    flexWrap: "wrap",
-  },
-  legendItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.3rem",
-  },
-};

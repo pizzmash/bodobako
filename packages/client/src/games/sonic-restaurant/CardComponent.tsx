@@ -4,7 +4,8 @@
 
 import type { Card } from "@bodobako/shared";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Z } from "../../styles/tokens";
 import { LAYOUT, styles } from "./constants";
 
 interface CardComponentProps {
@@ -17,7 +18,7 @@ interface CardComponentProps {
   hideLogo?: boolean;
 }
 
-export function CardComponent({
+export const CardComponent = React.memo(function CardComponent({
   card,
   onClick,
   disabled = false,
@@ -30,29 +31,28 @@ export function CardComponent({
   const width = isSmall ? LAYOUT.cardWidthSmall : LAYOUT.cardWidth;
   const height = isSmall ? LAYOUT.cardHeightSmall : LAYOUT.cardHeight;
   const isTorikeshi = card === "とりけし";
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isShaking, setIsShaking] = useState(false);
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  useEffect(() => {
+    return () => {
+      if (shakeTimerRef.current !== null) clearTimeout(shakeTimerRef.current);
+    };
+  }, []);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     if (!onClick) return;
-    
+
     if (disabled) {
-      // 選択できないカードをクリックした場合は振動
-      // 一時的にホバー状態を解除するため、疑似的にマウスを外す
-      const button = e.currentTarget;
-      button.style.pointerEvents = 'none';
-      
+      // 選択できないカードをクリックした場匂は振動
       setIsShaking(true);
-      
-      setTimeout(() => {
-        setIsShaking(false);
-        button.style.pointerEvents = 'auto';
-      }, 500);
+      shakeTimerRef.current = setTimeout(() => setIsShaking(false), 500);
       return;
     }
-    
+
     // 選択可能な場合は通常のクリックハンドラを実行
     onClick();
-  };
+  }, [onClick, disabled]);
 
   const cardStyle: CSSProperties = {
     ...styles.card,
@@ -60,6 +60,7 @@ export function CardComponent({
     height,
     flexShrink: 0,
     cursor: onClick ? "pointer" : "default",
+    pointerEvents: isShaking ? "none" : undefined,
     ...(isNew && !isSmall
       ? { animation: "sr-new-card-flash 1s ease-out" }
       : {}),
@@ -75,7 +76,7 @@ export function CardComponent({
 
   const contentStyle: CSSProperties = {
     ...styles.cardContent,
-    fontSize: isSmall 
+    fontSize: isSmall
       ? (isTorikeshi ? "0.875rem" : "1.25rem")
       : (isTorikeshi ? "1.25rem" : "1.875rem"),
     ...(isTorikeshi
@@ -83,7 +84,7 @@ export function CardComponent({
           color: "#ffffff",
           textShadow: "0 2px 2px rgba(0,0,0,0.5)",
           position: "relative",
-          zIndex: 10,
+          zIndex: Z.srPlayerInfo,
         }
       : {}),
   };
@@ -94,7 +95,7 @@ export function CardComponent({
     ...(isTorikeshi
       ? {
           color: "rgba(255, 255, 255, 0.5)",
-          zIndex: 10,
+          zIndex: Z.srPlayerInfo,
         }
       : {}),
   };
@@ -112,15 +113,8 @@ export function CardComponent({
         {!hideLogo && <div style={logoStyle}>音速飯点</div>}
         {isTorikeshi && !isSmall && (
           <div
-            style={{
-              position: "absolute",
-              bottom: "0.5rem",
-              right: "0.5rem",
-              fontSize: "1rem",
-              color: "white",
-              opacity: 0.5,
-              zIndex: 10,
-            }}
+            className="absolute bottom-2 right-2 text-base text-white opacity-50"
+            style={{ zIndex: Z.srPlayerInfo }}
           >
             ⊗
           </div>
@@ -136,19 +130,12 @@ export function CardComponent({
       {!hideLogo && <div style={logoStyle}>音速飯点</div>}
       {isTorikeshi && !isSmall && (
         <div
-          style={{
-            position: "absolute",
-            bottom: "0.5rem",
-            right: "0.5rem",
-            fontSize: "1rem",
-            color: "white",
-            opacity: 0.5,
-            zIndex: 10,
-          }}
+          className="absolute bottom-2 right-2 text-base text-white opacity-50"
+          style={{ zIndex: Z.srPlayerInfo }}
         >
           ⊗
         </div>
       )}
     </div>
   );
-}
+});

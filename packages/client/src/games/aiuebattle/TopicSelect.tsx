@@ -26,11 +26,7 @@ export function TopicSelect({
 
   if (isSelector) {
     return (
-      <div style={{ 
-        animation: "ab-fadeIn .4s ease-out",
-        width: "100%",
-        maxWidth: "700px",
-      }}>
+      <div className="w-full max-w-[700px]" style={{ animation: "ab-fadeIn .4s ease-out" }}>
         <p style={styles.subtitle}>お題を選んでください</p>
         <div style={styles.topicGrid}>
           {TOPIC_LIST.map((topic, i) => (

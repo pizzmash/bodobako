@@ -1,6 +1,6 @@
 import { BOARD_CHARS } from "@bodobako/shared";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { Z } from "../../styles/tokens";
 
 /* ── Design System ── */
 
@@ -121,19 +121,6 @@ export const BOARD_LAYOUT_HORIZONTAL: (string | null)[][] = [0, 1, 2, 3, 4].map(
 );
 
 const WIDE_BREAKPOINT = 600;
-
-export function useIsWideBoard(): boolean {
-  const [isWide, setIsWide] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= WIDE_BREAKPOINT
-  );
-  useEffect(() => {
-    const mql = window.matchMedia(`(min-width: ${WIDE_BREAKPOINT}px)`);
-    const handler = (e: MediaQueryListEvent) => setIsWide(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
-  return isWide;
-}
 
 export function charToIndex(char: string): number {
   return (BOARD_CHARS as readonly string[]).indexOf(char);
@@ -450,7 +437,7 @@ export const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 1000,
+    zIndex: Z.modal,
     padding: SPACING.lg,
   },
   confirmCard: {

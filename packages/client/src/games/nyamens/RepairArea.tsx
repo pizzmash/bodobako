@@ -1,17 +1,14 @@
-import type { NyaMensPlayerView, NyaMensTrack } from "@bodobako/shared";
+import type { NyaMensTrack } from "@bodobako/shared";
 import { PlayingCard } from "../../components/PlayingCard";
+import { cardColor } from "./nyaUtils";
+
+const TOTAL_REPAIR_CARDS = 30;
 
 const UP_COLOR = "#10B981";
 const DOWN_COLOR = "#F59E0B";
 const RECYCLE_COLOR = "#6B7280";
 const DRAW_PILE_BACK_COLOR = "#1e3a5f";
 const DRAW_PILE_COLOR = "#3b82f6";
-
-function cardColor(num: number): string {
-  if (num <= 10) return "#BAE6FD";
-  if (num <= 20) return "#BBF7D0";
-  return "#FED7AA";
-}
 
 function CardChip({
   num,
@@ -98,7 +95,7 @@ function TrackStack({
           空
         </div>
       )}
-      <span style={{ color: "#475569", fontSize: "0.65rem" }}>{showCount}/30</span>
+          <span style={{ color: "#475569", fontSize: "0.65rem" }}>{showCount}/{TOTAL_REPAIR_CARDS}</span>
     </div>
   );
 }
@@ -396,10 +393,9 @@ export function RepairArea({
       <div style={{ display: "flex", gap: 16, fontSize: "0.75rem", color: "#64748b" }}>
         <span>▲ {track.up.length}枚</span>
         <span>▼ {track.down.length}枚</span>
-        <span>合計 {track.up.length + track.down.length} / {30 - burnedCards.length}枚</span>
+        <span>合計 {track.up.length + track.down.length} / {TOTAL_REPAIR_CARDS - burnedCards.length}枚</span>
       </div>
     </div>
   );
 }
 
-export type { NyaMensPlayerView };
