@@ -71,6 +71,10 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(-100%)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "modal-appear": {
+          from: { opacity: "0", transform: "translate(-50%, calc(-50% - 20px))" },
+          to: { opacity: "1", transform: "translate(-50%, -50%)" },
+        },
         "pill-in": {
           from: { opacity: "0", transform: "scale(.9)" },
           to: { opacity: "1", transform: "scale(1)" },
@@ -121,6 +125,7 @@ const config: Config = {
         "icon-float": "icon-float 3s ease-in-out infinite",
         "icon-pulse": "icon-pulse 3s ease-in-out infinite",
         "slide-down": "slide-down .4s ease",
+        "modal-appear": "modal-appear .4s ease both",
         "pill-in": "pill-in .35s ease both",
         "slide-in-right": "slide-in-right .3s ease",
         // Citychase

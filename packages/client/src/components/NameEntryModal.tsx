@@ -35,7 +35,7 @@ export function NameEntryModal() {
   return (
     <div className="fixed inset-0 z-modal bg-indigo-600/15 backdrop-blur-2xl animate-fade-in">
       <div
-        className="absolute left-1/2 top-1/2 flex w-[380px] max-w-[calc(100%-48px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 rounded-3xl border-2 border-indigo-300/20 bg-white/95 px-10 pb-9 pt-12 text-[#312E81] shadow-modal-indigo backdrop-blur-xl animate-slide-down"
+        className="absolute left-1/2 top-1/2 flex w-[380px] max-w-[calc(100%-48px)] flex-col items-center gap-2 rounded-3xl border-2 border-indigo-300/20 bg-white/95 px-10 pb-9 pt-12 text-[#312E81] shadow-modal-indigo backdrop-blur-xl animate-modal-appear"
       >
         {isLoading ? (
           <div className="flex items-center justify-center py-8 min-h-[80px]" aria-live="polite" aria-label="読み込み中">

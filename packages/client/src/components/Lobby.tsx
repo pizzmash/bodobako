@@ -156,7 +156,7 @@ export function Lobby() {
         </div>
 
         {/* Game cards grid */}
-        <div className="relative z-10 flex w-full max-w-[800px] flex-wrap gap-4 px-6">
+        <div className="relative z-10 flex w-full max-w-[800px] flex-wrap justify-center gap-4 px-6">
           {pagedGames.map((g, i) => (
             <div
               key={g.id}

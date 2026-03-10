@@ -19,7 +19,7 @@ export function Modal({ onClose, children, zIndex = Z.modal }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[var(--modal-z)] flex items-center justify-center"
+      className="fixed inset-0 z-[var(--modal-z)] flex items-center justify-center p-6"
       style={modalStyle}
       onClick={onClose}
     >
