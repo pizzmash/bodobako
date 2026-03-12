@@ -23,6 +23,8 @@ import { StatusPanel } from "./StatusPanel";
 import { TurnFlipsBar } from "./TurnFlipsBar";
 import type { LogEntry } from "./types";
 
+const getLogStorageKey = (roomCode: string) => `nana-logs-${roomCode}`;
+
 // ── サブコンポーネント ────────────────────────────────────────────────────────────────────
 
 const TurnFlipsSection = memo(function TurnFlipsSection({
@@ -366,9 +368,20 @@ export function NanaBoard() {
   const state = gameState?.gameId === "nana" ? gameState.state : null;
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<"game" | "log">("game");
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const logIdRef = useRef(0);
+  const [logs, setLogs] = useState<LogEntry[]>(() => {
+    if (!room?.code) return [];
+    try {
+      const stored = localStorage.getItem(getLogStorageKey(room.code));
+      if (stored) {
+        const parsed = JSON.parse(stored) as LogEntry[];
+        return parsed;
+      }
+    } catch {}
+    return [];
+  });
+  const logIdRef = useRef(logs.length > 0 ? Math.max(...logs.map((l) => l.id)) : 0);
   const prevStateRef = useRef<NanaStateView | null>(null);
+  const prevRoomCodeRef = useRef<string | null>(null);
   const playersRef = useRef(room?.players ?? []);
   playersRef.current = room?.players ?? [];
 
@@ -403,6 +416,27 @@ export function NanaBoard() {
 
     setLogs((l) => [...logItems, ...l].slice(0, 50));
   }, [state, getName]);
+
+  // ── ログ永続化 ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!room?.code) return;
+    try {
+      localStorage.setItem(getLogStorageKey(room.code), JSON.stringify(logs));
+    } catch {}
+  }, [logs, room?.code]);
+
+  // ── ルーム退出時にログをクリア ──────────────────────────────────────
+  useEffect(() => {
+    if (room?.code) {
+      prevRoomCodeRef.current = room.code;
+    } else if (prevRoomCodeRef.current) {
+      // room が null になった（leaveRoom が呼ばれた）場合はログをクリア
+      try {
+        localStorage.removeItem(getLogStorageKey(prevRoomCodeRef.current));
+      } catch {}
+      prevRoomCodeRef.current = null;
+    }
+  }, [room?.code]);
 
   // ── 早期リターン ──────────────────────────────────────────────────
   if (gameState !== null && gameState.gameId !== "nana") return null;
