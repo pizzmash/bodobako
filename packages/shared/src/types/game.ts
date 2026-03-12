@@ -1,5 +1,16 @@
 export type GameStatus = "playing" | "finished";
 
+export interface GameLogEntry {
+  /** ログを生成したプレイヤーのID */
+  playerId: string;
+  /** 表示するメッセージ */
+  message: string;
+  /** タグラベル（例: "Match", "Miss"） */
+  tag?: string;
+  /** タグの色（CSS color文字列） */
+  tagColor?: string;
+}
+
 export interface GameDefinition<TState = unknown, TMove = unknown> {
   id: string;
   name: string;
@@ -17,4 +28,10 @@ export interface GameDefinition<TState = unknown, TMove = unknown> {
   getRanking(state: TState): string[] | null;
   getCurrentPlayerId(state: TState): string;
   getPlayerView?(state: TState, playerId: string): unknown;
+  /**
+   * 状態遷移のログエントリを生成する。
+   * prevState と newState の差分からログを生成して返す。
+   * クライアントはこれを蓄積して表示する。
+   */
+  getLogEntries?(prevState: TState, newState: TState): GameLogEntry[];
 }

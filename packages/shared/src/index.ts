@@ -43,7 +43,7 @@ export { CARD_COUNTS, MENUS } from "./games/sonic-restaurant/types.js";
 export type {
     Card, CompletedMenu, MenuTreeNode, SonicRestaurantMove, SonicRestaurantState
 } from "./games/sonic-restaurant/types.js";
-export type { GameDefinition, GameStatus } from "./types/game.js";
+export type { GameDefinition, GameLogEntry, GameStatus } from "./types/game.js";
 export type {
     GameResult, WsAckError, WsAckSuccess, WsClientMessage, WsServerMessage
 } from "./types/protocol.js";

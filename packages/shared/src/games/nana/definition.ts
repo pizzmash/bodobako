@@ -1,4 +1,4 @@
-import type { GameDefinition, GameStatus } from "../../types/game.js";
+import type { GameDefinition, GameLogEntry, GameStatus } from "../../types/game.js";
 import {
   checkWinCondition,
   createDeck,
@@ -262,6 +262,62 @@ export const nanaDefinition: GameDefinition<NanaState, NanaMove> = {
 
   getCurrentPlayerId(state: NanaState): string {
     return state.playerIds[state.currentPlayerIndex];
+  },
+
+  getLogEntries(prevState: NanaState, newState: NanaState): GameLogEntry[] {
+    const entries: GameLogEntry[] = [];
+    const prevPendingResult = prevState.pendingResult ?? null;
+    const pendingResult = newState.pendingResult ?? null;
+
+    if (newState.turnFlips.length > prevState.turnFlips.length) {
+      const flip = newState.turnFlips[newState.turnFlips.length - 1];
+      const actorPid = newState.playerIds[newState.currentPlayerIndex];
+      const message =
+        flip.source.type === "field"
+          ? "場のカードをめくりました"
+          : "プレイヤーのカードをめくりました";
+
+      if (prevPendingResult === null && pendingResult === "failure") {
+        entries.push({ playerId: actorPid, message, tag: "Miss", tagColor: "#2563eb" });
+      } else {
+        entries.push({ playerId: actorPid, message });
+      }
+      return entries;
+    }
+
+    if (prevPendingResult === null && pendingResult === "failure") {
+      const actorPid = newState.playerIds[newState.currentPlayerIndex];
+      const lastFlip = newState.turnFlips[newState.turnFlips.length - 1];
+      if (!lastFlip) {
+        entries.push({ playerId: actorPid, message: "ターン終了", tag: "Miss", tagColor: "#2563eb" });
+      } else {
+        const message =
+          lastFlip.source.type === "field"
+            ? "場のカードをめくりました"
+            : "プレイヤーのカードをめくりました";
+        entries.push({ playerId: actorPid, message, tag: "Miss", tagColor: "#2563eb" });
+      }
+      return entries;
+    }
+
+    // confirm後の成功（セット獲得）
+    if (prevPendingResult === "success" && pendingResult === null) {
+      for (const pid of newState.playerIds) {
+        const prevLen = prevState.collectedSets[pid]?.length ?? 0;
+        const nextLen = newState.collectedSets[pid]?.length ?? 0;
+        if (nextLen > prevLen) {
+          const num = newState.collectedSets[pid][nextLen - 1];
+          entries.push({
+            playerId: pid,
+            message: `「${num}」のセットを獲得しました！`,
+            tag: "Match",
+            tagColor: "#16a34a",
+          });
+        }
+      }
+    }
+
+    return entries;
   },
 
   getPlayerView(state: NanaState, playerId: string): NanaStateView {

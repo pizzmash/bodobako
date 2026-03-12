@@ -1,3 +1,4 @@
+import { nanaDefinition } from "@bodobako/shared";
 import type { NanaCardView, NanaMove, NanaStateView } from "@bodobako/shared";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
@@ -387,83 +388,20 @@ export function NanaBoard() {
     prevStateRef.current = state;
     if (!prev) return;
 
-    const addLog = (
-      playerId: string,
-      msg: string,
-      opts?: { tag?: string; tagColor?: string },
-    ) => {
-      const id = ++logIdRef.current;
-      setLogs((l) => [
-        { id, playerId, player: getName(playerId), msg, tag: opts?.tag, tagColor: opts?.tagColor },
-        ...l,
-      ].slice(0, 50));
-    };
+    // NanaStateView は NanaState と同じフィールドを持つためキャストで利用
+    const newEntries = nanaDefinition.getLogEntries!(prev as never, state as never);
+    if (newEntries.length === 0) return;
 
-    if (state.turnFlips.length > prev.turnFlips.length) {
-      const flip = state.turnFlips[state.turnFlips.length - 1];
-      const actorPid = state.playerIds[state.currentPlayerIndex];
-      const prevPendingResult = prev.pendingResult ?? null;
-      const pendingResult = state.pendingResult ?? null;
+    const logItems = newEntries.map((entry) => ({
+      id: ++logIdRef.current,
+      playerId: entry.playerId,
+      player: getName(entry.playerId),
+      msg: entry.message,
+      tag: entry.tag,
+      tagColor: entry.tagColor,
+    }));
 
-      if (prevPendingResult === null && pendingResult === "failure") {
-        if (flip.source.type === "field") {
-          addLog(actorPid, "場のカードをめくりました", { tag: "Miss", tagColor: "#2563eb" });
-        } else {
-          addLog(actorPid, "プレイヤーのカードをめくりました", {
-            tag: "Miss",
-            tagColor: "#2563eb",
-          });
-        }
-        return;
-      }
-
-      if (flip.source.type === "field") {
-        addLog(actorPid, "場のカードをめくりました");
-      } else {
-        addLog(actorPid, "プレイヤーのカードをめくりました");
-      }
-      return;
-    }
-
-    const prevPendingResult = prev.pendingResult ?? null;
-    const pendingResult = state.pendingResult ?? null;
-
-    if (prevPendingResult === null && pendingResult === "failure") {
-      const actorPid = state.playerIds[state.currentPlayerIndex];
-      const lastFlip = state.turnFlips[state.turnFlips.length - 1];
-      if (!lastFlip) {
-        addLog(actorPid, "ターン終了", { tag: "Miss", tagColor: "#2563eb" });
-      } else if (lastFlip.source.type === "field") {
-        addLog(actorPid, "場のカードをめくりました", { tag: "Miss", tagColor: "#2563eb" });
-      } else {
-        addLog(actorPid, "プレイヤーのカードをめくりました", {
-          tag: "Miss",
-          tagColor: "#2563eb",
-        });
-      }
-      return;
-    }
-
-    // confirm 後の成功反映（セット増加）
-    if (prevPendingResult === "success" && pendingResult === null) {
-      const actorPid = prev.playerIds[prev.currentPlayerIndex];
-      const prevTotal = Object.values(prev.collectedSets).flat().length;
-      const nextTotal = Object.values(state.collectedSets).flat().length;
-
-      if (nextTotal > prevTotal) {
-        for (const pid of state.playerIds) {
-          const prevLen = prev.collectedSets[pid]?.length ?? 0;
-          const nextLen = state.collectedSets[pid]?.length ?? 0;
-          if (nextLen > prevLen) {
-            const num = state.collectedSets[pid].at(-1)!;
-            addLog(pid, `「${num}」のセットを獲得しました！`, {
-              tag: "Match",
-              tagColor: "#16a34a",
-            });
-          }
-        }
-      }
-    }
+    setLogs((l) => [...logItems, ...l].slice(0, 50));
   }, [state, getName]);
 
   // ── 早期リターン ──────────────────────────────────────────────────
