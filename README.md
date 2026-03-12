@@ -72,7 +72,7 @@ bodobako/
 │          │─────────────►└────────┬─────────┘
 │          │                       │ stub.fetch()
 │          │              ┌────────▼─────────┐
-│          │◄────────────►│    RoomDO        │
+│          │◄────────────►│  RoomSession     │
 └────┬─────┘  WebSocket   │  WS・ゲーム状態   │
      │      (upgrade経由) └────────┬─────────┘
      │  import              import │
@@ -139,20 +139,20 @@ interface GameDefinition<TState, TMove> {
   maxPlayers: number;
 
   createInitialState(playerIds: string[], hostId?: string): TState;
+  parseMove?(raw: unknown): TMove | null; // 構造バリデーション（任意）
   validateMove(state: TState, move: TMove, playerId: string): boolean;
   applyMove(state: TState, move: TMove, playerId: string): TState;
   getStatus(state: TState): "playing" | "finished";
   getRanking(state: TState): string[] | null; // 1位から順、null=引き分け
   getCurrentPlayerId(state: TState): string;
-  getPlayerView?(state: TState, playerId: string): unknown; // 非対称情報対応
+  getPlayerView?(state: TState, playerId: string): unknown; // 手札など秘匿情報をプレイヤーごとにマスク
+  getLogEntries?(prevState: TState, newState: TState): GameLogEntry[]; // ゲームログ生成（原則実装）
 }
 ```
 
-Worker の `RoomDO` がこのインターフェースを通じてゲームを動かすため、ゲーム固有のロジックはWorker本体に一切入らない。`getPlayerView` を実装すれば、手牌を隠すなどの非対称情報ゲームにも対応可能。
-
 ### セッション管理
 
-クライアントは `crypto.randomUUID()` で生成したセッショントークンを `localStorage` に保持する。WebSocket 切断時、RoomDO は Alarms API で 30 秒の猶予期間を設け、同じトークンでの `session:reconnect` により進行中のゲームに復帰できる。
+クライアントは `crypto.randomUUID()` で生成したセッショントークンを `localStorage` に保持する。WebSocket 切断時、RoomSession は Alarms API で 30 秒の猶予期間を設け、同じトークンでの `session:reconnect` により進行中のゲームに復帰できる。
 
 ## 開発
 
