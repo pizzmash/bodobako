@@ -779,3 +779,114 @@ describe("getPlayerView", () => {
     expect(view.fieldCards[0]?.id).toBe(99);
   });
 });
+
+// ---- getLogEntries ----
+
+describe("getLogEntries", () => {
+  const getLogs = nanaDefinition.getLogEntries!.bind(nanaDefinition);
+
+  it("変化なしのとき空配列を返す", () => {
+    const state = makeState({ fieldCards: [card(0, 5)] });
+    expect(getLogs(state, state)).toHaveLength(0);
+  });
+
+  it("場札をめくったとき「場のカードをめくりました」ログを返す", () => {
+    const prev = makeState({ fieldCards: [card(0, 5)] });
+    const next = makeState({
+      fieldCards: [card(0, 5)],
+      turnFlips: [{ cardId: 0, source: { type: "field", index: 0 } }],
+    });
+    const logs = getLogs(prev, next);
+    expect(logs).toHaveLength(1);
+    expect(logs[0].playerId).toBe(P1);
+    expect(logs[0].message).toBe("場のカードをめくりました");
+    expect(logs[0].tag).toBeUndefined();
+  });
+
+  it("手札をめくったとき「プレイヤーのカードをめくりました」ログを返す", () => {
+    const prev = makeState({ hands: { [P1]: [], [P2]: [card(10, 3)] } });
+    const next = makeState({
+      hands: { [P1]: [], [P2]: [card(10, 3)] },
+      turnFlips: [{ cardId: 10, source: { type: "hand", targetPlayerId: P2, position: "min" } }],
+    });
+    const logs = getLogs(prev, next);
+    expect(logs).toHaveLength(1);
+    expect(logs[0].message).toBe("プレイヤーのカードをめくりました");
+    expect(logs[0].tag).toBeUndefined();
+  });
+
+  it("めくりと同時に failure になったとき Miss タグが付く（場札）", () => {
+    const prev = makeState({
+      fieldCards: [card(0, 5), card(1, 3)],
+      turnFlips: [{ cardId: 0, source: { type: "field", index: 0 } }],
+    });
+    const next = makeState({
+      fieldCards: [card(0, 5), card(1, 3)],
+      turnFlips: [
+        { cardId: 0, source: { type: "field", index: 0 } },
+        { cardId: 1, source: { type: "field", index: 1 } },
+      ],
+      pendingResult: "failure",
+    });
+    const logs = getLogs(prev, next);
+    expect(logs).toHaveLength(1);
+    expect(logs[0].tag).toBe("Miss");
+    expect(logs[0].message).toBe("場のカードをめくりました");
+  });
+
+  it("めくりと同時に failure になったとき Miss タグが付く（手札）", () => {
+    const prev = makeState({
+      fieldCards: [card(0, 5)],
+      hands: { [P1]: [], [P2]: [card(10, 3)] },
+      turnFlips: [{ cardId: 0, source: { type: "field", index: 0 } }],
+    });
+    const next = makeState({
+      fieldCards: [card(0, 5)],
+      hands: { [P1]: [], [P2]: [card(10, 3)] },
+      turnFlips: [
+        { cardId: 0, source: { type: "field", index: 0 } },
+        { cardId: 10, source: { type: "hand", targetPlayerId: P2, position: "min" } },
+      ],
+      pendingResult: "failure",
+    });
+    const logs = getLogs(prev, next);
+    expect(logs).toHaveLength(1);
+    expect(logs[0].tag).toBe("Miss");
+    expect(logs[0].message).toBe("プレイヤーのカードをめくりました");
+  });
+
+  it("confirm後に success → null になったときセット獲得ログが Match タグ付きで返る", () => {
+    const prev = makeState({
+      pendingResult: "success",
+      collectedSets: { [P1]: [], [P2]: [] },
+    });
+    const next = makeState({
+      pendingResult: null,
+      collectedSets: { [P1]: [5], [P2]: [] },
+    });
+    const logs = getLogs(prev, next);
+    expect(logs).toHaveLength(1);
+    expect(logs[0].playerId).toBe(P1);
+    expect(logs[0].message).toBe("「5」のセットを獲得しました！");
+    expect(logs[0].tag).toBe("Match");
+    expect(logs[0].tagColor).toBe("#16a34a");
+  });
+
+  it("confirm後 success → null でセット増加がなければログなし", () => {
+    const prev = makeState({
+      pendingResult: "success",
+      collectedSets: { [P1]: [3], [P2]: [] },
+    });
+    const next = makeState({
+      pendingResult: null,
+      collectedSets: { [P1]: [3], [P2]: [] },
+    });
+    expect(getLogs(prev, next)).toHaveLength(0);
+  });
+
+  it("failure → null（ターン交代）ではログなし", () => {
+    const prev = makeState({ pendingResult: "failure" });
+    const next = makeState({ pendingResult: null, currentPlayerIndex: 1 });
+    expect(getLogs(prev, next)).toHaveLength(0);
+  });
+});

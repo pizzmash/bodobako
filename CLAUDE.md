@@ -82,6 +82,7 @@ npm run test:e2e     # E2E テスト（Playwright、dev サーバーを自動起
 - `getRanking(state)` - 順位リスト（1位から順）or null（引き分け）
 - `getCurrentPlayerId(state)` - 現在の手番プレイヤー
 - `getPlayerView?(state, playerId)` - プレイヤーごとの視界制御（任意）
+- `getLogEntries?(prevState, newState)` - 状態遷移のログエントリ生成（任意）。`GameLogEntry[]` を返し、クライアントが蓄積して表示する
 
 ゲームロジックはWorkerから完全に分離されている。RoomDOは定義のメソッドを呼ぶだけ。
 
