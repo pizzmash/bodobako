@@ -1,12 +1,18 @@
-import { C, FONT } from "./constants";
-import type { LogEntry } from "./types";
+import { PLAYER_COLORS } from "../../lib/color";
+import type { GameLogItem } from "../../hooks/useGameLog";
 
-export function GameLogPanel({
+function getPlayerColor(playerId: string, players: { id: string }[]): string {
+  const index = players.findIndex((p) => p.id === playerId);
+  if (index < 0) return PLAYER_COLORS[0];
+  return PLAYER_COLORS[index % PLAYER_COLORS.length];
+}
+
+export function LogPanel({
   logs,
-  getPlayerColor,
+  players,
 }: {
-  logs: LogEntry[];
-  getPlayerColor: (pid: string) => string;
+  logs: GameLogItem[];
+  players: { id: string; name: string }[];
 }) {
   return (
     <div style={{ height: "100%", overflowY: "auto" }}>
@@ -16,14 +22,16 @@ export function GameLogPanel({
           fontWeight: 700,
           textTransform: "uppercase",
           letterSpacing: "0.08em",
-          color: C.muted,
+          color: "#94a3b8",
           marginBottom: 12,
         }}
       >
         ゲームログ
       </div>
       {logs.length === 0 && (
-        <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>まだログはありません</div>
+        <div style={{ fontSize: 12, color: "#94a3b8" }}>
+          まだログはありません
+        </div>
       )}
       {logs.map((entry) => (
         <div
@@ -33,15 +41,14 @@ export function GameLogPanel({
         >
           <span
             style={{
-              color: getPlayerColor(entry.playerId),
+              color: getPlayerColor(entry.playerId, players),
               fontWeight: 700,
-              fontFamily: FONT,
               flexShrink: 0,
             }}
           >
-            {entry.player}:
+            {entry.playerName}:
           </span>
-          <span style={{ color: "#64748b", fontFamily: FONT, lineHeight: 1.4 }}>
+          <span style={{ color: "#64748b", lineHeight: 1.4 }}>
             {entry.tag && (
               <span
                 style={{
@@ -53,7 +60,7 @@ export function GameLogPanel({
                 [{entry.tag}]
               </span>
             )}
-            {entry.msg}
+            {entry.message}
           </span>
         </div>
       ))}

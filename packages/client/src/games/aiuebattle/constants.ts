@@ -85,15 +85,7 @@ export const RADIUS = {
   full: "9999px",
 } as const;
 
-// Player colors (for identification)
-export const PLAYER_COLORS = [
-  "#0496ff",  // Blue
-  "#ff5c8d",  // Pink
-  "#ffbc42",  // Orange
-  "#06d6a0",  // Green
-  "#9d4edd",  // Purple
-  "#ec4899",  // Hot Pink
-];
+export { PLAYER_COLORS } from "../../lib/color";
 
 export const FONT = "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
 

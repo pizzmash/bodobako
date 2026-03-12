@@ -15,4 +15,4 @@ export const NANA_HAND_FOOTER_HEIGHT_DESKTOP = 143;
 export const NANA_HAND_FOOTER_HEIGHT_MOBILE = 121;
 export const NANA_PLAYER_BAR_HEIGHT_MOBILE = 132;
 export const NANA_TAB_HEIGHT_MOBILE = 52;
-export const PLAYER_COLORS = ["#0496ff", "#ff5c8d", "#22c55e", "#06d6a0", "#9d4edd", "#ec4899"];
+export { PLAYER_COLORS } from "../../lib/color";

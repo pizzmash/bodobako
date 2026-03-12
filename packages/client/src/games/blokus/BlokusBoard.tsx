@@ -16,7 +16,6 @@ import { BlokusLogo } from "./BlokusLogo";
 import { BlokusMainBoard } from "./BlokusMainBoard";
 import { BlokusPieceControls } from "./BlokusPieceControls";
 import { BlokusPiecePalette } from "./BlokusPiecePalette";
-import { BlokusPlayerInfo } from "./BlokusPlayerInfo";
 import { BG_GRADIENT, BLOKUS_COLORS, BOARD_PX } from "./constants";
 import { useBlokusDerivedState } from "./hooks/useBlokusDerivedState";
 import { useBlokusInteraction } from "./hooks/useBlokusInteraction";
@@ -108,9 +107,6 @@ function BlokusBoardContent({
     >
       {/* ロゴ */}
       <BlokusLogo size="lg" />
-
-      {/* プレイヤー情報 */}
-      <BlokusPlayerInfo state={state} playerId={playerId} room={room} />
 
       {/* 手番メッセージ */}
       {turnMessage && (

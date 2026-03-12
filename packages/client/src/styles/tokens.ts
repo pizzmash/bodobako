@@ -12,12 +12,16 @@ export const Z = {
   header: 900,
   headerPopover: 930,
   modal: 950,
+  gameSidebar: 970,
   overlay: 1090,
   sidebar: 1100,
   invite: 1200,
   inviteModal: 1300,
   roomError: 2000,
   scanlines: 9999,
+
+  // モバイルタブバー用
+  gameMobileTab: 25,
 
   // 音速飯点ゲーム内 z-index
   srGameSidebar: 40,

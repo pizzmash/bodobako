@@ -323,7 +323,6 @@ export function NyaMensBoard() {
     const isAssassin = state.myRole === "assassin";
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 500, margin: "0 auto" }}>
-        <PlayerBar state={state} myId={myId} playerNames={playerNames} photoURLs={photoURLs} />
 
         {/* 役職カード */}
         <div
@@ -475,11 +474,6 @@ export function NyaMensBoard() {
 
       {/* 終了時リザルト＋勝利理由（リペアボードより上） */}
       {finishedOverlay}
-
-      {/* プレイヤーバー（リペアボード直前、終了時は非表示） */}
-      {state.phase !== "finished" && (
-        <PlayerBar state={state} myId={myId} playerNames={playerNames} photoURLs={photoURLs} />
-      )}
 
       {/* 修理トラック（終了時は非表示） */}
       {state.phase !== "finished" && (
