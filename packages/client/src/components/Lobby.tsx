@@ -107,7 +107,7 @@ export function Lobby() {
         </div>
       )}
 
-      <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-lobby-shell pt-6 text-indigo-900">
+      <div className="relative flex min-h-screen flex-col items-center overflow-x-hidden bg-lobby-shell pt-6 text-indigo-900">
         {/* Background decorations */}
         <div className="pointer-events-none absolute -right-[5%] -top-[10%] z-0 h-[520px] w-[520px] rounded-full bg-lobby-orb-indigo" />
         <div className="pointer-events-none absolute -bottom-[15%] -left-[8%] z-0 h-[620px] w-[620px] rounded-full bg-lobby-orb-violet" />
@@ -157,7 +157,7 @@ export function Lobby() {
         </div>
 
         {/* Game cards grid */}
-        <div className="relative z-10 flex w-full max-w-[800px] flex-wrap gap-4 px-6">
+        <div className="relative z-10 flex w-full max-w-[800px] flex-wrap justify-center gap-4 px-6">
           {pagedGames.map((g, i) => (
             <div
               key={g.id}
