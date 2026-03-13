@@ -227,6 +227,8 @@ export function GameView() {
                 position: "absolute",
                 inset: 0,
                 visibility: mobileTab === "game" ? "visible" : "hidden",
+                overflowY: "auto",
+                WebkitOverflowScrolling: "touch",
               }}
             >
               {board}
