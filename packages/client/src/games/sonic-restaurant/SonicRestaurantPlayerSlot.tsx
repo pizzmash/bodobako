@@ -12,7 +12,7 @@ export function SonicRestaurantPlayerSlot({ playerId: slotPlayerId }: PlayerSlot
   if (isFinished) {
     const rank = state.finishedOrder.indexOf(slotPlayerId) + 1;
     return (
-      <span className="text-xs font-bold mt-0.5" style={{ color: "#f59e0b" }}>
+      <span className="text-xs font-bold mt-0.5 text-amber-500">
         上がり {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}位`}
       </span>
     );

@@ -45,7 +45,7 @@ export function Room() {
     const pendingGame = creatingGameId ? allGames.find((g) => g.id === creatingGameId) : null;
     return (
       <Modal zIndex={Z.modal}>
-        <div className="bg-white rounded-2xl px-10 py-9 w-full max-w-[400px] shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col items-center gap-2 text-gray-700 animate-bounce-in">
+        <div className="bg-white rounded-2xl px-10 py-9 w-[400px] max-w-[calc(100%-48px)] shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col items-center gap-2 text-gray-700 animate-bounce-in">
           <div className="text-xl font-bold mb-1">{pendingGame?.name ?? "ゲーム"}</div>
 
           {/* 二重リングスピナー */}
@@ -82,7 +82,7 @@ export function Room() {
   return (
     <>
       <Modal zIndex={Z.modal}>
-        <div className="bg-white rounded-2xl px-10 py-9 w-full max-w-[400px] shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col items-center gap-2 text-gray-700 animate-bounce-in">
+        <div className="bg-white rounded-2xl px-10 py-9 w-[400px] max-w-[calc(100%-48px)] shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col items-center gap-2 text-gray-700 animate-bounce-in">
           {/* ゲーム名 */}
           <div className="text-xl font-bold mb-1">{gameName}</div>
 

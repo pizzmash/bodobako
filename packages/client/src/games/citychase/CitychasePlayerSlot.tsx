@@ -39,8 +39,8 @@ export function CitychasePlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlot
     <div className="flex flex-col gap-1 mt-1">
       {/* 役割バッジ */}
       <span
-        className="text-xs font-bold"
-        style={{ color: accentColor, fontFamily: "'Orbitron', monospace", letterSpacing: "0.05em" }}
+        className="text-xs font-bold font-orbitron tracking-[0.05em]"
+        style={{ color: accentColor }}
       >
         {isCriminal ? "FUGITIVE" : "POLICE"}
       </span>
@@ -54,13 +54,11 @@ export function CitychasePlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlot
             return (
               <span
                 key={hi}
+                className={`font-orbitron tracking-[0.05em] ${isActive ? "font-extrabold" : "font-semibold"}`}
                 style={{
                   fontSize: "0.6rem",
                   padding: "0.1rem 0.4rem",
                   borderRadius: 4,
-                  fontFamily: "'Orbitron', monospace",
-                  letterSpacing: "0.05em",
-                  fontWeight: isActive ? 800 : 600,
                   background: isActive ? color : `${color}33`,
                   color: isActive ? "white" : color,
                   border: `1px solid ${color}99`,

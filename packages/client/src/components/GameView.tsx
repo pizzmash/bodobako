@@ -4,15 +4,17 @@ import {
   Suspense,
   useState,
   useEffect,
+  useMemo,
   type ComponentType,
   type ReactElement,
   type ReactNode,
 } from "react";
 import { getGameDefinition } from "@bodobako/shared";
-import type { GameId } from "@bodobako/shared";
+import type { GameId, BlokusState } from "@bodobako/shared";
 import type { GameResult } from "@bodobako/shared";
 import { useRoom } from "../context/RoomContext";
 import type { GameStateEntry } from "../context/RoomContext";
+import { BLOKUS_COLORS } from "../games/blokus/constants";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useGameLog } from "../hooks/useGameLog";
 import { APP_HEADER_HEIGHT, GAME_SIDEBAR_WIDTH, MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
@@ -142,6 +144,21 @@ export function GameView() {
     roomCode: room?.code ?? null,
   });
 
+  // Blokus: 各プレイヤーのメインカラーをサイドバーカードに反映
+  const playerColorMap = useMemo<Record<string, string> | undefined>(() => {
+    if (!gameState || gameState.gameId !== "blokus") return undefined;
+    const state = gameState.state as BlokusState;
+    const map: Record<string, string> = {};
+    for (let i = 0; i < state.playerIds.length; i++) {
+      const pid = state.playerIds[i];
+      const ownedColor = ([0, 1, 2, 3] as const).find((c) => state.colorOwner[c] === i);
+      if (ownedColor !== undefined) {
+        map[pid] = BLOKUS_COLORS[ownedColor].fill;
+      }
+    }
+    return map;
+  }, [gameState]);
+
   if (!room) return null;
 
   // 現在の手番プレイヤーを解決
@@ -181,6 +198,7 @@ export function GameView() {
       logEntries={logEntries}
       PlayerSlot={PlayerSlot}
       currentTurnPlayerId={currentTurnPlayerId}
+      playerColorMap={playerColorMap}
     />
   );
 

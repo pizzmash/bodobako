@@ -12,9 +12,15 @@ const config: Config = {
         "indigo-gradient-deep": "linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)",
         "lobby-divider":
           "linear-gradient(to right, transparent, rgba(129,140,248,0.3) 20%, rgba(129,140,248,0.3) 80%, transparent)",
-        "lobby-orb-indigo": "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)",
-        "lobby-orb-violet": "radial-gradient(circle, rgba(129,140,248,0.08) 0%, transparent 70%)",
-        "lobby-shell": "linear-gradient(135deg, #EEF2FF 0%, #F8FAFE 50%, #FAF5FF 100%)",
+        "lobby-orb-indigo": "radial-gradient(circle, rgba(99,102,241,0.13) 0%, transparent 70%)",
+        "lobby-orb-violet": "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)",
+        "lobby-shell":
+          "radial-gradient(ellipse 130% 80% at 8% 5%, rgba(165,180,252,0.62) 0%, transparent 60%)," +
+          "radial-gradient(ellipse 85% 110% at 93% 4%, rgba(196,181,253,0.58) 0%, transparent 58%)," +
+          "radial-gradient(ellipse 90% 72% at 88% 93%, rgba(167,139,250,0.48) 0%, transparent 55%)," +
+          "radial-gradient(ellipse 90% 82% at 7% 95%, rgba(129,140,248,0.42) 0%, transparent 58%)," +
+          "radial-gradient(ellipse 70% 65% at 50% 48%, rgba(224,231,255,0.52) 0%, transparent 65%)," +
+          "linear-gradient(155deg, #F0F4FF 0%, #FAFAFE 45%, #F7F0FF 100%)",
         "result-win":
           "linear-gradient(135deg, rgba(167,139,250,0.15) 0%, rgba(129,140,248,0.1) 50%, rgba(250,245,255,0.95) 100%)",
       },
@@ -31,6 +37,7 @@ const config: Config = {
       fontFamily: {
         poppins: ["Poppins", "Segoe UI", "Hiragino Sans", "Noto Sans JP", "sans-serif"],
         inter: ["Inter", "Open Sans", "Segoe UI", "Hiragino Sans", "Noto Sans JP", "sans-serif"],
+        orbitron: ["Orbitron", "monospace"],
       },
       keyframes: {
         // === Shared / Common ===
@@ -138,9 +145,9 @@ const config: Config = {
         "cc-highlight-intersection": "cc-highlight-intersection 1.2s ease-in-out infinite",
       },
       zIndex: {
-        header: "900",
-        "header-popover": "930",
-        modal: "950",
+        header: "971",
+        "header-popover": "975",
+        modal: "990",
         overlay: "1090",
         sidebar: "1100",
         invite: "1200",

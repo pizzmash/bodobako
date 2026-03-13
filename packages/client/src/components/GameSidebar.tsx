@@ -9,16 +9,12 @@ interface GameSidebarProps {
 export function GameSidebar({ children }: GameSidebarProps) {
   return (
     <div
+      className="fixed right-0 bg-white border-l border-slate-200 overflow-y-auto"
       style={{
-        position: "fixed",
-        right: 0,
         top: APP_HEADER_HEIGHT,
         width: GAME_SIDEBAR_WIDTH,
         height: `calc(100vh - ${APP_HEADER_HEIGHT}px)`,
         zIndex: Z.gameSidebar,
-        background: "#ffffff",
-        borderLeft: "1px solid #e2e8f0",
-        overflowY: "auto",
       }}
     >
       {children}

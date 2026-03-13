@@ -229,6 +229,18 @@
   50%       { box-shadow: 0 0 18px 6px rgba(59,130,246,0.55); }
 }
 
+/* サイドバー プレイヤーカード：手番ハイライトグロウ（--card-glow-ring / --card-glow-shadow で色指定） */
+@keyframes player-card-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 1.5px var(--card-glow-ring), 0 3px 10px var(--card-glow-shadow);
+    transform: scale(1.01);
+  }
+  50% {
+    box-shadow: 0 0 0 2.5px var(--card-glow-ring), 0 6px 22px var(--card-glow-shadow);
+    transform: scale(1.025);
+  }
+}
+
 /* CityChase カスタムプロパティ (@layer 外で定義しないと cascade / specificity が崩れる) */
 :root {
   --cc-primary: #258cf4;

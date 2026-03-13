@@ -9,9 +9,9 @@ export const NYAMENS_ACCENT = "#0EA5E9";
 
 /** z-index 階層定数 */
 export const Z = {
-  header: 900,
-  headerPopover: 930,
-  modal: 950,        // ロビー・ルーム画面のモーダル（ゲームサイドバーなし）
+  header: 971,
+  headerPopover: 975,
+  modal: 990,        // ロビー・ルーム画面のモーダル（ヘッダー=971 より上）
   gameSidebar: 970,  // ゲーム中の右サイドバー
   gameModal: 980,    // ゲーム内ブロッキングモーダル（サイドバーより上）
   overlay: 1090,     // ゲーム結果オーバーレイ

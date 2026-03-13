@@ -49,7 +49,6 @@ function PlayerBar({
         return (
           <div
             key={pid}
-            className={isDuty ? "nya-duty-pulse" : undefined}
             style={{
               padding: "6px 10px",
               borderRadius: 10,
@@ -322,7 +321,7 @@ export function NyaMensBoard() {
     const alreadyReady = state.readyPlayers.includes(myId);
     const isAssassin = state.myRole === "assassin";
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 500, margin: "0 auto" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 500, margin: "0 auto", paddingTop: 48 }}>
 
         {/* 役職カード */}
         <div
@@ -449,7 +448,7 @@ export function NyaMensBoard() {
   })();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 600, margin: "0 auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 600, margin: "0 auto", paddingTop: 48 }}>
       {/* イベントキュー表示 */}
       {state.eventQueue.length > 0 && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>

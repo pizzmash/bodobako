@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import { MAX_PLAYER_NAME_LENGTH } from "../lib/constants";
+import { Z } from "../styles/tokens";
 import { API_BASE } from "../lib/socket";
 import type { FriendRelation } from "./AppHeader/hooks/useFriendRelations";
 import { useFriendRelations } from "./AppHeader/hooks/useFriendRelations";
@@ -302,7 +303,8 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
         {room && activePlayer && (
           <div
             ref={popoverRef}
-            className="absolute right-4 top-14 z-header-popover w-[280px] rounded-2xl border border-indigo-300/[35%] bg-[rgba(255,255,255,0.98)] p-3 shadow-[0_14px_32px_rgba(79,70,229,0.2)] backdrop-blur-[10px] sm:right-6"
+            className="absolute right-4 top-14 w-[280px] rounded-2xl border border-indigo-300/[35%] bg-[rgba(255,255,255,0.98)] p-3 shadow-[0_14px_32px_rgba(79,70,229,0.2)] backdrop-blur-[10px] sm:right-6"
+            style={{ zIndex: Z.headerPopover }}
             role="dialog"
             aria-label="参加者情報"
           >

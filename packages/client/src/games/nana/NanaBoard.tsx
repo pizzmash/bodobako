@@ -15,6 +15,8 @@ import {
     PLAYER_COLORS,
 } from "./constants";
 import { FieldCardView, findVisibleCardNumber } from "./FieldCardView";
+import { RulesPanel } from "./RulesPanel";
+import { StatusPanel } from "./StatusPanel";
 import { TurnFlipsBar } from "./TurnFlipsBar";
 
 // ── サブコンポーネント ────────────────────────────────────────────────────────────────────
@@ -363,6 +365,11 @@ export function NanaBoard() {
   const playersRef = useRef(room?.players ?? []);
   playersRef.current = room?.players ?? [];
 
+  const getName = useCallback(
+    (pid: string) => playersRef.current.find((p) => p.id === pid)?.name ?? pid,
+    [],
+  );
+
   const getPlayerColor = useCallback((pid: string) => {
     const i = playersRef.current.findIndex((p) => p.id === pid);
     return PLAYER_COLORS[(i >= 0 ? i : 0) % PLAYER_COLORS.length];
@@ -445,6 +452,8 @@ export function NanaBoard() {
   const myMinId = myActiveCards[0]?.id;
   const myMaxId = myActiveCards[myActiveCards.length - 1]?.id;
   const myColor = useMemo(() => getPlayerColor(playerId), [getPlayerColor, playerId]);
+  const currentPlayerName = getName(state.playerIds[state.currentPlayerIndex]);
+  const playerList = state.playerIds;
 
   // ── ムーブ送信 ────────────────────────────────────────────────────
   const handleFlipField = useCallback((index: number) => {
@@ -477,6 +486,54 @@ export function NanaBoard() {
             fontFamily: FONT,
           }}
         >
+          {/* 左サイドバー */}
+          <aside
+            style={{
+              width: 240,
+              flexShrink: 0,
+              borderRight: `1px solid ${C.border}`,
+              background: "white",
+              padding: 16,
+              display: "flex",
+              flexDirection: "column",
+              gap: 20,
+              overflowY: "auto",
+              minHeight: 0,
+              height: "auto",
+            }}
+          >
+            {/* ロゴ */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  padding: "4px 8px",
+                  background: C.primary,
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 900,
+                  color: "white",
+                  fontFamily: FONT,
+                  letterSpacing: "0.03em",
+                  flexShrink: 0,
+                }}
+              >
+                ナナ
+              </div>
+              <h1 style={{ fontSize: 20, fontWeight: 900, color: C.primary, margin: 0, fontFamily: FONT }}>
+                <span style={{ color: C.muted, fontWeight: 400, fontSize: 14 }}>Nana</span>
+              </h1>
+            </div>
+
+            <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
+              <StatusPanel
+                state={state}
+                playerId={playerId}
+                currentPlayerName={currentPlayerName}
+              />
+              <RulesPanel />
+            </div>
+          </aside>
+
           {/* センター */}
           <section
             style={{

@@ -19,7 +19,7 @@ export function NyaMensPlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlotPr
   // role-reveal フェーズ: 準備完了かどうかを表示
   if (state.phase === "role-reveal") {
     return (
-      <div className="text-xs mt-1" style={{ color: isReady ? "#22c55e" : "#94a3b8" }}>
+      <div className={`text-xs mt-1 ${isReady ? "text-green-500" : "text-slate-400"}`}>
         {isReady ? "準備完了" : "確認中..."}
       </div>
     );
@@ -31,7 +31,10 @@ export function NyaMensPlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlotPr
     if (role) {
       const isAssassin = role === "assassin";
       return (
-        <div className="text-xs mt-1" style={{ color: isAssassin ? "#ef4444" : ACCENT }}>
+        <div
+          className={`text-xs mt-1 ${isAssassin ? "text-red-500" : ""}`}
+          style={isAssassin ? undefined : { color: ACCENT }}
+        >
           {isAssassin ? "アサシン" : "ニャーメンズ"}
         </div>
       );
@@ -42,18 +45,18 @@ export function NyaMensPlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlotPr
   return (
     <div className="flex items-center gap-2 mt-1">
       {/* 手札枚数 */}
-      <span className="text-xs" style={{ color: "#94a3b8" }}>
-        <span style={{ color: "#1e293b", fontWeight: 700 }}>{handCount}</span> 枚
+      <span className="text-xs text-slate-400">
+        <span className="text-slate-900 font-bold">{handCount}</span> 枚
       </span>
       {/* 修理当番（パルスアニメーション付き） */}
       {isDuty && (
-        <span className="text-xs nya-duty-pulse" style={{ color: ACCENT, fontWeight: 700 }}>
+        <span className="text-xs font-bold" style={{ color: ACCENT }}>
           🛠️ 当番
         </span>
       )}
       {/* 自分のみ役割表示（アサシンの場合） */}
       {isKnownAssassin && (
-        <span className="text-xs" style={{ color: "#ef4444" }}>
+        <span className="text-xs text-red-500">
           🗡️
         </span>
       )}

@@ -21,17 +21,10 @@ interface MobileTabBarProps {
 export function MobileTabBar({ activeTab, onTabChange }: MobileTabBarProps) {
   return (
     <div
+      className="fixed bottom-0 left-0 right-0 flex flex-shrink-0 bg-white border-t border-slate-200"
       style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
         height: MOBILE_TAB_BAR_HEIGHT,
         zIndex: Z.gameMobileTab,
-        background: "#ffffff",
-        borderTop: "1px solid #e2e8f0",
-        display: "flex",
-        flexShrink: 0,
       }}
     >
       {(["game", "sidebar"] as const).map((tab) => {
@@ -39,24 +32,13 @@ export function MobileTabBar({ activeTab, onTabChange }: MobileTabBarProps) {
         return (
           <button
             key={tab}
-            style={{
-              flex: 1,
-              border: "none",
-              background: active ? "rgba(99,102,241,0.08)" : "transparent",
-              color: active ? "#6366F1" : "#94a3b8",
-              fontWeight: active ? 700 : 500,
-              fontSize: 11,
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 2,
-              borderTop: active ? "2px solid #6366F1" : "2px solid transparent",
-            }}
+            className={[
+              "flex-1 border-none cursor-pointer flex flex-col items-center justify-center gap-0.5 text-[11px]",
+              active ? "bg-indigo-500/[0.08] text-indigo-500 font-bold border-t-2 border-t-indigo-500" : "bg-transparent text-slate-400 font-medium border-t-2 border-t-transparent",
+            ].join(" ")}
             onClick={() => onTabChange(tab)}
           >
-            <span style={{ fontSize: 16 }}>{TAB_ICONS[tab]}</span>
+            <span className="text-base">{TAB_ICONS[tab]}</span>
             {TAB_LABELS[tab]}
           </button>
         );

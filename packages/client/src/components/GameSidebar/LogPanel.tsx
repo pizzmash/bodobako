@@ -15,47 +15,31 @@ export function LogPanel({
   players: { id: string; name: string }[];
 }) {
   return (
-    <div style={{ height: "100%", overflowY: "auto" }}>
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: "#94a3b8",
-          marginBottom: 12,
-        }}
-      >
+    <div className="h-full overflow-y-auto">
+      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-3">
         ゲームログ
       </div>
       {logs.length === 0 && (
-        <div style={{ fontSize: 12, color: "#94a3b8" }}>
+        <div className="text-xs text-slate-400">
           まだログはありません
         </div>
       )}
       {logs.map((entry) => (
         <div
           key={entry.id}
-          className="nana-log-entry"
-          style={{ display: "flex", gap: 6, marginBottom: 8, fontSize: 12 }}
+          className="nana-log-entry flex gap-1.5 mb-2 text-xs"
         >
           <span
-            style={{
-              color: getPlayerColor(entry.playerId, players),
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
+            className="font-bold flex-shrink-0"
+            style={{ color: getPlayerColor(entry.playerId, players) }}
           >
             {entry.playerName}:
           </span>
-          <span style={{ color: "#64748b", lineHeight: 1.4 }}>
+          <span className="text-slate-500 leading-[1.4]">
             {entry.tag && (
               <span
-                style={{
-                  color: entry.tagColor ?? "#64748b",
-                  fontWeight: 800,
-                  marginRight: 6,
-                }}
+                className="font-extrabold mr-1.5"
+                style={{ color: entry.tagColor ?? "#64748b" }}
               >
                 [{entry.tag}]
               </span>
