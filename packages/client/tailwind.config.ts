@@ -66,6 +66,15 @@ const config: Config = {
           "20%, 60%": { transform: "translateX(-5px)" },
           "40%, 80%": { transform: "translateX(5px)" },
         },
+        // === AiueBattle ===
+        "ab-fadeIn": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        "ab-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.6" },
+        },
         "icon-float": {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-8px)" },
@@ -135,6 +144,9 @@ const config: Config = {
         "modal-appear": "modal-appear .4s ease both",
         "pill-in": "pill-in .35s ease both",
         "slide-in-right": "slide-in-right .3s ease",
+        // AiueBattle
+        "ab-fadeIn": "ab-fadeIn .4s ease-out",
+        "ab-pulse": "ab-pulse 1.5s ease-in-out infinite",
         // Citychase
         "cc-pulse": "cc-pulse 2s infinite",
         "cc-pulse-danger": "cc-pulse-danger 2s infinite",

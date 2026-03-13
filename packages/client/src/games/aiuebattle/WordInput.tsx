@@ -43,9 +43,9 @@ export function WordInput({
 
   if (hasSubmitted) {
     return (
-      <div className="w-full max-w-sm text-center" style={{ animation: "ab-fadeIn .4s ease-out" }}>
+      <div className="w-full max-w-sm text-center animate-ab-fadeIn">
         <p style={styles.waiting}>
-          <span style={{ animation: "ab-pulse 1.5s ease-in-out infinite", display: "inline-block" }}>
+          <span className="animate-ab-pulse inline-block">
             他のプレイヤーを待っています... ({state.submittedPlayers.length}/
             {state.playerIds.length})
           </span>
@@ -94,7 +94,7 @@ export function WordInput({
   }
 
   return (
-    <div className="w-full max-w-[700px]" style={{ animation: "ab-fadeIn .4s ease-out" }}>
+    <div className="w-full max-w-[700px] animate-ab-fadeIn">
       {/* お題カード - 共通スタイルを使用 */}
       <div style={topicCardStyle}>
         <div style={topicBadgeStyle}>Topic</div>

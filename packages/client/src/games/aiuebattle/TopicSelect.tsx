@@ -26,7 +26,7 @@ export function TopicSelect({
 
   if (isSelector) {
     return (
-      <div className="w-full max-w-[700px]" style={{ animation: "ab-fadeIn .4s ease-out" }}>
+      <div className="w-full max-w-[700px] animate-ab-fadeIn">
         <p style={styles.subtitle}>お題を選んでください</p>
         <div style={styles.topicGrid}>
           {TOPIC_LIST.map((topic, i) => (
@@ -71,7 +71,7 @@ export function TopicSelect({
 
   return (
     <p style={styles.waiting}>
-      <span style={{ animation: "ab-pulse 1.5s ease-in-out infinite" }}>
+      <span className="animate-ab-pulse">
         {selectorName} がお題を選んでいます...
       </span>
     </p>

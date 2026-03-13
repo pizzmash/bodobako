@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
 import { Z } from "../styles/tokens";
 
@@ -32,10 +33,12 @@ export function MobileTabBar({ activeTab, onTabChange }: MobileTabBarProps) {
         return (
           <button
             key={tab}
-            className={[
-              "flex-1 border-none cursor-pointer flex flex-col items-center justify-center gap-0.5 text-[11px]",
-              active ? "bg-indigo-500/[0.08] text-indigo-500 font-bold border-t-2 border-t-indigo-500" : "bg-transparent text-slate-400 font-medium border-t-2 border-t-transparent",
-            ].join(" ")}
+            className={clsx(
+              "flex-1 border-none cursor-pointer flex flex-col items-center justify-center gap-0.5 text-[11px] border-t-2",
+              active
+                ? "bg-indigo-500/[0.08] text-indigo-500 font-bold border-t-indigo-500"
+                : "bg-transparent text-slate-400 font-medium border-t-transparent",
+            )}
             onClick={() => onTabChange(tab)}
           >
             <span className="text-base">{TAB_ICONS[tab]}</span>
