@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { aiuebattleDefinition } from "../definition.js";
 import { BOARD_CHARS, WORD_LENGTH, type AiueBattleState } from "../types.js";
 

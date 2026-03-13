@@ -16,7 +16,7 @@ import { useRoom } from "../context/RoomContext";
 import { BLOKUS_COLORS } from "../games/blokus/constants";
 import { useGameLog } from "../hooks/useGameLog";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { APP_HEADER_HEIGHT, GAME_SIDEBAR_WIDTH, MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
+import { APP_HEADER_HEIGHT_MOBILE, GAME_SIDEBAR_WIDTH, MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
 import { GameSidebar } from "./GameSidebar";
 import type { PlayerSlotProps } from "./GameSidebar/PlayerCard";
 import { GameSidebarContent } from "./GameSidebarContent";
@@ -214,7 +214,7 @@ export function GameView() {
           <div
             style={{
               position: "fixed",
-              top: APP_HEADER_HEIGHT,
+              top: APP_HEADER_HEIGHT_MOBILE,
               left: 0,
               right: 0,
               bottom: MOBILE_TAB_BAR_HEIGHT,

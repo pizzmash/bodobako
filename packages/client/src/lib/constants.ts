@@ -1,5 +1,8 @@
-/** アプリヘッダーの高さ (px) */
+/** アプリヘッダーの高さ (px) — デスクトップ (sm:py-3.5 + h-9 + border) */
 export const APP_HEADER_HEIGHT = 76;
+
+/** アプリヘッダーの高さ (px) — モバイル (py-2.5 + h-9 + border) */
+export const APP_HEADER_HEIGHT_MOBILE = 57;
 
 /** プレイヤー名（ゲスト）の最大文字数 */
 export const MAX_PLAYER_NAME_LENGTH = 12;
