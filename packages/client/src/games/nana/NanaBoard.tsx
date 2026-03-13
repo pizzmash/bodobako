@@ -638,7 +638,7 @@ export function NanaBoard() {
           left: 0,
           right: 0,
           bottom: MOBILE_TAB_BAR_HEIGHT,
-          zIndex: 22,
+          zIndex: Z.nanaHandFooter,
           background: "white",
         }}
       >

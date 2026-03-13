@@ -23,6 +23,9 @@ export const Z = {
   // モバイルタブバー用
   gameMobileTab: 25,
 
+  // ナナゲーム内 z-index
+  nanaHandFooter: 22,  // モバイル手札フッター（gameMobileTab=25 より下）
+
   // 音速飯点ゲーム内 z-index
   srGameSidebar: 40,
   srTableCard: 15,
@@ -37,4 +40,9 @@ export const Z = {
   blkBoardSvg: 1,   // SVGピース描画レイヤー
   blkBoardCell: 2,  // インタラクション用セルレイヤー
   blkCellOverlay: 1, // セル内のゴースト・ドット等のオーバーレイ
+
+  // ニャーメンズ: 山札カード積み重ね表示用（ローカル stacking context 内）
+  nyaDrawPileBack2: 0,  // 一番奥のカード
+  nyaDrawPileBack1: 1,  // 中間のカード
+  nyaDrawPileTop:   2,  // 一番手前のカード（クリック対象）
 } as const;

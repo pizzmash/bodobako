@@ -1,5 +1,6 @@
 import type { NyaMensTrack } from "@bodobako/shared";
 import { PlayingCard } from "../../components/PlayingCard";
+import { Z } from "../../styles/tokens";
 import { cardColor } from "./nyaUtils";
 
 const TOTAL_REPAIR_CARDS = 30;
@@ -220,16 +221,16 @@ export function RepairArea({
           {drawPileCount > 0 ? (
             <div style={{ position: "relative", width: 38, height: 52, flexShrink: 0 }}>
               {drawPileCount > 2 && (
-                <div style={{ position: "absolute", top: -5, left: 5, zIndex: 0 }}>
+                <div style={{ position: "absolute", top: -5, left: 5, zIndex: Z.nyaDrawPileBack2 }}>
                   <PlayingCard faceDown backColor={DRAW_PILE_BACK_COLOR} width={36} height={48} style={{ opacity: 0.3, borderRadius: 5 }} />
                 </div>
               )}
               {drawPileCount > 1 && (
-                <div style={{ position: "absolute", top: -2, left: 2, zIndex: 1 }}>
+                <div style={{ position: "absolute", top: -2, left: 2, zIndex: Z.nyaDrawPileBack1 }}>
                   <PlayingCard faceDown backColor={DRAW_PILE_BACK_COLOR} width={36} height={48} style={{ opacity: 0.6, borderRadius: 5 }} />
                 </div>
               )}
-              <div style={{ position: "relative", zIndex: 2 }}>
+              <div style={{ position: "relative", zIndex: Z.nyaDrawPileTop }}>
                 <PlayingCard
                   faceDown
                   backColor={DRAW_PILE_BACK_COLOR}

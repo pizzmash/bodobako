@@ -74,8 +74,9 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
           return (
             <div
               key={menuName}
+              className="flex items-center justify-between rounded-sm"
               style={{
-                ...styles.menuItem,
+                padding: "0.1875rem 0.25rem",
                 ...(canMake
                   ? styles.menuItemActive
                   : styles.menuItemInactive),
@@ -83,16 +84,20 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
             >
               <div>
                 <p
+                  className="text-sm font-bold italic m-0"
                   style={{
-                    ...styles.menuName,
+                    lineHeight: 1.2,
                     color: canMake ? C.primary : C.gray700,
                   }}
                 >
                   {menuName}
                 </p>
                 <p
+                  className="font-medium mb-0"
                   style={{
-                    ...styles.menuRecipe,
+                    fontSize: "0.6875rem",
+                    marginTop: "0.0625rem",
+                    lineHeight: 1.2,
                     color: canMake ? `${C.primary}99` : C.gray500,
                   }}
                 >
@@ -100,8 +105,10 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
                 </p>
               </div>
               <span
+                className="font-bold rounded-full"
                 style={{
-                  ...styles.badge,
+                  padding: "0.09375rem 0.1875rem",
+                  fontSize: "0.625rem",
                   ...(canMake ? styles.badgeActive : styles.badgeInactive),
                 }}
               >

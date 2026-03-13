@@ -1,6 +1,5 @@
 import { BOARD_CHARS } from "@bodobako/shared";
 import type React from "react";
-import { Z } from "../../styles/tokens";
 
 /* ── Design System ── */
 
@@ -417,20 +416,6 @@ export const styles: Record<string, React.CSSProperties> = {
     ...TYPOGRAPHY.base,
     fontWeight: 700,
     transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)",
-  },
-  confirmOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0,0,0,.5)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: Z.modal,
-    padding: SPACING.lg,
   },
   confirmCard: {
     background: C.bgCard,
