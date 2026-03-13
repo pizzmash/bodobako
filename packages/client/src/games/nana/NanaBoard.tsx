@@ -395,6 +395,7 @@ export function NanaBoard() {
           alignItems: "center",
           justifyContent: "center",
           padding: 16,
+          paddingRight: "calc(16px + var(--sidebar-right-offset, 0px))",
         }}
       >
         <div style={{ maxWidth: 420, width: "100%" }}>

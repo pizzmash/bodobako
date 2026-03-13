@@ -11,9 +11,10 @@ export const NYAMENS_ACCENT = "#0EA5E9";
 export const Z = {
   header: 900,
   headerPopover: 930,
-  modal: 950,
-  gameSidebar: 970,
-  overlay: 1090,
+  modal: 950,        // ロビー・ルーム画面のモーダル（ゲームサイドバーなし）
+  gameSidebar: 970,  // ゲーム中の右サイドバー
+  gameModal: 980,    // ゲーム内ブロッキングモーダル（サイドバーより上）
+  overlay: 1090,     // ゲーム結果オーバーレイ
   sidebar: 1100,
   invite: 1200,
   inviteModal: 1300,

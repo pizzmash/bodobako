@@ -12,7 +12,7 @@ export function ConfirmModal({ wordChars, onCancel, onSubmit }: ConfirmModalProp
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-      style={{ zIndex: Z.modal }}
+      style={{ zIndex: Z.gameModal, paddingRight: "var(--sidebar-right-offset, 0px)" }}
       onClick={onCancel}
     >
       <div

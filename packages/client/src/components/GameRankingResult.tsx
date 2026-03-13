@@ -34,7 +34,7 @@ export function GameRankingResult({
   const isHost = playerId === room.hostId;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in" style={{ zIndex: Z.overlay }}>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in" style={{ zIndex: Z.overlay, paddingRight: "var(--sidebar-right-offset, 0px)" }}>
       <div className="bg-white rounded-3xl p-8 max-w-[500px] w-[90%] shadow-[0_20px_60px_rgba(0,0,0,0.3)] animate-slide-down">
         {/* タイトル */}
         <div className="text-center mb-8">
