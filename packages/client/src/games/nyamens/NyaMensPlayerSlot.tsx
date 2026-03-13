@@ -45,9 +45,9 @@ export function NyaMensPlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlotPr
       <span className="text-xs" style={{ color: "#94a3b8" }}>
         <span style={{ color: "#1e293b", fontWeight: 700 }}>{handCount}</span> 枚
       </span>
-      {/* 修理当番 */}
+      {/* 修理当番（パルスアニメーション付き） */}
       {isDuty && (
-        <span className="text-xs" style={{ color: ACCENT, fontWeight: 700 }}>
+        <span className="text-xs nya-duty-pulse" style={{ color: ACCENT, fontWeight: 700 }}>
           🛠️ 当番
         </span>
       )}
