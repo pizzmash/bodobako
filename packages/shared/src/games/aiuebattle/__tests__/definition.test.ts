@@ -357,12 +357,12 @@ describe("getCurrentPlayerId", () => {
     expect(aiuebattleDefinition.getCurrentPlayerId(state)).toBe(P1);
   });
 
-  it("word-inputフェーズで未提出プレイヤーを返す", () => {
+  it("word-inputフェーズで空文字を返す（全員同時入力のため手番なし）", () => {
     const state: AiueBattleState = {
       ...makeWordInputState([P1, P2]),
       submittedPlayers: [P1], // P1は提出済み
     };
-    expect(aiuebattleDefinition.getCurrentPlayerId(state)).toBe(P2);
+    expect(aiuebattleDefinition.getCurrentPlayerId(state)).toBe("");
   });
 
   it("battleフェーズでcurrentPlayerIndexのプレイヤーを返す", () => {
