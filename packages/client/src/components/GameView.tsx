@@ -241,7 +241,7 @@ export function GameView() {
       >
         {/* サイドバー幅分の右余白をラッパーで確保（通常フローのゲーム向け） */}
         {/* position:fixed のゲームは CSS var --sidebar-right-offset で個別対応済み */}
-        <div style={{ paddingRight: GAME_SIDEBAR_WIDTH }}>
+        <div style={{ paddingRight: "var(--sidebar-right-offset, 0px)" }}>
           {board}
         </div>
         <GameSidebar>{sidebarContent}</GameSidebar>
