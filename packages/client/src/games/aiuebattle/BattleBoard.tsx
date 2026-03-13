@@ -16,7 +16,6 @@ import {
     TYPOGRAPHY,
 } from "./constants";
 import { useIsWideBoard } from "./hooks/useIsWideBoard";
-import { PlayerSheet } from "./PlayerSheet";
 
 interface BattleBoardProps {
   state: AiueBattleState;
@@ -349,22 +348,6 @@ export function BattleBoard({
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Player sheets */}
-      <div style={styles.sheets}>
-        {state.playerIds.map((pid, pi) => (
-          <PlayerSheet
-            key={pid}
-            pid={pid}
-            pi={pi}
-            state={state}
-            room={room}
-            playerId={playerId}
-            newlyRevealed={newlyRevealed}
-            gameResult={gameResult}
-          />
-        ))}
       </div>
     </>
   );

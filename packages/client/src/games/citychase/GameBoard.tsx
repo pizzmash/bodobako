@@ -17,7 +17,6 @@ import { clsx } from "clsx";
 import { useCallback, useMemo } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { BoardGrid } from "./BoardGrid";
-import { PlayerPanel } from "./PlayerPanel";
 
 interface Props {
   state: CitychasePlayerView;
@@ -127,9 +126,6 @@ export function GameBoard({
 
   return (
     <div className="text-center p-2 w-full max-w-[900px]">
-      {/* プレイヤーパネル */}
-      <PlayerPanel state={state} playerId={playerId} room={room} />
-
       {/* ステータスバー */}
       <div className="flex justify-center gap-3 mb-3 flex-wrap">
         <div className="cc-status-badge flex items-center gap-2">

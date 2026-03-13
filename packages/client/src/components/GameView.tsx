@@ -1,27 +1,26 @@
-import {
-  Component,
-  lazy,
-  Suspense,
-  useState,
-  useEffect,
-  useMemo,
-  type ComponentType,
-  type ReactElement,
-  type ReactNode,
-} from "react";
+import type { BlokusState, GameId, GameResult } from "@bodobako/shared";
 import { getGameDefinition } from "@bodobako/shared";
-import type { GameId, BlokusState } from "@bodobako/shared";
-import type { GameResult } from "@bodobako/shared";
-import { useRoom } from "../context/RoomContext";
+import {
+    Component,
+    lazy,
+    Suspense,
+    useEffect,
+    useMemo,
+    useState,
+    type ComponentType,
+    type ReactElement,
+    type ReactNode,
+} from "react";
 import type { GameStateEntry } from "../context/RoomContext";
+import { useRoom } from "../context/RoomContext";
 import { BLOKUS_COLORS } from "../games/blokus/constants";
-import { useIsMobile } from "../hooks/useIsMobile";
 import { useGameLog } from "../hooks/useGameLog";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { APP_HEADER_HEIGHT, GAME_SIDEBAR_WIDTH, MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
 import { GameSidebar } from "./GameSidebar";
+import type { PlayerSlotProps } from "./GameSidebar/PlayerCard";
 import { GameSidebarContent } from "./GameSidebarContent";
 import { MobileTabBar } from "./MobileTabBar";
-import type { PlayerSlotProps } from "./GameSidebar/PlayerCard";
 
 const OthelloBoard = lazy(() =>
   import("../games/othello/OthelloBoard").then((m) => ({ default: m.OthelloBoard }))
