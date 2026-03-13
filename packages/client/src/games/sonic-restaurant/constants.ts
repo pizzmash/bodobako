@@ -120,14 +120,6 @@ export const styles: Record<string, CSSProperties> = {
     color: C.gray700,
   },
 
-  menuItem: {
-    padding: "0.1875rem 0.25rem",
-    borderRadius: "0.125rem",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
   menuItemActive: {
     backgroundColor: `${C.primary}0D`, // 5% opacity
     border: `1px solid ${C.primary}33`, // 20% opacity
@@ -139,29 +131,6 @@ export const styles: Record<string, CSSProperties> = {
     opacity: 0.5,
   },
 
-  menuName: {
-    fontSize: "0.875rem",
-    fontWeight: 700,
-    fontStyle: "italic",
-    lineHeight: 1.2,
-    margin: 0,
-  },
-
-  menuRecipe: {
-    fontSize: "0.6875rem",
-    fontWeight: 500,
-    marginTop: "0.0625rem",
-    marginBottom: 0,
-    lineHeight: 1.2,
-  },
-
-  badge: {
-    padding: "0.09375rem 0.1875rem",
-    fontSize: "0.625rem",
-    fontWeight: 700,
-    borderRadius: "9999px",
-  },
-
   badgeActive: {
     backgroundColor: C.primary,
     color: C.white,
@@ -171,45 +140,6 @@ export const styles: Record<string, CSSProperties> = {
   badgeInactive: {
     backgroundColor: C.gray200,
     color: C.gray500,
-  },
-
-  // プレイヤーアイテム（動的な色定数を使用）
-  playerItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.75rem",
-    padding: "0.75rem",
-    backgroundColor: C.gray50,
-    borderRadius: "1rem",
-    border: `1px solid ${C.gray100}`,
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  playerProgress: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: `${C.primary}1A`, // 10% opacity
-    pointerEvents: "none",
-    transition: "width 0.5s ease",
-  },
-
-  playerName: {
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    color: C.gray900,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-
-  playerCards: {
-    fontSize: "0.75rem",
-    fontWeight: 800,
-    color: C.primary,
-    marginTop: "0.25rem",
   },
 
   // 中央テーブル（動的な色定数を使用）
@@ -241,7 +171,7 @@ export const styles: Record<string, CSSProperties> = {
     position: "fixed",
     bottom: 0,
     left: 0,
-    right: 0,
+    right: "var(--sidebar-right-offset, 0px)",
     backgroundColor: "rgba(255, 255, 255, 0.95)",
     backdropFilter: "blur(12px)",
     borderTop: `4px solid ${C.primary}`,

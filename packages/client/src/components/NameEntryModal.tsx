@@ -20,7 +20,6 @@ export function NameEntryModal() {
     if (!draft.trim()) {
       setShake(true);
       inputRef.current?.focus();
-      setTimeout(() => setShake(false), 400);
       return;
     }
     setPlayerName(draft.trim());
@@ -64,6 +63,7 @@ export function NameEntryModal() {
             <input
               ref={inputRef}
               className={`w-full rounded-2xl border-2 border-indigo-300/30 bg-white/70 px-[18px] py-[14px] text-center font-poppins text-[1.05rem] font-medium text-indigo-600 outline-none transition-all duration-200 backdrop-blur-lg focus:border-indigo-500 focus:outline focus:outline-3 focus:outline-offset-2 focus:outline-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1),0_4px_12px_rgba(99,102,241,0.15)] ${shake ? "animate-shake border-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.15),0_4px_12px_rgba(239,68,68,0.2)]" : ""}`}
+              onAnimationEnd={() => setShake(false)}
               placeholder="名前を入力..."
               value={draft}
               onChange={(e) => setDraft(e.target.value)}

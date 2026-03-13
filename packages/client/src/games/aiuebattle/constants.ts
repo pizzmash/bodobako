@@ -1,6 +1,5 @@
 import { BOARD_CHARS } from "@bodobako/shared";
 import type React from "react";
-import { Z } from "../../styles/tokens";
 
 /* ── Design System ── */
 
@@ -85,15 +84,7 @@ export const RADIUS = {
   full: "9999px",
 } as const;
 
-// Player colors (for identification)
-export const PLAYER_COLORS = [
-  "#0496ff",  // Blue
-  "#ff5c8d",  // Pink
-  "#ffbc42",  // Orange
-  "#06d6a0",  // Green
-  "#9d4edd",  // Purple
-  "#ec4899",  // Hot Pink
-];
+export { PLAYER_COLORS } from "../../lib/color";
 
 export const FONT = "'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif";
 
@@ -425,20 +416,6 @@ export const styles: Record<string, React.CSSProperties> = {
     ...TYPOGRAPHY.base,
     fontWeight: 700,
     transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)",
-  },
-  confirmOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0,0,0,.5)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: Z.modal,
-    padding: SPACING.lg,
   },
   confirmCard: {
     background: C.bgCard,

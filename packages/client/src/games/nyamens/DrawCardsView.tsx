@@ -50,11 +50,12 @@ function EventCardOverlay({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.7)",
-        zIndex: Z.modal,
+        zIndex: Z.gameModal,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
+        paddingRight: "calc(24px + var(--sidebar-right-offset, 0px))",
       }}
       onClick={onDismiss}
     >
@@ -98,12 +99,13 @@ function NumberCardOverlay({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.65)",
-        zIndex: Z.modal,
+        zIndex: Z.gameModal,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "column",
         gap: 20,
+        paddingRight: "var(--sidebar-right-offset, 0px)",
       }}
       onClick={onDismiss}
     >

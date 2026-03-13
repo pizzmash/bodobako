@@ -9,15 +9,23 @@ export const NYAMENS_ACCENT = "#0EA5E9";
 
 /** z-index 階層定数 */
 export const Z = {
-  header: 900,
-  headerPopover: 930,
-  modal: 950,
-  overlay: 1090,
+  header: 971,
+  headerPopover: 975,
+  modal: 990,        // ロビー・ルーム画面のモーダル（ヘッダー=971 より上）
+  gameSidebar: 970,  // ゲーム中の右サイドバー
+  gameModal: 980,    // ゲーム内ブロッキングモーダル（サイドバーより上）
+  overlay: 1090,     // ゲーム結果オーバーレイ
   sidebar: 1100,
   invite: 1200,
   inviteModal: 1300,
   roomError: 2000,
   scanlines: 9999,
+
+  // モバイルタブバー用
+  gameMobileTab: 25,
+
+  // ナナゲーム内 z-index
+  nanaHandFooter: 22,  // モバイル手札フッター（gameMobileTab=25 より下）
 
   // 音速飯点ゲーム内 z-index
   srGameSidebar: 40,
@@ -33,4 +41,9 @@ export const Z = {
   blkBoardSvg: 1,   // SVGピース描画レイヤー
   blkBoardCell: 2,  // インタラクション用セルレイヤー
   blkCellOverlay: 1, // セル内のゴースト・ドット等のオーバーレイ
+
+  // ニャーメンズ: 山札カード積み重ね表示用（ローカル stacking context 内）
+  nyaDrawPileBack2: 0,  // 一番奥のカード
+  nyaDrawPileBack1: 1,  // 中間のカード
+  nyaDrawPileTop:   2,  // 一番手前のカード（クリック対象）
 } as const;

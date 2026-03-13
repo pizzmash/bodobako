@@ -107,10 +107,11 @@ export function Lobby() {
         </div>
       )}
 
-      <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-lobby-shell pt-6 text-indigo-900">
+      <div className="relative flex min-h-screen flex-col items-center overflow-x-hidden bg-lobby-shell pt-6 text-indigo-900">
         {/* Background decorations */}
-        <div className="pointer-events-none absolute -right-[5%] -top-[10%] z-0 h-[500px] w-[500px] rounded-full bg-lobby-orb-indigo" />
-        <div className="pointer-events-none absolute -bottom-[15%] -left-[8%] z-0 h-[600px] w-[600px] rounded-full bg-lobby-orb-violet" />
+        <div className="pointer-events-none absolute -right-[5%] -top-[10%] z-0 h-[520px] w-[520px] rounded-full bg-lobby-orb-indigo" />
+        <div className="pointer-events-none absolute -bottom-[15%] -left-[8%] z-0 h-[620px] w-[620px] rounded-full bg-lobby-orb-violet" />
+        <div className="pointer-events-none absolute left-[30%] top-[40%] z-0 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(216,180,254,0.18)_0%,transparent_70%)]" />
 
         {/* Error banner */}
         {errorMsg && (

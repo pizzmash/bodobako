@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { SidebarAccountTab } from "./Sidebar/SidebarAccountTab";
@@ -81,11 +82,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               return (
                 <button
                   key={tab}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2.5 text-[0.85rem] font-poppins transition duration-200 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
+                  className={clsx(
+                    "flex flex-1 items-center justify-center gap-1.5 rounded-lg border-0 py-2.5 text-[0.85rem] font-poppins transition duration-200 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500",
                     active
                       ? "bg-white text-indigo-600 font-bold shadow-[0_2px_8px_rgba(99,102,241,0.15)]"
-                      : "bg-transparent text-slate-400 font-medium"
-                  }`}
+                      : "bg-transparent text-slate-400 font-medium",
+                  )}
                   onClick={() => setActiveTab(tab)}
                   aria-selected={active}
                   role="tab"

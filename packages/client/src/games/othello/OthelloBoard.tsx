@@ -16,10 +16,6 @@ export function OthelloBoard() {
   const mustPass = isMyTurn && validMoves.length === 0 && !state.finished;
   const counts = countDiscs(state.board);
 
-  const currentPlayer = room.players.find(
-    (p) => p.id === state.playerIds[state.currentPlayerIndex]
-  );
-
   const handleClick = (row: number, col: number) => {
     if (!isMyTurn || state.finished) return;
     if (!validSet.has(`${row},${col}`)) return;
@@ -33,22 +29,12 @@ export function OthelloBoard() {
     sendMove(move);
   };
 
-  const myColor = myIndex === 0 ? "黒" : "白";
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen font-sans">
       <h2>オセロ</h2>
       <div className="text-lg my-2">
-        <span>あなた: {myColor}</span>
-        <span className="mx-4 text-gray-400">|</span>
         <span>黒: {counts.black} / 白: {counts.white}</span>
       </div>
-
-      {!gameResult && (
-        <div className="text-xl font-bold my-2 mb-4">
-          {isMyTurn ? "あなたの番です" : `${currentPlayer?.name ?? "相手"} の番です`}
-        </div>
-      )}
 
       {gameResult && (
         <GameResultCard

@@ -5,7 +5,9 @@
 import type { Card, SonicRestaurantState } from "@bodobako/shared";
 import { canPlayCard } from "@bodobako/shared";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { MOBILE_TAB_BAR_HEIGHT } from "../../lib/constants";
 import { Z } from "../../styles/tokens";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import { CardComponent } from "./CardComponent";
 import { styles } from "./constants";
 
@@ -18,6 +20,7 @@ interface HandCardsProps {
 export const HandCards = React.memo(function HandCards({ state, playerId, onCardPlay }: HandCardsProps) {
   const myHand = state.hands[playerId] || [];
   const isFinished = state.finishedOrder.includes(playerId);
+  const isMobile = useIsMobile();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -50,7 +53,13 @@ export const HandCards = React.memo(function HandCards({ state, playerId, onCard
   }, []);
 
   return (
-    <footer style={{ ...styles.handContainer, zIndex: Z.srHandArea }}>
+    <footer
+      style={{
+        ...styles.handContainer,
+        bottom: isMobile ? MOBILE_TAB_BAR_HEIGHT : 0,
+        zIndex: Z.srHandArea,
+      }}
+    >
       {/* 手札ラベル */}
       <div style={styles.handLabel}>自分の手札</div>
 

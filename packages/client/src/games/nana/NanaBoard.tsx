@@ -1,29 +1,23 @@
-import { nanaDefinition } from "@bodobako/shared";
 import type { NanaCardView, NanaMove, NanaStateView } from "@bodobako/shared";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { useRoom } from "../../context/RoomContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { withAlpha } from "../../lib/color";
+import { MOBILE_TAB_BAR_HEIGHT } from "../../lib/constants";
+import { Z } from "../../styles/tokens";
 import {
     APP_HEADER_HEIGHT,
     C,
     FONT,
     NANA_HAND_FOOTER_HEIGHT_DESKTOP,
     NANA_HAND_FOOTER_HEIGHT_MOBILE,
-    NANA_PLAYER_BAR_HEIGHT_MOBILE,
-    NANA_TAB_HEIGHT_MOBILE,
     PLAYER_COLORS,
 } from "./constants";
 import { FieldCardView, findVisibleCardNumber } from "./FieldCardView";
-import { GameLogPanel } from "./GameLogPanel";
-import { OpponentArea } from "./OpponentArea";
 import { RulesPanel } from "./RulesPanel";
 import { StatusPanel } from "./StatusPanel";
 import { TurnFlipsBar } from "./TurnFlipsBar";
-import type { LogEntry } from "./types";
-
-const getLogStorageKey = (roomCode: string) => `nana-logs-${roomCode}`;
 
 // ── サブコンポーネント ────────────────────────────────────────────────────────────────────
 
@@ -367,21 +361,7 @@ export function NanaBoard() {
   // フックはすべて条件リターンより前に呼ぶ（React Hooks のルール）
   const state = gameState?.gameId === "nana" ? gameState.state : null;
   const isMobile = useIsMobile();
-  const [mobileTab, setMobileTab] = useState<"game" | "log">("game");
-  const [logs, setLogs] = useState<LogEntry[]>(() => {
-    if (!room?.code) return [];
-    try {
-      const stored = localStorage.getItem(getLogStorageKey(room.code));
-      if (stored) {
-        const parsed = JSON.parse(stored) as LogEntry[];
-        return parsed;
-      }
-    } catch {}
-    return [];
-  });
-  const logIdRef = useRef(logs.length > 0 ? Math.max(...logs.map((l) => l.id)) : 0);
   const prevStateRef = useRef<NanaStateView | null>(null);
-  const prevRoomCodeRef = useRef<string | null>(null);
   const playersRef = useRef(room?.players ?? []);
   playersRef.current = room?.players ?? [];
 
@@ -389,54 +369,16 @@ export function NanaBoard() {
     (pid: string) => playersRef.current.find((p) => p.id === pid)?.name ?? pid,
     [],
   );
+
   const getPlayerColor = useCallback((pid: string) => {
     const i = playersRef.current.findIndex((p) => p.id === pid);
     return PLAYER_COLORS[(i >= 0 ? i : 0) % PLAYER_COLORS.length];
   }, []);
 
-  // ── ログ生成 ──────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!state) return;
-    const prev = prevStateRef.current;
+  // prevStateRef の更新（ゲームロジックで参照される場合に備える）
+  if (state && state !== prevStateRef.current) {
     prevStateRef.current = state;
-    if (!prev) return;
-
-    // NanaStateView は NanaState と同じフィールドを持つためキャストで利用
-    const newEntries = nanaDefinition.getLogEntries!(prev as never, state as never);
-    if (newEntries.length === 0) return;
-
-    const logItems = newEntries.map((entry) => ({
-      id: ++logIdRef.current,
-      playerId: entry.playerId,
-      player: getName(entry.playerId),
-      msg: entry.message,
-      tag: entry.tag,
-      tagColor: entry.tagColor,
-    }));
-
-    setLogs((l) => [...logItems, ...l].slice(0, 50));
-  }, [state, getName]);
-
-  // ── ログ永続化 ─────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!room?.code) return;
-    try {
-      localStorage.setItem(getLogStorageKey(room.code), JSON.stringify(logs));
-    } catch {}
-  }, [logs, room?.code]);
-
-  // ── ルーム退出時にログをクリア ──────────────────────────────────────
-  useEffect(() => {
-    if (room?.code) {
-      prevRoomCodeRef.current = room.code;
-    } else if (prevRoomCodeRef.current) {
-      // room が null になった（leaveRoom が呼ばれた）場合はログをクリア
-      try {
-        localStorage.removeItem(getLogStorageKey(prevRoomCodeRef.current));
-      } catch {}
-      prevRoomCodeRef.current = null;
-    }
-  }, [room?.code]);
+  }
 
   // ── 早期リターン ──────────────────────────────────────────────────
   if (gameState !== null && gameState.gameId !== "nana") return null;
@@ -453,13 +395,14 @@ export function NanaBoard() {
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: 120,
+          zIndex: Z.overlay,
           background: "rgba(15,23,42,0.34)",
           backdropFilter: "blur(2px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: 16,
+          paddingRight: "calc(16px + var(--sidebar-right-offset, 0px))",
         }}
       >
         <div style={{ maxWidth: 420, width: "100%" }}>
@@ -508,9 +451,9 @@ export function NanaBoard() {
   );
   const myMinId = myActiveCards[0]?.id;
   const myMaxId = myActiveCards[myActiveCards.length - 1]?.id;
+  const myColor = useMemo(() => getPlayerColor(playerId), [getPlayerColor, playerId]);
   const currentPlayerName = getName(state.playerIds[state.currentPlayerIndex]);
   const playerList = state.playerIds;
-  const myColor = useMemo(() => getPlayerColor(playerId), [getPlayerColor, playerId]);
 
   // ── ムーブ送信 ────────────────────────────────────────────────────
   const handleFlipField = useCallback((index: number) => {
@@ -534,7 +477,7 @@ export function NanaBoard() {
             position: "fixed",
             top: `${APP_HEADER_HEIGHT}px`,
             left: 0,
-            right: 0,
+            right: "var(--sidebar-right-offset, 0px)",
             bottom: `${NANA_HAND_FOOTER_HEIGHT_DESKTOP}px`,
             display: "flex",
             minHeight: 0,
@@ -563,14 +506,9 @@ export function NanaBoard() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
-                  width: "fit-content",
-                  height: "fit-content",
                   padding: "4px 8px",
                   background: C.primary,
                   borderRadius: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                   fontSize: 14,
                   fontWeight: 900,
                   color: "white",
@@ -581,60 +519,12 @@ export function NanaBoard() {
               >
                 ナナ
               </div>
-              <h1
-                style={{
-                  fontSize: 20,
-                  fontWeight: 900,
-                  color: C.primary,
-                  margin: 0,
-                  fontFamily: FONT,
-                }}
-              >
-                <span
-                  style={{ color: C.muted, fontWeight: 400, fontSize: 14 }}
-                >
-                  Nana
-                </span>
+              <h1 style={{ fontSize: 20, fontWeight: 900, color: C.primary, margin: 0, fontFamily: FONT }}>
+                <span style={{ color: C.muted, fontWeight: 400, fontSize: 14 }}>Nana</span>
               </h1>
             </div>
 
-            <div>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: C.muted,
-                  marginBottom: 8,
-                }}
-              >
-                プレイヤー
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {playerList.map((pid) => (
-                  <OpponentArea
-                    key={pid}
-                    pid={pid}
-                    name={getName(pid)}
-                    state={state}
-                    isMyTurn={isMyTurn}
-                    onFlip={(pos) => handleFlipHand(pid, pos)}
-                    isCurrentPlayer={state.playerIds[state.currentPlayerIndex] === pid}
-                    playerColor={getPlayerColor(pid)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "auto",
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-              }}
-            >
+            <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
               <StatusPanel
                 state={state}
                 playerId={playerId}
@@ -696,22 +586,6 @@ export function NanaBoard() {
               <GuideBanner isMyTurn={isMyTurn} pendingResult={pendingResult} turnFlipsCount={state.turnFlips.length} />
             </div>
           </section>
-
-          {/* 右サイドバー */}
-          <aside
-            style={{
-              width: 200,
-              flexShrink: 0,
-              borderLeft: `1px solid ${C.border}`,
-              background: "white",
-              padding: 16,
-              overflowY: "auto",
-              minHeight: 0,
-              height: "auto",
-            }}
-          >
-            <GameLogPanel logs={logs} getPlayerColor={getPlayerColor} />
-          </aside>
         </main>
 
         {/* 手札フッター */}
@@ -719,7 +593,7 @@ export function NanaBoard() {
           style={{
             position: "fixed",
             left: 0,
-            right: 0,
+            right: "var(--sidebar-right-offset, 0px)",
             bottom: 0,
             zIndex: 10,
             background: "white",
@@ -752,75 +626,67 @@ export function NanaBoard() {
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        paddingBottom:
-          NANA_HAND_FOOTER_HEIGHT_MOBILE + NANA_PLAYER_BAR_HEIGHT_MOBILE + NANA_TAB_HEIGHT_MOBILE,
+        paddingBottom: NANA_HAND_FOOTER_HEIGHT_MOBILE + MOBILE_TAB_BAR_HEIGHT,
         background: C.bg,
         fontFamily: FONT,
       }}
     >
-      {/* タブコンテンツ */}
+      {/* ゲームコンテンツ */}
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-        {mobileTab === "game" && (
+        <div
+          style={{
+            height: "100%",
+            minHeight: 0,
+            overflow: "hidden",
+            padding: "8px",
+            display: "grid",
+            gridTemplateRows: hasBottomAction
+              ? "102px minmax(0, 1fr) 72px"
+              : "102px minmax(0, 1fr)",
+            rowGap: 10,
+          }}
+        >
+          <TurnFlipsSection
+            flips={displayTurnFlips}
+            state={state}
+            resolvedNumbers={displayTurnFlipNumbers}
+            getPlayerColor={getPlayerColor}
+          />
           <div
             style={{
-              height: "100%",
+              flex: 1,
               minHeight: 0,
-              overflow: "hidden",
-              padding: "8px",
-              display: "grid",
-              gridTemplateRows: hasBottomAction
-                ? "102px minmax(0, 1fr) 72px"
-                : "102px minmax(0, 1fr)",
-              rowGap: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <TurnFlipsSection
-              flips={displayTurnFlips}
-              state={state}
-              resolvedNumbers={displayTurnFlipNumbers}
-              getPlayerColor={getPlayerColor}
+            <FieldGrid
+              cardW={55}
+              cardH={73}
+              fieldCards={state.fieldCards}
+              isMyTurn={isMyTurn}
+              pendingResult={pendingResult}
+              displayTurnFlipIds={displayTurnFlipIds}
+              displayTurnFlipNumbers={displayTurnFlipNumbers}
+              onFlipField={handleFlipField}
             />
+          </div>
+          {hasBottomAction && (
             <div
               style={{
-                flex: 1,
-                minHeight: 0,
+                height: 72,
                 display: "flex",
-                alignItems: "center",
+                flexDirection: "column",
                 justifyContent: "center",
+                gap: 6,
               }}
             >
-              <FieldGrid
-                cardW={55}
-                cardH={73}
-                fieldCards={state.fieldCards}
-                isMyTurn={isMyTurn}
-                pendingResult={pendingResult}
-                displayTurnFlipIds={displayTurnFlipIds}
-                displayTurnFlipNumbers={displayTurnFlipNumbers}
-                onFlipField={handleFlipField}
-              />
+              <ConfirmBanner isMyTurn={isMyTurn} pendingResult={pendingResult} onConfirm={handleConfirm} />
+              <GuideBanner isMyTurn={isMyTurn} pendingResult={pendingResult} turnFlipsCount={state.turnFlips.length} />
             </div>
-            {hasBottomAction && (
-              <div
-                style={{
-                  height: 72,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  gap: 6,
-                }}
-              >
-                <ConfirmBanner isMyTurn={isMyTurn} pendingResult={pendingResult} onConfirm={handleConfirm} />
-                <GuideBanner isMyTurn={isMyTurn} pendingResult={pendingResult} turnFlipsCount={state.turnFlips.length} />
-              </div>
-            )}
-          </div>
-        )}
-        {mobileTab === "log" && (
-          <div style={{ height: "100%", padding: 16 }}>
-            <GameLogPanel logs={logs} getPlayerColor={getPlayerColor} />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* 手札フッター */}
@@ -829,8 +695,8 @@ export function NanaBoard() {
           position: "fixed",
           left: 0,
           right: 0,
-          bottom: NANA_PLAYER_BAR_HEIGHT_MOBILE + NANA_TAB_HEIGHT_MOBILE,
-          zIndex: 22,
+          bottom: MOBILE_TAB_BAR_HEIGHT,
+          zIndex: Z.nanaHandFooter,
           background: "white",
         }}
       >
@@ -850,86 +716,6 @@ export function NanaBoard() {
         />
       </div>
 
-      <div
-        style={{
-          position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: NANA_TAB_HEIGHT_MOBILE,
-          zIndex: 21,
-          height: NANA_PLAYER_BAR_HEIGHT_MOBILE,
-          background: "white",
-          borderTop: `1px solid ${C.border}`,
-          padding: "8px 6px",
-          overflowX: "auto",
-          overflowY: "hidden",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <div style={{ display: "flex", gap: 8, width: "max-content" }}>
-          {playerList.map((pid) => (
-            <OpponentArea
-              key={pid}
-              pid={pid}
-              name={getName(pid)}
-              state={state}
-              isMyTurn={isMyTurn}
-              onFlip={(pos) => handleFlipHand(pid, pos)}
-              isCurrentPlayer={state.playerIds[state.currentPlayerIndex] === pid}
-              playerColor={getPlayerColor(pid)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 下部ナビ */}
-      <div
-        style={{
-          position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 23,
-          height: NANA_TAB_HEIGHT_MOBILE,
-          background: "white",
-          borderTop: `1px solid ${C.border}`,
-          display: "flex",
-          flexShrink: 0,
-        }}
-      >
-        {(["game", "log"] as const).map((tab) => {
-          const labels = { game: "ゲーム", log: "ログ" };
-          const icons = { game: "🃏", log: "📋" };
-          const active = mobileTab === tab;
-          return (
-            <button
-              key={tab}
-              className="nana-bottom-nav-btn"
-              style={{
-                flex: 1,
-                border: "none",
-                background: active ? C.primaryLight : "transparent",
-                color: active ? C.primary : C.muted,
-                fontWeight: active ? 700 : 500,
-                fontFamily: FONT,
-                fontSize: 11,
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 2,
-                borderTop: active ? `2px solid ${C.primary}` : "2px solid transparent",
-              }}
-              onClick={() => setMobileTab(tab)}
-            >
-              <span style={{ fontSize: 16 }}>{icons[tab]}</span>
-              {labels[tab]}
-            </button>
-          );
-        })}
-      </div>
       {resultOverlay}
     </div>
   );

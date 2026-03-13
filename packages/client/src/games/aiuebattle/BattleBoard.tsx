@@ -16,7 +16,6 @@ import {
     TYPOGRAPHY,
 } from "./constants";
 import { useIsWideBoard } from "./hooks/useIsWideBoard";
-import { PlayerSheet } from "./PlayerSheet";
 
 interface BattleBoardProps {
   state: AiueBattleState;
@@ -124,14 +123,8 @@ export function BattleBoard({
             ) : isMyTurn ? (
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: SPACING.sm, flexWrap: "wrap" }}>
                 <span
-                  style={{
-                    display: "inline-block",
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    background: C.textMain,
-                    animation: "ab-pulse 1.5s ease-in-out infinite",
-                  }}
+                  className="animate-ab-pulse inline-block w-2 h-2 rounded-full"
+                  style={{ background: C.textMain }}
                 />
                 あなたの番です！
                 {state.attackCount > 0 && (
@@ -163,14 +156,8 @@ export function BattleBoard({
                   </span>
                 )}
                 <span
-                  style={{
-                    display: "inline-block",
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    background: C.textMain,
-                    animation: "ab-pulse 1.5s ease-in-out infinite",
-                  }}
+                  className="animate-ab-pulse inline-block w-2 h-2 rounded-full"
+                  style={{ background: C.textMain }}
                 />
               </span>
             ) : (
@@ -361,22 +348,6 @@ export function BattleBoard({
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Player sheets */}
-      <div style={styles.sheets}>
-        {state.playerIds.map((pid, pi) => (
-          <PlayerSheet
-            key={pid}
-            pid={pid}
-            pi={pi}
-            state={state}
-            room={room}
-            playerId={playerId}
-            newlyRevealed={newlyRevealed}
-            gameResult={gameResult}
-          />
-        ))}
       </div>
     </>
   );

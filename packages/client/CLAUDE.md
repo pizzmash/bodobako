@@ -64,6 +64,22 @@ case "mygame":
 
 > **注意:** `default` ケースはコンパイルエラーにならないため、追加後は必ず動作確認すること。
 
+### 4. PlayerSlot と GameSidebarContent への登録
+
+`src/games/<game>/<Game>PlayerSlot.tsx` を作成する（既存の `BlokusPlayerSlot.tsx` や `NanaPlayerSlot.tsx` を参考）。
+
+`src/components/GameSidebarContent.tsx` の switch 文にケースを追加する：
+
+```tsx
+import { MyGamePlayerSlot } from "../games/mygame/MyGamePlayerSlot";
+
+case "mygame":
+  PlayerSlotComponent = MyGamePlayerSlot;
+  break;
+```
+
+`definition.ts` で `getLogEntries?(prevState, newState)` を実装すると、サイドバーのログパネルに手順が自動表示される（推奨）。
+
 ### 4. ファイル・定数の命名
 
 CSS クラス名・keyframe 名に使うプレフィックスを衝突しない2〜4文字で決める。
@@ -139,11 +155,11 @@ Tailwind JIT は `animate-*` クラスが JSX に登場しない keyframe を出
 
 ### スタイリング手法の使い分け（値の性質で判断する）
 
-| 値の性質 | 手法 | 例 |
-| -------- | ---- | -- |
-| **固定値**（条件分岐なし・props 非依存） | **Tailwind クラス** | `flex`, `items-center`, `p-4`, `text-sm` |
-| **動的値**（props・state・計算値に依存） | **inline style** | `style={{ width: cardW, color: playerColor }}` |
-| **複雑な hover/active/アニメーション** | **ゲーム固有 CSS クラス** | `.cc-glass-panel:hover { ... }` |
+| 値の性質                                 | 手法                      | 例                                             |
+| ---------------------------------------- | ------------------------- | ---------------------------------------------- |
+| **固定値**（条件分岐なし・props 非依存） | **Tailwind クラス**       | `flex`, `items-center`, `p-4`, `text-sm`       |
+| **動的値**（props・state・計算値に依存） | **inline style**          | `style={{ width: cardW, color: playerColor }}` |
+| **複雑な hover/active/アニメーション**   | **ゲーム固有 CSS クラス** | `.cc-glass-panel:hover { ... }`                |
 
 同一コンポーネント内で固定値と動的値が混在する場合は、**固定値を className に、動的値のみ style に**分離する：
 
@@ -209,9 +225,9 @@ Z.roomError   = 2000  ← ルームエラー表示
 // tokens.ts に追加する例
 export const Z = {
   // ...共通定数...
-  blkBoardSvg:  1,  // blokus: SVG 描画レイヤー
-  blkBoardCell: 2,  // blokus: インタラクション用セル
-  srTableCard:  15, // sonic-restaurant: テーブルカード
+  blkBoardSvg: 1, // blokus: SVG 描画レイヤー
+  blkBoardCell: 2, // blokus: インタラクション用セル
+  srTableCard: 15, // sonic-restaurant: テーブルカード
 } as const;
 ```
 
@@ -302,6 +318,8 @@ sendMove({ type: "place" } as MyMove);
 □ shared: registry に definition 登録
 □ client: RoomContext の GameStateEntry に追加
 □ client: GameView.tsx に lazy import と switch case 追加
+□ client: games/<game>/<Game>PlayerSlot.tsx を作成（共通サイドバー用）
+□ client: GameSidebarContent.tsx に PlayerSlot の case を追加
 □ client: games/<game>/ ディレクトリ構成を整備
 □ client: constants.ts でプレフィックスとカラートークンを定義
 □ client: アニメーション keyframe の置き場所を決定（tailwind.config or index.css、両方に書かない）

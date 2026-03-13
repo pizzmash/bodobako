@@ -16,7 +16,6 @@ import { LAYOUT } from "./constants";
 import { HandCards } from "./HandCards";
 import { MenuSidebar } from "./MenuSidebar";
 import { OrderStartCountdown } from "./OrderStartCountdown";
-import { PlayersSidebar } from "./PlayersSidebar";
 import { SonicRestaurantResult } from "./SonicRestaurantResult";
 export function SonicRestaurantBoard() {
   const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom } = useRoom();
@@ -119,9 +118,10 @@ export function SonicRestaurantBoard() {
       {/* メインエリア */}
       {/* top: 76px = AppHeaderの高さ分（padding 14px×2 + pill minHeight 32px + padding 6px×2 + border 1px + margin） */}
       <main
-        className="fixed left-0 right-0 flex transition-opacity duration-300"
+        className="fixed left-0 flex transition-opacity duration-300"
         style={{
           top: "76px",
+          right: "var(--sidebar-right-offset, 0px)",
           bottom: `${LAYOUT.handHeight}px`,
           pointerEvents: isCountdown ? "none" : "auto",
           opacity: isCountdown ? 0.6 : 1,
@@ -137,8 +137,6 @@ export function SonicRestaurantBoard() {
           <CenterTable state={state} lastPlayedCard={lastPlayedCard} />
         </div>
 
-        {/* 右サイドバー: 他プレイヤー */}
-        <PlayersSidebar state={state} playerId={playerId} room={room} />
       </main>
 
       {/* 下部: 自分の手札 */}

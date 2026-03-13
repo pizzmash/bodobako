@@ -5,15 +5,15 @@
 
 ## 技術スタック
 
-| レイヤー       | 技術                                          |
-| -------------- | --------------------------------------------- |
-| 言語           | TypeScript 5.7 (strict mode)                  |
-| フロントエンド | React 19 + Vite 6 + React Router v7           |
+| レイヤー       | 技術                                               |
+| -------------- | -------------------------------------------------- |
+| 言語           | TypeScript 5.7 (strict mode)                       |
+| フロントエンド | React 19 + Vite 6 + React Router v7                |
 | バックエンド   | Hono 4 + Cloudflare Workers + Durable Objects + R2 |
-| 通信           | ネイティブ WebSocket（reqIdベースプロトコル） |
-| 認証           | Firebase Authentication（Google サインイン）  |
-| モジュール     | ES Modules                                    |
-| パッケージ管理 | npm workspaces (monorepo)                     |
+| 通信           | ネイティブ WebSocket（reqIdベースプロトコル）      |
+| 認証           | Firebase Authentication（Google サインイン）       |
+| モジュール     | ES Modules                                         |
+| パッケージ管理 | npm workspaces (monorepo)                          |
 
 ## プロジェクト構成
 
@@ -251,7 +251,7 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 
 ## 新しいゲームの追加方法
 
-新しいゲームを追加するには、以下の **4 箇所** を修正する。
+新しいゲームを追加するには、以下の **6 箇所** を修正する。
 
 ### 1. ゲームロジックの実装 (shared)
 
@@ -375,6 +375,24 @@ case "mygame":
   return <MyGameBoard />;
 ```
 
+### 5. PlayerSlot の作成 (client)
+
+`packages/client/src/games/<game-id>/<Game>PlayerSlot.tsx` を作成する。共通サイドバー（`GameSidebarContent`）がプレイヤーカードを描画するために使用する。既存の `BlokusPlayerSlot.tsx` や `NanaPlayerSlot.tsx` を参考にすること。
+
+`definition.ts` に `getLogEntries?(prevState, newState)` を実装するとサイドバーのログパネルに手順が自動表示される（推奨）。
+
+### 6. GameSidebarContent への追加 (client)
+
+`packages/client/src/components/GameSidebarContent.tsx` の switch 文に PlayerSlot のケースを追加する。
+
+```typescript
+import { MyGamePlayerSlot } from "../games/mygame/MyGamePlayerSlot";
+
+case "mygame":
+  PlayerSlotComponent = MyGamePlayerSlot;
+  break;
+```
+
 ### チェックリスト
 
 - [ ] `types.ts` でゲーム状態と手の型を定義した
@@ -383,6 +401,8 @@ case "mygame":
 - [ ] `games/index.ts` のレジストリに登録し、`GameId` 型と `GameDefinitionMap` インターフェースにも追加した
 - [ ] クライアント側のボードコンポーネントを作成した
 - [ ] `GameView.tsx` に分岐を追加した
+- [ ] `<Game>PlayerSlot.tsx` を作成し、`GameSidebarContent.tsx` に case を追加した
+- [ ] 必要に応じて `definition.ts` に `getLogEntries` を実装した（サイドバーログ表示）
 - [ ] 必要に応じて `shared/src/index.ts` に型の export を追加した
 - [ ] `npm run update-readme` で README の収録ゲーム一覧を更新した
 
@@ -391,13 +411,15 @@ Worker 側のコード修正は不要。`GameDefinition` インターフェー�
 ## 収録
 
 <!-- GAMES:START -->
-| ゲーム | 人数 | 概要 |
-|--------|------|------|
-| オセロ | 2人 | 8x8 盤面で石を挟んでひっくり返す定番ゲーム |
-| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル |
+
+| ゲーム         | 人数   | 概要                                                                        |
+| -------------- | ------ | --------------------------------------------------------------------------- |
+| オセロ         | 2人    | 8x8 盤面で石を挟んでひっくり返す定番ゲーム                                  |
+| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル              |
 | シティチェイス | 2〜4人 | 犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム |
-| 音速飯点 | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！ |
-| ブロックス | 2〜4人 | 20×20 の盤面にピースを角で繋げて配置する陣取りゲーム |
-| ナナ | 2〜5人 | 7をねらえ！3枚ペアの神経衰弱ゲーム |
-| ニャーメンズ | 2〜5人 | アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！ |
+| 音速飯点       | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！          |
+| ブロックス     | 2〜4人 | 20×20 の盤面にピースを角で繋げて配置する陣取りゲーム                        |
+| ナナ           | 2〜5人 | 7をねらえ！3枚ペアの神経衰弱ゲーム                                          |
+| ニャーメンズ   | 2〜5人 | アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！  |
+
 <!-- GAMES:END -->

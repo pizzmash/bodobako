@@ -148,12 +148,7 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
 
   getCurrentPlayerId(state: AiueBattleState): string {
     if (state.phase === "topic-select") return state.topicSelectorId;
-    if (state.phase === "word-input") {
-      const notSubmitted = state.playerIds.find(
-        (id) => !state.submittedPlayers.includes(id)
-      );
-      return notSubmitted ?? state.topicSelectorId;
-    }
+    if (state.phase === "word-input") return ""; // 全員同時入力フェーズ - 手番なし
     return state.playerIds[state.currentPlayerIndex];
   },
 };

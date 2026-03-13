@@ -1,9 +1,11 @@
 import { getGameDefinition } from "@bodobako/shared";
+import clsx from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import { MAX_PLAYER_NAME_LENGTH } from "../lib/constants";
 import { API_BASE } from "../lib/socket";
+import { Z } from "../styles/tokens";
 import type { FriendRelation } from "./AppHeader/hooks/useFriendRelations";
 import { useFriendRelations } from "./AppHeader/hooks/useFriendRelations";
 import { useParticipantProfiles } from "./AppHeader/hooks/useParticipantProfiles";
@@ -202,9 +204,9 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
       className="sticky top-0 z-header w-full border-b border-indigo-300/20 bg-white/75 font-poppins shadow-[0_4px_16px_rgba(99,102,241,0.08)] backdrop-blur-xl animate-slide-down"
     >
       <div className="relative mx-auto max-w-[800px]">
-        <div className="flex flex-wrap items-center justify-center gap-2 px-4 py-2.5 sm:justify-between sm:gap-4 sm:px-6 sm:py-3.5">
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3.5">
           {/* Brand */}
-          <div className="flex w-full select-none items-center justify-center gap-2.5 sm:w-auto sm:justify-start" role="heading" aria-level={1}>
+          <div className="flex select-none items-center gap-2.5" role="heading" aria-level={1}>
             <GameIcon />
             <span className="text-[1.4rem] font-bold tracking-[0.01em] text-indigo-gradient">
               ボド箱
@@ -212,10 +214,10 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           </div>
 
           {/* Right side */}
-          <div className="flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-end">
-          {/* Room context pills */}
+          <div className="flex items-center gap-2">
+          {/* Room context pills - モバイルでは非表示 */}
           {room && (
-            <div className="flex items-center gap-2.5 animate-slide-down">
+            <div className="hidden sm:flex items-center gap-2.5 animate-slide-down">
               {gameDef && (
                 <span
                   className="px-3.5 py-1.5 text-[0.85rem] font-semibold rounded-full text-white whitespace-nowrap min-h-[32px] flex items-center shadow-[0_2px_8px_rgba(99,102,241,0.25),0_0_0_1px_rgba(255,255,255,0.2)_inset] bg-indigo-gradient"
@@ -249,7 +251,12 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           {/* Player name pill */}
           {playerName && !editing && (
             <button
-              className={`flex min-h-[32px] items-center gap-2 whitespace-nowrap rounded-full border-none bg-indigo-50/80 px-3.5 py-1.5 text-[0.85rem] font-medium text-indigo-700 shadow-[0_2px_8px_rgba(99,102,241,0.08)] backdrop-blur-sm transition-[background,transform,box-shadow] duration-200 ${canEdit ? "cursor-pointer hover:-translate-y-px hover:bg-indigo-300/15 hover:shadow-[0_2px_8px_rgba(99,102,241,0.15)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500" : "cursor-default"}`}
+              className={clsx(
+                "flex min-h-[32px] items-center gap-2 whitespace-nowrap rounded-full border-none bg-indigo-50/80 px-3.5 py-1.5 text-[0.85rem] font-medium text-indigo-700 shadow-[0_2px_8px_rgba(99,102,241,0.08)] backdrop-blur-sm transition-[background,transform,box-shadow] duration-200",
+                canEdit
+                  ? "cursor-pointer hover:-translate-y-px hover:bg-indigo-300/15 hover:shadow-[0_2px_8px_rgba(99,102,241,0.15)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                  : "cursor-default",
+              )}
               onClick={startEdit}
               disabled={!canEdit}
               title={canEdit ? "クリックで名前を変更" : displayName}
@@ -302,7 +309,8 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
         {room && activePlayer && (
           <div
             ref={popoverRef}
-            className="absolute right-4 top-14 z-header-popover w-[280px] rounded-2xl border border-indigo-300/[35%] bg-[rgba(255,255,255,0.98)] p-3 shadow-[0_14px_32px_rgba(79,70,229,0.2)] backdrop-blur-[10px] sm:right-6"
+            className="absolute right-4 top-14 w-[280px] rounded-2xl border border-indigo-300/[35%] bg-[rgba(255,255,255,0.98)] p-3 shadow-[0_14px_32px_rgba(79,70,229,0.2)] backdrop-blur-[10px] sm:right-6"
+            style={{ zIndex: Z.headerPopover }}
             role="dialog"
             aria-label="参加者情報"
           >
