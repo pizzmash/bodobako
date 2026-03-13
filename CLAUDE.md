@@ -145,6 +145,7 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 ## 実装済みゲーム
 
 <!-- GAMES:START -->
+
 - **オセロ** - 2人、8x8 盤面で石を挟んでひっくり返す定番ゲーム
 - **あいうえバトル** - 2〜5人、お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル
 - **シティチェイス** - 2〜4人、犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム
@@ -161,6 +162,10 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 3. `packages/shared/src/index.ts` から export
 4. `packages/client/src/games/<game>/` に UI コンポーネント作成
 5. `packages/client/src/components/GameView.tsx` に case を追加
+6. `packages/client/src/games/<game>/<Game>PlayerSlot.tsx` を作成（共通サイドバーのプレイヤー表示用）
+7. `packages/client/src/components/GameSidebarContent.tsx` に case を追加
+
+`definition.ts` で `getLogEntries?(prevState, newState)` を実装すると、共通サイドバーのログパネルに手順が自動表示される（推奨）。
 
 Worker側のコード修正は不要。`GameDefinition` インターフェースを通じて自動的にゲームが動作する。
 
