@@ -2,7 +2,7 @@ import type { AiueBattleState } from "@bodobako/shared";
 import type { PlayerSlotProps } from "../../components/GameSidebar/PlayerCard";
 import { useRoom } from "../../context/RoomContext";
 
-export function AiueBattlePlayerSlot({ playerId: slotPlayerId }: PlayerSlotProps) {
+export function AiueBattlePlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlotProps) {
   const { gameState } = useRoom();
   const state = (gameState?.gameId === "aiuebattle" ? gameState.state : null) as AiueBattleState | null;
   if (!state) return null;
@@ -29,7 +29,7 @@ export function AiueBattlePlayerSlot({ playerId: slotPlayerId }: PlayerSlotProps
     );
   }
 
-  // battle フェーズ: 残り文字数 or 脱落表示
+  // battle フェーズ: 単語タイル表示 or 脱落表示
   if (state.phase === "battle") {
     if (isEliminated) {
       return (
@@ -38,12 +38,35 @@ export function AiueBattlePlayerSlot({ playerId: slotPlayerId }: PlayerSlotProps
         </div>
       );
     }
-    const revealed = state.revealed[slotPlayerId] ?? [];
-    const remaining = revealed.filter((v) => v === false).length;
-    const total = revealed.filter((v) => v !== "end").length;
+    const words = state.words[slotPlayerId] ?? [];
+    const revealedArr = state.revealed[slotPlayerId] ?? [];
     return (
-      <div className="text-xs mt-1" style={{ color: "#94a3b8" }}>
-        残り <span style={{ color: "#171717", fontWeight: 700 }}>{remaining}</span> / {total} 文字
+      <div className="flex flex-wrap gap-px mt-1">
+        {words.map((char, i) => {
+          const revealStatus = revealedArr[i];
+          const isRevealed = revealStatus === true;
+          const isEnd = revealStatus === "end";
+          const bg = isRevealed ? "#FFC107" : isEnd ? "#94a3b8" : "#ffffff";
+          const textColor = isEnd ? "#ffffff" : "#171717";
+          const displayChar = isRevealed || isEnd || isMe ? char : "?";
+          return (
+            <span
+              key={i}
+              className="inline-flex items-center justify-center rounded flex-shrink-0"
+              style={{
+                width: 18,
+                height: 20,
+                fontSize: 10,
+                fontWeight: 700,
+                background: bg,
+                color: textColor,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              {displayChar}
+            </span>
+          );
+        })}
       </div>
     );
   }
