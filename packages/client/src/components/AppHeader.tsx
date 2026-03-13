@@ -204,9 +204,9 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
       className="sticky top-0 z-header w-full border-b border-indigo-300/20 bg-white/75 font-poppins shadow-[0_4px_16px_rgba(99,102,241,0.08)] backdrop-blur-xl animate-slide-down"
     >
       <div className="relative mx-auto max-w-[800px]">
-        <div className="flex flex-wrap items-center justify-center gap-2 px-4 py-2.5 sm:justify-between sm:gap-4 sm:px-6 sm:py-3.5">
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3.5">
           {/* Brand */}
-          <div className="flex w-full select-none items-center justify-center gap-2.5 sm:w-auto sm:justify-start" role="heading" aria-level={1}>
+          <div className="flex select-none items-center gap-2.5" role="heading" aria-level={1}>
             <GameIcon />
             <span className="text-[1.4rem] font-bold tracking-[0.01em] text-indigo-gradient">
               ボド箱
@@ -214,10 +214,10 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           </div>
 
           {/* Right side */}
-          <div className="flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-end">
-          {/* Room context pills */}
+          <div className="flex items-center gap-2">
+          {/* Room context pills - モバイルでは非表示 */}
           {room && (
-            <div className="flex items-center gap-2.5 animate-slide-down">
+            <div className="hidden sm:flex items-center gap-2.5 animate-slide-down">
               {gameDef && (
                 <span
                   className="px-3.5 py-1.5 text-[0.85rem] font-semibold rounded-full text-white whitespace-nowrap min-h-[32px] flex items-center shadow-[0_2px_8px_rgba(99,102,241,0.25),0_0_0_1px_rgba(255,255,255,0.2)_inset] bg-indigo-gradient"
