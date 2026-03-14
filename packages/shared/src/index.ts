@@ -2,6 +2,20 @@ export { aiuebattleDefinition } from "./games/aiuebattle/index.js";
 export { getActivePlayers, isValidWord, normalizeChar, padWord } from "./games/aiuebattle/logic.js";
 export { BOARD_CHARS, TOPIC_LIST, WORD_LENGTH } from "./games/aiuebattle/types.js";
 export type { AiueBattleMove, AiueBattleState } from "./games/aiuebattle/types.js";
+export { BORDER_MASK, ROW_RANGES, VALID_MASK, isUpTriangle, isTrigonBorderCell, isValidCell, startBitFor } from "./games/blokus-trigon/board.js";
+export {
+    PIECES as TRIGON_PIECES, TOTAL_CELLS as TRIGON_TOTAL_CELLS, TOTAL_VARIANTS as TRIGON_TOTAL_VARIANTS, blokusTrigonDefinition, boardToGrid as trigonBoardToGrid,
+    canPlace as trigonCanPlace, computePlayerPenalty as trigonComputePlayerScore, computeRemainingCells as trigonComputeRemainingCells,
+    computePenalty as trigonComputeScore, getCurrentPlayerId as trigonGetCurrentPlayerId,
+    getValidPlacements as trigonGetValidPlacements
+} from "./games/blokus-trigon/index.js";
+export type { Placement as TrigonPlacement } from "./games/blokus-trigon/logic.js";
+export { GRID_COLS, GRID_ROWS, START_POSITIONS, START_POSITIONS_3P, MAX_COLORS as TRIGON_MAX_COLORS, NUM_PIECES as TRIGON_NUM_PIECES } from "./games/blokus-trigon/types.js";
+export type {
+    BlokusTrigonMove, BlokusTrigonState,
+    PieceDefinition as TrigonPieceDefinition,
+    PieceVariant as TrigonPieceVariant
+} from "./games/blokus-trigon/types.js";
 export {
     PIECES, TOTAL_VARIANTS, blokusDefinition, boardToGrid, canPlace, computePlayerRemainingCells,
     computeRemainingCells, getCurrentPlayerId, getValidPlacements
@@ -24,15 +38,15 @@ export type {
     SearchResult
 } from "./games/citychase/types.js";
 export { getAllGames, getGameDefinition } from "./games/index.js";
+export type { GameDefinitionMap, GameId } from "./games/index.js";
 export { nanaDefinition } from "./games/nana/index.js";
-export { nyaMensDefinition } from "./games/nyamens/index.js";
-export type {
-  NyaCard, NyaEventCard, NyaMensMove, NyaMensPhase, NyaMensPlayerView,
-  NyaMensState, NyaMensTrack, NyaRole
-} from "./games/nyamens/types.js";
 export { checkWinCondition, createDeck, getActiveHandCard } from "./games/nana/logic.js";
 export type { NanaCard, NanaCardView, NanaMove, NanaState, NanaStateView } from "./games/nana/types.js";
-export type { GameDefinitionMap, GameId } from "./games/index.js";
+export { nyaMensDefinition } from "./games/nyamens/index.js";
+export type {
+    NyaCard, NyaEventCard, NyaMensMove, NyaMensPhase, NyaMensPlayerView,
+    NyaMensState, NyaMensTrack, NyaRole
+} from "./games/nyamens/types.js";
 export { othelloDefinition } from "./games/othello/index.js";
 export { countDiscs, getValidMoves } from "./games/othello/logic.js";
 export { BOARD_SIZE } from "./games/othello/types.js";

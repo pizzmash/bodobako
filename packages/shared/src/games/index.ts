@@ -1,6 +1,8 @@
 import type { GameDefinition } from "../types/game.js";
 import { aiuebattleDefinition } from "./aiuebattle/index.js";
 import type { AiueBattleMove, AiueBattleState } from "./aiuebattle/types.js";
+import { blokusTrigonDefinition } from "./blokus-trigon/index.js";
+import type { BlokusTrigonMove, BlokusTrigonState } from "./blokus-trigon/types.js";
 import { blokusDefinition } from "./blokus/index.js";
 import type { BlokusMove, BlokusState } from "./blokus/types.js";
 import { citychaseDefinition } from "./citychase/index.js";
@@ -15,7 +17,7 @@ import { sonicRestaurantGame } from "./sonic-restaurant/index.js";
 import type { SonicRestaurantMove, SonicRestaurantState } from "./sonic-restaurant/types.js";
 
 /** 登録済みゲームIDのリテラル型 */
-export type GameId = "othello" | "aiuebattle" | "citychase" | "sonic-restaurant" | "blokus" | "nana" | "nyamens";
+export type GameId = "othello" | "aiuebattle" | "citychase" | "sonic-restaurant" | "blokus" | "blokus-trigon" | "nana" | "nyamens";
 
 /** ゲームID → 具体的な GameDefinition 型のマッピング */
 export interface GameDefinitionMap {
@@ -26,6 +28,7 @@ export interface GameDefinitionMap {
   "blokus": GameDefinition<BlokusState, BlokusMove>;
   "nana": GameDefinition<NanaState, NanaMove>;
   "nyamens": GameDefinition<NyaMensState, NyaMensMove>;
+  "blokus-trigon": GameDefinition<BlokusTrigonState, BlokusTrigonMove>;
 }
 
 const registry = new Map<string, GameDefinition>();
@@ -35,6 +38,7 @@ registry.set(aiuebattleDefinition.id, aiuebattleDefinition);
 registry.set(citychaseDefinition.id, citychaseDefinition);
 registry.set(sonicRestaurantGame.id, sonicRestaurantGame);
 registry.set(blokusDefinition.id, blokusDefinition);
+registry.set(blokusTrigonDefinition.id, blokusTrigonDefinition);
 registry.set(nanaDefinition.id, nanaDefinition);
 registry.set(nyaMensDefinition.id, nyaMensDefinition);
 

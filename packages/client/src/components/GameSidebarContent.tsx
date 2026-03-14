@@ -1,19 +1,19 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
-import { useIsMobile } from "../hooks/useIsMobile";
 import type { GameLogItem } from "../hooks/useGameLog";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { APP_HEADER_HEIGHT, GAME_SIDEBAR_WIDTH } from "../lib/constants";
 import { API_BASE } from "../lib/socket";
+import { Z } from "../styles/tokens";
 import type { FriendRelation } from "./AppHeader/hooks/useFriendRelations";
 import { useFriendRelations } from "./AppHeader/hooks/useFriendRelations";
 import { useParticipantProfiles } from "./AppHeader/hooks/useParticipantProfiles";
 import { LogPanel } from "./GameSidebar/LogPanel";
-import { PlayerCard } from "./GameSidebar/PlayerCard";
 import type { PlayerSlotProps } from "./GameSidebar/PlayerCard";
+import { PlayerCard } from "./GameSidebar/PlayerCard";
 import { Avatar } from "./ui/Avatar";
-import { Z } from "../styles/tokens";
 
 interface GameSidebarContentProps {
   logEntries: GameLogItem[];
@@ -21,6 +21,8 @@ interface GameSidebarContentProps {
   currentTurnPlayerId: string | null;
   /** ゲーム固有のプレイヤーカラーマップ（playerId → CSS color） */
   playerColorMap?: Record<string, string>;
+  /** ログエントリの追加レンダリング（ゲーム固有のSVG等） */
+  renderLogItemExtra?: (item: GameLogItem) => ReactNode;
 }
 
 export function GameSidebarContent({
@@ -28,6 +30,7 @@ export function GameSidebarContent({
   PlayerSlot,
   currentTurnPlayerId,
   playerColorMap,
+  renderLogItemExtra,
 }: GameSidebarContentProps) {
   const { room, playerId } = useRoom();
   const { firebaseUser, idToken } = useAuth();
@@ -171,7 +174,6 @@ export function GameSidebarContent({
   return (
     <div className="flex flex-col h-full p-3 gap-3">
       {/* プレイヤーリスト */}
-      {/* プレイヤーリスト */}
       <div>
         <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2">
           プレイヤー
@@ -214,7 +216,7 @@ export function GameSidebarContent({
 
       {/* ゲームログ */}
       <div className="flex-1 overflow-y-auto">
-        <LogPanel logs={logEntries} players={room.players} />
+        <LogPanel logs={logEntries} players={room.players} playerColorMap={playerColorMap} renderLogItemExtra={renderLogItemExtra} />
       </div>
 
       {/* 参加者ポップオーバー */}

@@ -320,6 +320,7 @@
     font-weight: 600;
     letter-spacing: 0.02em;
   }
+  .blk-ctrl-btn:disabled { opacity: 0.3; cursor: default; }
   .blk-ctrl-btn:not(:disabled):hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(100,120,180,0.22);
@@ -359,6 +360,10 @@
   @media (max-width: 620px) {
     .blk-board-scale-wrap { overflow: hidden; width: 100%; }
   }
+
+  /* ---- Blokus Trigon ---- */
+  @keyframes bkt-last-piece-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .bkt-last-piece { animation: bkt-last-piece-pulse 0.65s ease-in-out infinite; }
 
   /* ---- Aiuebattle ---- */
   .ab-topic-btn { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }

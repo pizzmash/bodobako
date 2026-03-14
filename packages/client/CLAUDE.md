@@ -64,21 +64,46 @@ case "mygame":
 
 > **注意:** `default` ケースはコンパイルエラーにならないため、追加後は必ず動作確認すること。
 
-### 4. PlayerSlot と GameSidebarContent への登録
+### 4. PlayerSlot の作成と登録
 
 `src/games/<game>/<Game>PlayerSlot.tsx` を作成する（既存の `BlokusPlayerSlot.tsx` や `NanaPlayerSlot.tsx` を参考）。
 
-`src/components/GameSidebarContent.tsx` の switch 文にケースを追加する：
+`src/components/GameView.tsx` の `playerSlotMap` にエントリを追加する：
 
 ```tsx
-import { MyGamePlayerSlot } from "../games/mygame/MyGamePlayerSlot";
+const MyGamePlayerSlot = lazy(() =>
+  import("../games/mygame/MyGamePlayerSlot").then((m) => ({
+    default: m.MyGamePlayerSlot,
+  })),
+);
 
-case "mygame":
-  PlayerSlotComponent = MyGamePlayerSlot;
-  break;
+const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
+  // ...
+  mygame: MyGamePlayerSlot as ComponentType<PlayerSlotProps>,
+};
 ```
 
 `definition.ts` で `getLogEntries?(prevState, newState)` を実装すると、サイドバーのログパネルに手順が自動表示される（推奨）。
+
+### 5. サイドバー拡張（任意）
+
+プレイヤーカラーのカスタムマッピングや、ログエントリへの SVG アイコン追加が必要な場合は `src/games/<game>/sidebarExtras.ts(x)` を作成し、`GameView.tsx` の `sidebarExtrasMap` にエントリを追加する：
+
+```tsx
+// src/games/mygame/sidebarExtras.ts
+export function getMyGamePlayerColorMap(state: MyGameState): Record<string, string> { ... }
+export function renderMyGameLogItemExtra(item: GameLogItem): ReactNode { ... }
+
+// GameView.tsx
+const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
+  mygame: {
+    getPlayerColorMap: (s) => getMyGamePlayerColorMap(s as never),
+    renderLogItemExtra: renderMyGameLogItemExtra,
+  },
+};
+```
+
+`getLogEntries` の `GameLogEntry.metadata` にゲーム固有データ（ピースIDなど）を乗せておくと `renderLogItemExtra` 内で参照できる。
 
 ### 4. ファイル・定数の命名
 
@@ -318,8 +343,8 @@ sendMove({ type: "place" } as MyMove);
 □ shared: registry に definition 登録
 □ client: RoomContext の GameStateEntry に追加
 □ client: GameView.tsx に lazy import と switch case 追加
-□ client: games/<game>/<Game>PlayerSlot.tsx を作成（共通サイドバー用）
-□ client: GameSidebarContent.tsx に PlayerSlot の case を追加
+□ client: games/<game>/<Game>PlayerSlot.tsx を作成し GameView.tsx の playerSlotMap に登録
+□ client: サイドバー拡張が必要なら sidebarExtras.ts(x) を作成し sidebarExtrasMap に登録
 □ client: games/<game>/ ディレクトリ構成を整備
 □ client: constants.ts でプレフィックスとカラートークンを定義
 □ client: アニメーション keyframe の置き場所を決定（tailwind.config or index.css、両方に書かない）

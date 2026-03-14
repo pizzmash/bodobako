@@ -1,6 +1,7 @@
 import type {
     AiueBattleState,
     BlokusState,
+    BlokusTrigonState,
     CitychasePlayerView, GameResult, NanaStateView,
     NyaMensPlayerView,
     OthelloState, RoomInfo, SonicRestaurantState, WsServerMessage
@@ -29,6 +30,7 @@ export type GameStateEntry =
   | { gameId: "citychase"; state: CitychasePlayerView }
   | { gameId: "sonic-restaurant"; state: SonicRestaurantState }
   | { gameId: "blokus"; state: BlokusState }
+  | { gameId: "blokus-trigon"; state: BlokusTrigonState }
   | { gameId: "nana"; state: NanaStateView }
   | { gameId: "nyamens"; state: NyaMensPlayerView };
 
@@ -69,6 +71,7 @@ interface RoomContextValue {
   startGame: () => void;
   sendMove: (move: unknown) => void;
   clearError: () => void;
+  gameStartCount: number;
 }
 
 const RoomContext = createContext<RoomContextValue>(null!);
@@ -90,6 +93,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   );
   const [gameState, setGameState] = useState<GameStateEntry | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
+  const [gameStartCount, setGameStartCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [creatingGameId, setCreatingGameId] = useState<string | null>(null);
@@ -158,6 +162,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       const gameId = roomRef.current?.gameId ?? "";
       setGameState({ gameId, state: msg.state } as GameStateEntry);
       setGameResult(null);
+      setGameStartCount((c) => c + 1);
     };
     const onGameStateUpdated = (msg: Extract<WsServerMessage, { type: "game:stateUpdated" }>) => {
       const gameId = roomRef.current?.gameId ?? "";
@@ -414,6 +419,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         startGame,
         sendMove,
         clearError,
+        gameStartCount,
       }}
     >
       {children}

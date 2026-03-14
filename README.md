@@ -375,23 +375,46 @@ case "mygame":
   return <MyGameBoard />;
 ```
 
-### 5. PlayerSlot の作成 (client)
+### 5. PlayerSlot の作成と登録 (client)
 
-`packages/client/src/games/<game-id>/<Game>PlayerSlot.tsx` を作成する。共通サイドバー（`GameSidebarContent`）がプレイヤーカードを描画するために使用する。既存の `BlokusPlayerSlot.tsx` や `NanaPlayerSlot.tsx` を参考にすること。
+`packages/client/src/games/<game-id>/<Game>PlayerSlot.tsx` を作成する。既存の `BlokusPlayerSlot.tsx` や `NanaPlayerSlot.tsx` を参考にすること。
+
+`packages/client/src/components/GameView.tsx` の `playerSlotMap` にエントリを追加する：
+
+```typescript
+const MyGamePlayerSlot = lazy(() =>
+  import("../games/mygame/MyGamePlayerSlot").then((m) => ({
+    default: m.MyGamePlayerSlot,
+  })),
+);
+
+const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
+  // ...
+  mygame: MyGamePlayerSlot as ComponentType<PlayerSlotProps>,
+};
+```
 
 `definition.ts` に `getLogEntries?(prevState, newState)` を実装するとサイドバーのログパネルに手順が自動表示される（推奨）。
 
-### 6. GameSidebarContent への追加 (client)
+### 6. サイドバー拡張（任意）
 
-`packages/client/src/components/GameSidebarContent.tsx` の switch 文に PlayerSlot のケースを追加する。
+プレイヤーカラーのカスタムマッピングや、ログエントリへの SVG アイコン追加が必要な場合は `packages/client/src/games/<game-id>/sidebarExtras.ts(x)` を作成し、`GameView.tsx` の `sidebarExtrasMap` に登録する：
 
 ```typescript
-import { MyGamePlayerSlot } from "../games/mygame/MyGamePlayerSlot";
+// sidebarExtras.ts(x)
+export function getMyGamePlayerColorMap(state: MyGameState): Record<string, string> { ... }
+export function renderMyGameLogItemExtra(item: GameLogItem): ReactNode { ... }
 
-case "mygame":
-  PlayerSlotComponent = MyGamePlayerSlot;
-  break;
+// GameView.tsx
+const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
+  mygame: {
+    getPlayerColorMap: (s) => getMyGamePlayerColorMap(s as never),
+    renderLogItemExtra: renderMyGameLogItemExtra,
+  },
+};
 ```
+
+`getLogEntries` の `GameLogEntry.metadata` にゲーム固有データを乗せておくと `renderLogItemExtra` で参照できる。
 
 ### チェックリスト
 
@@ -401,7 +424,8 @@ case "mygame":
 - [ ] `games/index.ts` のレジストリに登録し、`GameId` 型と `GameDefinitionMap` インターフェースにも追加した
 - [ ] クライアント側のボードコンポーネントを作成した
 - [ ] `GameView.tsx` に分岐を追加した
-- [ ] `<Game>PlayerSlot.tsx` を作成し、`GameSidebarContent.tsx` に case を追加した
+- [ ] `<Game>PlayerSlot.tsx` を作成し、`GameView.tsx` の `playerSlotMap` に登録した
+- [ ] 必要に応じて `sidebarExtras.ts(x)` を作成し、`GameView.tsx` の `sidebarExtrasMap` に登録した
 - [ ] 必要に応じて `definition.ts` に `getLogEntries` を実装した（サイドバーログ表示）
 - [ ] 必要に応じて `shared/src/index.ts` に型の export を追加した
 - [ ] `npm run update-readme` で README の収録ゲーム一覧を更新した
@@ -411,15 +435,14 @@ Worker 側のコード修正は不要。`GameDefinition` インターフェー�
 ## 収録
 
 <!-- GAMES:START -->
-
-| ゲーム         | 人数   | 概要                                                                        |
-| -------------- | ------ | --------------------------------------------------------------------------- |
-| オセロ         | 2人    | 8x8 盤面で石を挟んでひっくり返す定番ゲーム                                  |
-| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル              |
+| ゲーム | 人数 | 概要 |
+|--------|------|------|
+| オセロ | 2人 | 8x8 盤面で石を挟んでひっくり返す定番ゲーム |
+| あいうえバトル | 2〜5人 | お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル |
 | シティチェイス | 2〜4人 | 犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム |
-| 音速飯点       | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！          |
-| ブロックス     | 2〜4人 | 20×20 の盤面にピースを角で繋げて配置する陣取りゲーム                        |
-| ナナ           | 2〜5人 | 7をねらえ！3枚ペアの神経衰弱ゲーム                                          |
-| ニャーメンズ   | 2〜5人 | アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！  |
-
+| 音速飯点 | 2〜6人 | 中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！ |
+| ブロックス | 2〜4人 | 20×20 の盤面にピースを角で繋げて配置する陣取りゲーム |
+| ブロックストライゴン | 2〜4人 | 三角形のピースを角で繋げて配置する六角形盤面の陣取りゲーム |
+| ナナ | 2〜5人 | 7をねらえ！3枚ペアの神経衰弱ゲーム |
+| ニャーメンズ | 2〜5人 | アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！ |
 <!-- GAMES:END -->
