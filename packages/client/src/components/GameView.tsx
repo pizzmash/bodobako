@@ -1,19 +1,21 @@
-import type { BlokusState, GameId, GameResult } from "@bodobako/shared";
+import type { GameId, GameResult } from "@bodobako/shared";
 import { getGameDefinition } from "@bodobako/shared";
 import {
-    Component,
-    lazy,
-    Suspense,
-    useEffect,
-    useMemo,
-    useState,
-    type ComponentType,
-    type ReactElement,
-    type ReactNode,
+  Component,
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentType,
+  type ReactElement,
+  type ReactNode,
 } from "react";
 import type { GameStateEntry } from "../context/RoomContext";
 import { useRoom } from "../context/RoomContext";
-import { BLOKUS_COLORS } from "../games/blokus/constants";
+import { getBlokusTrigonPlayerColorMap, renderBlokusTrigonLogItemExtra } from "../games/blokus-trigon/sidebarExtras";
+import { getBlokusPlayerColorMap } from "../games/blokus/sidebarExtras";
+import type { GameLogItem } from "../hooks/useGameLog";
 import { useGameLog } from "../hooks/useGameLog";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { APP_HEADER_HEIGHT_MOBILE, GAME_SIDEBAR_WIDTH, MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
@@ -42,6 +44,9 @@ const NanaBoard = lazy(() =>
 );
 const NyaMensBoard = lazy(() =>
   import("../games/nyamens/NyaMensBoard").then((m) => ({ default: m.NyaMensBoard }))
+);
+const BlokusTrigonBoard = lazy(() =>
+  import("../games/blokus-trigon/BlokusTrigonBoard").then((m) => ({ default: m.BlokusTrigonBoard }))
 );
 
 class GameErrorBoundary extends Component<
@@ -107,6 +112,23 @@ const BlokusPlayerSlot = lazy(() =>
 const SonicRestaurantPlayerSlot = lazy(() =>
   import("../games/sonic-restaurant/SonicRestaurantPlayerSlot").then((m) => ({ default: m.SonicRestaurantPlayerSlot }))
 );
+const BlokusTrigonPlayerSlot = lazy(() =>
+  import("../games/blokus-trigon/BlokusTrigonPlayerSlot").then((m) => ({ default: m.BlokusTrigonPlayerSlot }))
+);
+
+/** ゲーム固有のサイドバー拡張 */
+interface SidebarExtras {
+  getPlayerColorMap?: (state: unknown) => Record<string, string>;
+  renderLogItemExtra?: (item: GameLogItem) => ReactNode;
+}
+
+const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
+  blokus: { getPlayerColorMap: (s) => getBlokusPlayerColorMap(s as never) },
+  "blokus-trigon": {
+    getPlayerColorMap: (s) => getBlokusTrigonPlayerColorMap(s as never),
+    renderLogItemExtra: renderBlokusTrigonLogItemExtra,
+  },
+};
 
 /** ゲームID → PlayerSlot コンポーネントのマップ */
 const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
@@ -116,10 +138,11 @@ const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
   aiuebattle: AiueBattlePlayerSlot as ComponentType<PlayerSlotProps>,
   citychase: CitychasePlayerSlot as ComponentType<PlayerSlotProps>,
   nyamens: NyaMensPlayerSlot as ComponentType<PlayerSlotProps>,
+  "blokus-trigon": BlokusTrigonPlayerSlot as ComponentType<PlayerSlotProps>,
 };
 
 export function GameView() {
-  const { room, gameState, playerId: _playerId, gameResult } = useRoom();
+  const { room, gameState, playerId: _playerId, gameResult, gameStartCount } = useRoom();
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<"game" | "sidebar">("game");
 
@@ -141,21 +164,13 @@ export function GameView() {
     gameState: gameState?.state ?? null,
     players: room?.players ?? [],
     roomCode: room?.code ?? null,
+    resetKey: gameStartCount,
   });
 
-  // Blokus: 各プレイヤーのメインカラーをサイドバーカードに反映
+  // ゲーム固有のサイドバー拡張（プレイヤーカラーマップ）
   const playerColorMap = useMemo<Record<string, string> | undefined>(() => {
-    if (!gameState || gameState.gameId !== "blokus") return undefined;
-    const state = gameState.state as BlokusState;
-    const map: Record<string, string> = {};
-    for (let i = 0; i < state.playerIds.length; i++) {
-      const pid = state.playerIds[i];
-      const ownedColor = ([0, 1, 2, 3] as const).find((c) => state.colorOwner[c] === i);
-      if (ownedColor !== undefined) {
-        map[pid] = BLOKUS_COLORS[ownedColor].fill;
-      }
-    }
-    return map;
+    if (!gameState) return undefined;
+    return sidebarExtrasMap[gameState.gameId as GameId]?.getPlayerColorMap?.(gameState.state);
   }, [gameState]);
 
   if (!room) return null;
@@ -188,9 +203,14 @@ export function GameView() {
     case "nyamens":
       board = <NyaMensBoard />;
       break;
+    case "blokus-trigon":
+      board = <BlokusTrigonBoard />;
+      break;
     default:
       board = <div>未対応のゲーム: {room.gameId}</div>;
   }
+
+  const renderLogItemExtra = sidebarExtrasMap[room.gameId as GameId]?.renderLogItemExtra;
 
   const sidebarContent = (
     <GameSidebarContent
@@ -198,6 +218,7 @@ export function GameView() {
       PlayerSlot={PlayerSlot}
       currentTurnPlayerId={currentTurnPlayerId}
       playerColorMap={playerColorMap}
+      renderLogItemExtra={renderLogItemExtra}
     />
   );
 

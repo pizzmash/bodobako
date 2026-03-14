@@ -9,6 +9,8 @@ export interface GameLogEntry {
   tag?: string;
   /** タグの色（CSS color文字列） */
   tagColor?: string;
+  /** ゲーム固有のメタデータ（クライアント側の拡張表示用） */
+  metadata?: Record<string, unknown>;
 }
 
 export interface GameDefinition<TState = unknown, TMove = unknown> {

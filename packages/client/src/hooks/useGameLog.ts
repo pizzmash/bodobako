@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getGameDefinition } from "@bodobako/shared";
 import type { GameId } from "@bodobako/shared";
+import { getGameDefinition } from "@bodobako/shared";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface GameLogItem {
   id: number;
@@ -9,6 +9,7 @@ export interface GameLogItem {
   message: string;
   tag?: string;
   tagColor?: string;
+  metadata?: Record<string, unknown>;
 }
 
 const getNewLogStorageKey = (roomCode: string) => `game-logs-${roomCode}`;
@@ -37,11 +38,13 @@ export function useGameLog({
   gameState,
   players,
   roomCode,
+  resetKey,
 }: {
   gameId: string | undefined;
   gameState: unknown;
   players: { id: string; name: string }[];
   roomCode: string | null;
+  resetKey?: number;
 }): GameLogItem[] {
   const [logItems, setLogItems] = useState<GameLogItem[]>(() => {
     if (!roomCode) return [];
@@ -53,6 +56,7 @@ export function useGameLog({
   );
   const prevStateRef = useRef<unknown>(null);
   const prevRoomCodeRef = useRef<string | null>(null);
+  const prevResetKeyRef = useRef<number | undefined>(resetKey);
   const playersRef = useRef(players);
   playersRef.current = players;
 
@@ -89,6 +93,21 @@ export function useGameLog({
     }
   }, [roomCode]);
 
+  // 再戦時リセット
+  useEffect(() => {
+    if (prevResetKeyRef.current === undefined || prevResetKeyRef.current === resetKey) {
+      prevResetKeyRef.current = resetKey;
+      return;
+    }
+    prevResetKeyRef.current = resetKey;
+    if (roomCode) {
+      try { localStorage.removeItem(getNewLogStorageKey(roomCode)); } catch { /* 無視 */ }
+    }
+    setLogItems([]);
+    logIdRef.current = 0;
+    prevStateRef.current = null;
+  }, [resetKey, roomCode]);
+
   // ログ蓄積
   useEffect(() => {
     if (!gameState || !gameId) return;
@@ -106,6 +125,7 @@ export function useGameLog({
       message: entry.message,
       tag: entry.tag,
       tagColor: entry.tagColor,
+      metadata: entry.metadata,
     }));
     setLogItems((prev) => [...newItems, ...prev].slice(0, 50));
   }, [gameState, gameId, getName]);

@@ -145,12 +145,12 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 ## 実装済みゲーム
 
 <!-- GAMES:START -->
-
 - **オセロ** - 2人、8x8 盤面で石を挟んでひっくり返す定番ゲーム
 - **あいうえバトル** - 2〜5人、お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル
 - **シティチェイス** - 2〜4人、犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム
 - **音速飯点** - 2〜6人、中華料理の具材カードをスピード勝負で重ねて、いち早く手札を無くせ！
 - **ブロックス** - 2〜4人、20×20 の盤面にピースを角で繋げて配置する陣取りゲーム
+- **ブロックストライゴン** - 2〜4人、三角形のピースを角で繋げて配置する六角形盤面の陣取りゲーム
 - **ナナ** - 2〜5人、7をねらえ！3枚ペアの神経衰弱ゲーム
 - **ニャーメンズ** - 2〜5人、アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！
 <!-- GAMES:END -->
@@ -161,11 +161,12 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 2. `packages/shared/src/games/index.ts` のレジストリに登録し、`GameId` 型と `GameDefinitionMap` インターフェースにも追加
 3. `packages/shared/src/index.ts` から export
 4. `packages/client/src/games/<game>/` に UI コンポーネント作成
-5. `packages/client/src/components/GameView.tsx` に case を追加
+5. `packages/client/src/components/GameView.tsx` に case を追加（`switch` 文 + `playerSlotMap` へのエントリ登録）
 6. `packages/client/src/games/<game>/<Game>PlayerSlot.tsx` を作成（共通サイドバーのプレイヤー表示用）
-7. `packages/client/src/components/GameSidebarContent.tsx` に case を追加
 
 `definition.ts` で `getLogEntries?(prevState, newState)` を実装すると、共通サイドバーのログパネルに手順が自動表示される（推奨）。
+
+**サイドバー拡張（任意）:** プレイヤーカラーのカスタムマッピングや、ログエントリへのSVGアイコン追加が必要な場合は `packages/client/src/games/<game>/sidebarExtras.ts(x)` を作成し、`GameView.tsx` の `sidebarExtrasMap` に登録する。`getLogEntries` の `GameLogEntry.metadata` にゲーム固有データを乗せておくと `renderLogItemExtra` で参照できる。
 
 Worker側のコード修正は不要。`GameDefinition` インターフェースを通じて自動的にゲームが動作する。
 

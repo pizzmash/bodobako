@@ -1,7 +1,13 @@
-import { PLAYER_COLORS } from "../../lib/color";
+import type { ReactNode } from "react";
 import type { GameLogItem } from "../../hooks/useGameLog";
+import { PLAYER_COLORS } from "../../lib/color";
 
-function getPlayerColor(playerId: string, players: { id: string }[]): string {
+function getPlayerColor(
+  playerId: string,
+  players: { id: string }[],
+  playerColorMap?: Record<string, string>,
+): string {
+  if (playerColorMap?.[playerId]) return playerColorMap[playerId];
   const index = players.findIndex((p) => p.id === playerId);
   if (index < 0) return PLAYER_COLORS[0];
   return PLAYER_COLORS[index % PLAYER_COLORS.length];
@@ -10,9 +16,13 @@ function getPlayerColor(playerId: string, players: { id: string }[]): string {
 export function LogPanel({
   logs,
   players,
+  playerColorMap,
+  renderLogItemExtra,
 }: {
   logs: GameLogItem[];
   players: { id: string; name: string }[];
+  playerColorMap?: Record<string, string>;
+  renderLogItemExtra?: (item: GameLogItem) => ReactNode;
 }) {
   return (
     <div className="h-full overflow-y-auto">
@@ -31,11 +41,11 @@ export function LogPanel({
         >
           <span
             className="font-bold flex-shrink-0"
-            style={{ color: getPlayerColor(entry.playerId, players) }}
+            style={{ color: getPlayerColor(entry.playerId, players, playerColorMap) }}
           >
             {entry.playerName}:
           </span>
-          <span className="text-slate-500 leading-[1.4]">
+          <span className="text-slate-500 leading-[1.4] flex items-center gap-1 flex-wrap">
             {entry.tag && (
               <span
                 className="font-extrabold mr-1.5"
@@ -44,6 +54,7 @@ export function LogPanel({
                 [{entry.tag}]
               </span>
             )}
+            {renderLogItemExtra?.(entry)}
             {entry.message}
           </span>
         </div>

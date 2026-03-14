@@ -15,11 +15,13 @@ const LETTERS: { char: string; color: string; cls: string }[] = [
 
 interface BlokusLogoProps {
   size?: "sm" | "md" | "lg";
+  subtitle?: string;
 }
 
-export function BlokusLogo({ size = "md" }: BlokusLogoProps) {
+export function BlokusLogo({ size = "md", subtitle }: BlokusLogoProps) {
   const fontSize = size === "sm" ? "2rem" : size === "lg" ? "5rem" : "3rem";
   const blockSize = size === "sm" ? 6 : 8;
+  const subtitleSize = size === "sm" ? "0.75rem" : size === "lg" ? "1.2rem" : "0.9rem";
 
   return (
     <div className="flex flex-col items-center gap-[0.3rem]">
@@ -55,6 +57,17 @@ export function BlokusLogo({ size = "md" }: BlokusLogoProps) {
           />
         ))}
       </div>
+      {subtitle && (
+        <div
+          className="font-semibold tracking-[0.18em] text-slate-500 uppercase select-none"
+          style={{
+            fontFamily: "'Fredoka', sans-serif",
+            fontSize: subtitleSize,
+          }}
+        >
+          {subtitle}
+        </div>
+      )}
     </div>
   );
 }
