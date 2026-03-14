@@ -2,7 +2,7 @@
 // ブロックス — GameDefinition 実装
 // ---------------------------------------------------------------------------
 
-import type { GameDefinition, GameStatus } from "../../types/game.js";
+import type { GameDefinition, GameLogEntry, GameStatus } from "../../types/game.js";
 import {
   applyMove,
   canPlace,
@@ -119,5 +119,37 @@ export const blokusDefinition: GameDefinition<BlokusState, BlokusMove> = {
 
   getCurrentPlayerId(state: BlokusState): string {
     return getCurrentPlayerId(state);
+  },
+
+  getLogEntries(
+    prevState: BlokusState,
+    newState: BlokusState,
+  ): GameLogEntry[] {
+    if (!newState.lastMove) return [];
+
+    const { colorIndex } = newState.lastMove;
+    const owner = prevState.colorOwner[colorIndex];
+    // 3人戦のフリーカラー（owner=-1）は記録しない
+    if (owner < 0) return [];
+
+    const playerId = prevState.playerIds[owner];
+    // 配置されたピースを特定
+    const prevRemaining = prevState.remainingPieces[colorIndex];
+    const newRemaining = newState.remainingPieces[colorIndex];
+    const diff = prevRemaining & ~newRemaining;
+    let pieceId = -1;
+    for (let pid = 0; pid < NUM_PIECES; pid++) {
+      if (diff & (1 << pid)) {
+        pieceId = pid;
+        break;
+      }
+    }
+
+    const pieceSize = pieceId >= 0 ? (PIECES[pieceId]?.size ?? 0) : 0;
+    return [{
+      message: "を配置",
+      playerId,
+      metadata: { pieceId, colorIndex, pieceSize },
+    }];
   },
 };
