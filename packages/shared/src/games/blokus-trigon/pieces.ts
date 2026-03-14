@@ -6,9 +6,7 @@
 //
 // baseParity: ピースを盤面に配置する際、配置先 (R, C) の
 //   (R + C) % 2 が baseParity と一致する必要がある。
-//   pieces.md の最初のセル記号から算出:
-//     baseParity = intended_orientation XOR (row + col) % 2
-//   (intended は ▲=0, ▼=1)
+//   = 正規形の先頭セルの向き (▲=0, ▼=1) XOR そのセルの (row+col)%2
 //
 // 60°回転(6パターン) × 反転(2) = 最大12バリアントから
 // ユニーク版を自動生成する（baseParity も追跡）。
@@ -22,16 +20,13 @@ import type { PieceDefinition, PieceVariant } from "./types.js";
 
 interface RawPiece {
   cells: [number, number][];
-  /** pieces.md の最初のセル記号から算出した基準パリティ */
+  /** 先頭セルの向き (▲=0, ▼=1) XOR そのセルの (row+col)%2 */
   baseParity: 0 | 1;
 }
 
 /**
- * pieces.md のASCIIアートから変換した22ピースの座標配列。
- * 座標は (row, col) 左上原点。
- *
- * baseParity の算出: pieces.md の最初のセルの向き (▲=0, ▼=1) と
- * そのセルの (row+col)%2 の XOR。
+ * 22ピースの正規形座標配列。座標は (row, col) 左上原点。
+ * baseParity = 先頭セルの向き (▲=0, ▼=1) XOR (row+col)%2
  */
 const RAW_PIECES: RawPiece[] = [
   // #1: ▲
