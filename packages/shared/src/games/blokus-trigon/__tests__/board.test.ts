@@ -9,6 +9,7 @@ import {
     bitToCoords,
     getCornerAdjacent,
     getEdgeAdjacent,
+    isTrigonBorderCell,
     isUpTriangle,
     isValidCell,
     pieceToBitboard,
@@ -239,6 +240,68 @@ describe("ユーティリティ", () => {
     const bb = cellBit(3, 17);
     const coords = bitToCoords(bb);
     expect(coords).toEqual([[3, 17]]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isTrigonBorderCell
+// ---------------------------------------------------------------------------
+
+describe("isTrigonBorderCell", () => {
+  it("row=0 (最上行) の有効セルは全て外周", () => {
+    const [sc, ec] = ROW_RANGES[0];
+    expect(isTrigonBorderCell(0, sc)).toBe(true);
+    expect(isTrigonBorderCell(0, 17)).toBe(true);
+    expect(isTrigonBorderCell(0, ec)).toBe(true);
+  });
+
+  it("row=17 (最下行) の有効セルは全て外周", () => {
+    const [sc, ec] = ROW_RANGES[17];
+    expect(isTrigonBorderCell(17, sc)).toBe(true);
+    expect(isTrigonBorderCell(17, 17)).toBe(true);
+    expect(isTrigonBorderCell(17, ec)).toBe(true);
+  });
+
+  it("中間行の両端2セルが外周、中央は外周でない", () => {
+    // row=8 は [0, 34]
+    const [sc, ec] = ROW_RANGES[8];
+    expect(isTrigonBorderCell(8, sc)).toBe(true);
+    expect(isTrigonBorderCell(8, sc + 1)).toBe(true);
+    expect(isTrigonBorderCell(8, ec - 1)).toBe(true);
+    expect(isTrigonBorderCell(8, ec)).toBe(true);
+    // 中央は外周でない
+    expect(isTrigonBorderCell(8, 17)).toBe(false);
+  });
+
+  it("中間行の内側セルは外周でない", () => {
+    // row=4: [4, 30]
+    const [sc, ec] = ROW_RANGES[4];
+    expect(isTrigonBorderCell(4, sc + 2)).toBe(false);
+    expect(isTrigonBorderCell(4, ec - 2)).toBe(false);
+  });
+
+  it("範囲外の行は false", () => {
+    expect(isTrigonBorderCell(-1, 0)).toBe(false);
+    expect(isTrigonBorderCell(18, 0)).toBe(false);
+  });
+
+  it("VALID_MASK 外のセルは false", () => {
+    // row=0, col=0 は有効セル外
+    expect(isTrigonBorderCell(0, 0)).toBe(false);
+    // row=8, col=0 は有効セルの端（外周）
+    expect(isTrigonBorderCell(8, 0)).toBe(true);
+  });
+
+  it("BORDER_MASK と一致する", () => {
+    // isTrigonBorderCell が true のセルは全て BORDER_MASK に含まれる
+    for (let r = 0; r < GRID_ROWS; r++) {
+      const [sc, ec] = ROW_RANGES[r];
+      for (let c = sc; c <= ec; c++) {
+        const inBorder = isTrigonBorderCell(r, c);
+        const inMask = (BORDER_MASK & (1n << BigInt(r * GRID_COLS + c))) !== 0n;
+        expect(inBorder).toBe(inMask);
+      }
+    }
   });
 });
 

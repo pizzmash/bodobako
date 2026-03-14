@@ -233,6 +233,48 @@ describe("getValidPlacements", () => {
     });
     expect(getValidPlacements(state, 0, 0)).toEqual([]);
   });
+
+  it("2手目: 角接触位置に有効配置が列挙される", () => {
+    const state = makeState({
+      boards: [setBit(6, 9), "0", "0", "0"],
+      hasPlacedFirst: [true, false, false, false],
+    });
+    const placements = getValidPlacements(state, 0, 0);
+    expect(placements.length).toBeGreaterThan(0);
+    // 全配置が canPlace を満たすことを確認
+    for (const p of placements) {
+      expect(canPlace(state, 0, 0, p.variantIndex, p.row, p.col)).toBe(true);
+    }
+  });
+
+  it("2手目: 重複する配置が列挙されない", () => {
+    const state = makeState({
+      boards: [setBit(6, 9), "0", "0", "0"],
+      hasPlacedFirst: [true, false, false, false],
+    });
+    const placements = getValidPlacements(state, 0, 0);
+    const keys = new Set(placements.map((p) => `${p.variantIndex},${p.row},${p.col}`));
+    expect(keys.size).toBe(placements.length);
+  });
+
+  it("3人戦: ボーダー外のスタート位置に配置可能", () => {
+    const state: import("../types.js").BlokusTrigonState = {
+      boards: ["0", "0", "0"],
+      remainingPieces: [ALL_PIECES_MASK, ALL_PIECES_MASK, ALL_PIECES_MASK],
+      playerIds: ["p1", "p2", "p3"],
+      currentColorIndex: 2,
+      colorOwner: [0, 1, 2],
+      numColors: 3,
+      hasPlacedFirst: [false, false, false],
+      eliminated: [false, false, false],
+      lastPieceSize: [0, 0, 0],
+      borderRestriction: true,
+      finished: false,
+    };
+    // 色2の3人戦スタートは (14, 17) — ボーダー外のはず
+    const placements = getValidPlacements(state, 2, 0);
+    expect(placements.length).toBeGreaterThanOrEqual(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -268,6 +310,44 @@ describe("advanceColor", () => {
     const next = advanceColor(state);
     expect(next.finished).toBe(true);
     expect(next.eliminated.every(Boolean)).toBe(true);
+  });
+
+  it("色1がeliminated済みなら色0→色2へスキップ", () => {
+    const state = makeState({
+      currentColorIndex: 0,
+      eliminated: [false, true, false, false],
+      boards: ["0", setBit(6, 25), "0", "0"],
+      hasPlacedFirst: [false, true, false, false],
+    });
+    const next = advanceColor(state);
+    expect(next.currentColorIndex).toBe(2);
+    expect(next.eliminated[1]).toBe(true);
+  });
+
+  it("連続してeliminated済みの色をスキップ", () => {
+    // 色1,2がeliminated済み → 色0から色3へ
+    const state = makeState({
+      currentColorIndex: 0,
+      eliminated: [false, true, true, false],
+      boards: ["0", setBit(6, 25), setBit(11, 25), "0"],
+      hasPlacedFirst: [false, true, true, false],
+    });
+    const next = advanceColor(state);
+    expect(next.currentColorIndex).toBe(3);
+  });
+
+  it("有効手のない色は自動でeliminated", () => {
+    // 色1: 全ピース使用済みで有効手なし → eliminated になり色2へ
+    const state = makeState({
+      currentColorIndex: 0,
+      eliminated: [false, false, false, false],
+      remainingPieces: [ALL_PIECES_MASK, 0, ALL_PIECES_MASK, ALL_PIECES_MASK],
+      boards: ["0", setBit(6, 25), "0", "0"],
+      hasPlacedFirst: [false, true, false, false],
+    });
+    const next = advanceColor(state);
+    expect(next.eliminated[1]).toBe(true);
+    expect(next.currentColorIndex).toBe(2);
   });
 });
 

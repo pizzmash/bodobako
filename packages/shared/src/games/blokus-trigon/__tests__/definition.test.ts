@@ -141,6 +141,21 @@ describe("validateMove", () => {
     const move: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(8, 10), row: 8, col: 10 };
     expect(blokusTrigonDefinition.validateMove(state, move, "p1")).toBe(false);
   });
+
+  it("3人戦: 色2 (p3) のスタートは (14,17)", () => {
+    let state = blokusTrigonDefinition.createInitialState(["p1", "p2", "p3"]);
+    // p1(色0), p2(色1) の初手を先に打つ
+    const move0: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(6, 9), row: 6, col: 9 };
+    state = blokusTrigonDefinition.applyMove(state, move0, "p1");
+    const move1: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(6, 25), row: 6, col: 25 };
+    state = blokusTrigonDefinition.applyMove(state, move1, "p2");
+    // p3(色2)の手番: 3人戦のスタートは (14,17)
+    const move2: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(14, 17), row: 14, col: 17 };
+    expect(blokusTrigonDefinition.validateMove(state, move2, "p3")).toBe(true);
+    // 別の位置は不正
+    const wrongMove: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(8, 17), row: 8, col: 17 };
+    expect(blokusTrigonDefinition.validateMove(state, wrongMove, "p3")).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -283,6 +298,27 @@ describe("getLogEntries", () => {
     expect(logs[0].metadata?.pieceId).toBe(0);
     expect(logs[0].metadata?.colorIndex).toBe(0);
     expect(logs[0].playerId).toBe("p1");
+  });
+
+  it("pieceSizeメタデータが正しい (1マスピース)", () => {
+    const prev = blokusTrigonDefinition.createInitialState(["p1", "p2", "p3", "p4"]);
+    const move: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(6, 9), row: 6, col: 9 };
+    const next = blokusTrigonDefinition.applyMove(prev, move, "p1");
+    const logs = blokusTrigonDefinition.getLogEntries!(prev, next);
+    expect(logs[0].metadata?.pieceSize).toBe(1);
+  });
+
+  it("2人戦: p2が色1を配置したときのログにp2が記録される", () => {
+    let state = blokusTrigonDefinition.createInitialState(["p1", "p2"]);
+    // p1(色0)の初手
+    const move0: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(6, 9), row: 6, col: 9 };
+    const afterP1 = blokusTrigonDefinition.applyMove(state, move0, "p1");
+    // p2(色1)の初手
+    const move1: BlokusTrigonMove = { pieceId: 0, variantIndex: vi0(6, 25), row: 6, col: 25 };
+    const afterP2 = blokusTrigonDefinition.applyMove(afterP1, move1, "p2");
+    const logs = blokusTrigonDefinition.getLogEntries!(afterP1, afterP2);
+    expect(logs[0].playerId).toBe("p2");
+    expect(logs[0].metadata?.colorIndex).toBe(1);
   });
 
   it("lastMoveがなければ空配列", () => {
