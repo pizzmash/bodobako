@@ -4,11 +4,11 @@
 
 import type { GameDefinition, GameLogEntry, GameStatus } from "../../types/game.js";
 import {
-  applyMove,
-  canPlace,
-  computePlayerRemainingCells,
-  createInitialState,
-  getCurrentPlayerId,
+    applyMove,
+    canPlace,
+    computePlayerRemainingCells,
+    createInitialState,
+    getCurrentPlayerId,
 } from "./logic.js";
 import { PIECES } from "./pieces.js";
 import type { BlokusMove, BlokusState } from "./types.js";
