@@ -1,4 +1,4 @@
-import type { GameDefinition } from "../../types/game.js";
+import type { GameDefinition, GameLogEntry } from "../../types/game.js";
 import {
   canPlaceAnywhere,
   canPlaceOnDown,
@@ -543,6 +543,84 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
       return [...nyamenIds, ...assassinIds];
     }
     return [...assassinIds, ...nyamenIds];
+  },
+
+  getLogEntries(prevState: NyaMensState, newState: NyaMensState): GameLogEntry[] {
+    // クライアントサイドでは NyaMensPlayerView が渡される
+    const prev = prevState as unknown as NyaMensPlayerView;
+    const next = newState as unknown as NyaMensPlayerView;
+    const entries: GameLogEntry[] = [];
+
+    // ロール確認完了
+    if (prev.phase === "role-reveal" && next.phase === "dice-roll") {
+      entries.push({ playerId: next.playerOrder[0]!, message: "全員が役職を確認しました" });
+      return entries;
+    }
+
+    // サイコロ
+    if (prev.diceResult == null && next.diceResult != null) {
+      const pid = prev.playerOrder[prev.repairDutyIndex]!;
+      let tag: string | undefined;
+      let tagColor: string | undefined;
+      if (next.diceResult === 1) { tag = "焼却"; tagColor = "#dc2626"; }
+      if (next.diceResult === 6) { tag = "リサイクル"; tagColor = "#16a34a"; }
+      entries.push({ playerId: pid, message: `「${next.diceResult}」が出ました`, tag, tagColor });
+    }
+
+    // カード配置（track変化）
+    if (prev.phase === "repair" || next.phase === "repair" ||
+        prev.phase === "event-shirokuma" || prev.phase === "event-tuning") {
+      const pid = prev.playerOrder[prev.repairDutyIndex]!;
+      // up 増加
+      if (next.track.up.length > prev.track.up.length) {
+        const card = next.track.up[next.track.up.length - 1];
+        entries.push({ playerId: pid, message: `「${card}」を上り列に配置しました` });
+      }
+      // down 増加
+      if (next.track.down.length > prev.track.down.length) {
+        const card = next.track.down[next.track.down.length - 1];
+        entries.push({ playerId: pid, message: `「${card}」を下り列に配置しました` });
+      }
+      // recycleBox 変化（nullでない新しいカード）
+      if (next.track.recycleBox !== null && next.track.recycleBox !== prev.track.recycleBox) {
+        entries.push({ playerId: pid, message: `「${next.track.recycleBox}」をリサイクルボックスに配置しました` });
+      }
+    }
+
+    // 焼却（burnedCards 増加）
+    if (next.burnedCards.length > prev.burnedCards.length) {
+      const pid = prev.playerOrder[prev.repairDutyIndex]!;
+      entries.push({ playerId: pid, message: "カードが廃棄されました" });
+    }
+
+    // カードを引いた
+    if (next.drawnCard != null && next.drawnCard !== prev.drawnCard && next.lastDrawer) {
+      if (typeof next.drawnCard === "number") {
+        entries.push({ playerId: next.lastDrawer, message: "カードを引きました" });
+      } else {
+        entries.push({ playerId: next.lastDrawer, message: `「${next.drawnCard}」イベントが発生しました` });
+      }
+    }
+
+    // 投票完了 → 次フェーズ
+    if (prev.phase === "vote" && next.phase !== "vote") {
+      if (next.phase === "finished") {
+        // ゲーム終了は下のブロックで処理
+      } else {
+        entries.push({ playerId: next.playerOrder[0]!, message: "修理失敗... 次のターンへ" });
+      }
+    }
+
+    // ゲーム終了
+    if (next.phase === "finished" && prev.phase !== "finished") {
+      if (next.result?.winner === "nyamens") {
+        entries.push({ playerId: next.playerOrder[0]!, message: "ニャーメンズの勝利！修理が完了しました！", tag: "修理完了", tagColor: "#16a34a" });
+      } else if (next.result?.winner === "assassin") {
+        entries.push({ playerId: next.playerOrder[0]!, message: "アサシンの勝利！修理を妨害しました", tag: "妨害成功", tagColor: "#dc2626" });
+      }
+    }
+
+    return entries;
   },
 
   getCurrentPlayerId(state: NyaMensState): string {

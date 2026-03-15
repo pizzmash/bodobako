@@ -1,4 +1,4 @@
-import type { GameDefinition, GameStatus } from "../../types/game.js";
+import type { GameDefinition, GameLogEntry, GameStatus } from "../../types/game.js";
 import { isValidWord, padWord, processAttack } from "./logic.js";
 import type { AiueBattleMove, AiueBattleState } from "./types.js";
 import { BOARD_CHARS, WORD_LENGTH } from "./types.js";
@@ -150,5 +150,59 @@ export const aiuebattleDefinition: GameDefinition<AiueBattleState, AiueBattleMov
     if (state.phase === "topic-select") return state.topicSelectorId;
     if (state.phase === "word-input") return ""; // 全員同時入力フェーズ - 手番なし
     return state.playerIds[state.currentPlayerIndex];
+  },
+
+  getLogEntries(prevState: AiueBattleState, newState: AiueBattleState): GameLogEntry[] {
+    const entries: GameLogEntry[] = [];
+
+    // お題選択
+    if (prevState.phase === "topic-select" && newState.phase === "word-input") {
+      entries.push({
+        playerId: prevState.topicSelectorId,
+        message: `「${newState.topic}」をお題に選びました`,
+      });
+      return entries;
+    }
+
+    // 単語提出
+    if (prevState.phase === "word-input") {
+      const newlySubmitted = newState.submittedPlayers.filter(
+        (id) => !prevState.submittedPlayers.includes(id)
+      );
+      for (const pid of newlySubmitted) {
+        entries.push({ playerId: pid, message: "単語を送信しました" });
+      }
+      if (newState.phase === "battle") {
+        entries.push({
+          playerId: newState.playerIds[0]!,
+          message: "バトル開始！",
+          tag: "バトル",
+          tagColor: "#dc2626",
+        });
+      }
+      return entries;
+    }
+
+    // 攻撃
+    if (prevState.phase === "battle" && newState.lastAttackChar !== null &&
+        newState.lastAttackChar !== prevState.lastAttackChar) {
+      const attackerId = prevState.playerIds[prevState.currentPlayerIndex]!;
+      entries.push({
+        playerId: attackerId,
+        message: `「${newState.lastAttackChar}」を攻撃しました`,
+        tag: newState.lastAttackHit ? "Hit" : "Miss",
+        tagColor: newState.lastAttackHit ? "#dc2626" : "#6366f1",
+      });
+    }
+
+    // 脱落
+    const newlyEliminated = newState.eliminatedPlayers.filter(
+      (id) => !prevState.eliminatedPlayers.includes(id)
+    );
+    for (const pid of newlyEliminated) {
+      entries.push({ playerId: pid, message: "脱落しました", tag: "脱落", tagColor: "#9333ea" });
+    }
+
+    return entries;
   },
 };
