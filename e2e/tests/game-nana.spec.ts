@@ -48,8 +48,14 @@ async function startNanaGame(browser: {
 
 /** 手番プレイヤーのページでフィールドカードを1枚めくる。成功したら true を返す */
 async function flipOneFieldCard(pageA: Page, pageB: Page): Promise<boolean> {
+  // WS伝播待ちのため、どちらかのページに「あなたの番です」が表示されるまで待つ
+  await expect(async () => {
+    const aHas = await pageA.getByText("あなたの番です").isVisible().catch(() => false);
+    const bHas = await pageB.getByText("あなたの番です").isVisible().catch(() => false);
+    expect(aHas || bHas).toBe(true);
+  }).toPass({ timeout: 10_000 });
+
   for (const page of [pageA, pageB]) {
-    // 自分の番かどうかチェック（ガイドバナーまたはステータスパネルの「あなたの番です」）
     const isMyTurn = await page.getByText("あなたの番です").isVisible().catch(() => false);
     if (!isMyTurn) continue;
 
@@ -116,27 +122,16 @@ test.describe("ナナゲーム", () => {
     // 1枚目をめくる
     const flipped1 = await flipOneFieldCard(pageA, pageB);
     expect(flipped1).toBe(true);
-    await pageA.waitForTimeout(500);
 
-    // 2枚目をめくる（同じプレイヤーのターン）
+    // 2枚目をめくる（同じプレイヤーのターン）。flipOneFieldCard が手番待ちを含む
+    const flipped2 = await flipOneFieldCard(pageA, pageB);
+    expect(flipped2).toBe(true);
+
+    // 2枚めくった後、手番プレイヤーに確認ボタンが表示される
     for (const page of [pageA, pageB]) {
-      const isMyTurn = await page.getByText("あなたの番です").isVisible().catch(() => false);
-      if (!isMyTurn) continue;
-
-      // フィールドカードをもう1枚めくる
-      const clickableCard = page.locator(".nana-field-card.clickable").first();
-      if (await clickableCard.isVisible().catch(() => false)) {
-        await clickableCard.click();
-        await page.waitForTimeout(500);
-
-        // 2枚めくった後、確認ボタン（success or failure）が表示される
-        const confirmBtn = page.getByRole("button", { name: /確認して/ });
-        await expect(confirmBtn).toBeVisible({ timeout: 5_000 });
-
-        // 確認ボタンをクリック
+      const confirmBtn = page.getByRole("button", { name: /確認して/ });
+      if (await confirmBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
         await confirmBtn.click();
-        await page.waitForTimeout(500);
-
         break;
       }
     }

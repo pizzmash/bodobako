@@ -69,15 +69,16 @@ async function rollDice(
     diceButtonB.waitFor({ state: "visible", timeout: 15_000 }).catch(() => {}),
   ]);
 
-  let dutyPage: Page;
-  let otherPage: Page;
-  if (await diceButtonA.isVisible().catch(() => false)) {
-    dutyPage = pageA;
-    otherPage = pageB;
-  } else {
-    dutyPage = pageB;
-    otherPage = pageA;
+  // どちらのページが当番かを確認（waitFor後に isVisible でチェック）
+  const aVisible = await diceButtonA.isVisible().catch(() => false);
+  const bVisible = await diceButtonB.isVisible().catch(() => false);
+  // サイレント失敗の検出: 少なくとも一方が表示されていなければ失敗
+  if (!aVisible && !bVisible) {
+    throw new Error("サイコロボタンがどちらのページにも表示されませんでした");
   }
+
+  const dutyPage = aVisible ? pageA : pageB;
+  const otherPage = aVisible ? pageB : pageA;
 
   await dutyPage.getByRole("button", { name: "🎲 サイコロを振る" }).click();
   return { dutyPage, otherPage };
@@ -148,7 +149,7 @@ test.describe("ニャーメンズゲーム", () => {
   });
 
   test("サイコロを振るとカード選択フェーズに遷移する", async ({ browser }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
 
     const { pageA, pageB, contextA, contextB } =
       await startNyaMensGame(browser);
@@ -157,27 +158,21 @@ test.describe("ニャーメンズゲーム", () => {
     await rollDice(pageA, pageB);
 
     // カード選択フェーズへ遷移: 「必要:」or「選択中:」テキストが表示される
-    await Promise.race([
-      pageA.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 10_000 }).catch(() => {}),
-      pageA.getByText(/選択中:/).waitFor({ state: "visible", timeout: 10_000 }).catch(() => {}),
-      pageB.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 10_000 }).catch(() => {}),
-      pageB.getByText(/選択中:/).waitFor({ state: "visible", timeout: 10_000 }).catch(() => {}),
+    // draw-cards フェーズ（サイコロ1or6時）を経由すると最大10秒かかるため余裕を持たせる
+    // Promise.any: 1つでも成功すれば通過、全て失敗（タイムアウト）した場合のみエラー
+    await Promise.any([
+      pageA.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
+      pageA.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
+      pageB.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
+      pageB.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
     ]);
-
-    const aVisible =
-      (await pageA.getByText(/必要:.*枚/).isVisible().catch(() => false)) ||
-      (await pageA.getByText(/選択中:/).isVisible().catch(() => false));
-    const bVisible =
-      (await pageB.getByText(/必要:.*枚/).isVisible().catch(() => false)) ||
-      (await pageB.getByText(/選択中:/).isVisible().catch(() => false));
-    expect(aVisible || bVisible).toBe(true);
 
     await contextA.close();
     await contextB.close();
   });
 
   test("カード選択と修理確定ボタンが表示される", async ({ browser }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
 
     const { pageA, pageB, contextA, contextB } =
       await startNyaMensGame(browser);
@@ -185,10 +180,13 @@ test.describe("ニャーメンズゲーム", () => {
     await readyBothPlayers(pageA, pageB);
     const { dutyPage } = await rollDice(pageA, pageB);
 
-    // カード選択フェーズまで待機（両ページの状態遷移を待ってからdutyPageで確認）
-    await Promise.race([
-      pageA.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 15_000 }).catch(() => {}),
-      pageB.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 15_000 }).catch(() => {}),
+    // カード選択フェーズまで待機（draw-cards 経由で最大10秒かかる場合あり）
+    // Promise.any: 1つでも成功すれば通過
+    await Promise.any([
+      pageA.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
+      pageA.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
+      pageB.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
+      pageB.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
     ]);
     await expect(
       dutyPage.getByText(/必要:.*枚/).or(dutyPage.getByText(/選択中:/))

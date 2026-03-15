@@ -90,10 +90,11 @@ async function placeAllHelicopters(
       .locator(".cc-intersection-clickable")
       .filter({ hasNot: policePage.locator("text=/^H\\d$/") });
     await expect(emptyIntersection.first()).toBeVisible({ timeout: 10_000 });
+    const beforeCount = await emptyIntersection.count();
     await emptyIntersection.first().click();
 
-    // 状態更新を待つ
-    await policePage.waitForTimeout(500);
+    // クリックが受理されたことを確認（未配置交差点が減るか、犯人セットアップに遷移）
+    await expect(emptyIntersection).not.toHaveCount(beforeCount, { timeout: 5_000 });
   }
 
   return { policePage, criminalPage };
@@ -122,8 +123,9 @@ async function placeCriminal(
 /** 警察ターンで全ヘリを操作する（移動 or 捜索） */
 async function completePoliceActions(policePage: Page) {
   for (let i = 0; i < 3; i++) {
+    // 警察のターン案内が表示されるまで待ってから判定（スナップショット判定を避ける）
     const turnIndicator = policePage.getByText("交差点をクリックで移動");
-    const isTurn = await turnIndicator.isVisible().catch(() => false);
+    const isTurn = await turnIndicator.isVisible({ timeout: 3_000 }).catch(() => false);
     if (!isTurn) break;
 
     // 移動可能な交差点をクリック（移動優先）
@@ -138,7 +140,8 @@ async function completePoliceActions(policePage: Page) {
       await searchTarget.click();
     }
 
-    await policePage.waitForTimeout(500);
+    // クリックが受理されるまで待つ（ターン案内が消えるか、犯人ターンに遷移するまで）
+    await expect(turnIndicator).not.toBeVisible({ timeout: 5_000 }).catch(() => {});
   }
 }
 

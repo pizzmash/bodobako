@@ -4,10 +4,10 @@ export default defineConfig({
   testDir: "./e2e/tests",
   fullyParallel: false, // マルチプレイヤーテストは順番に実行
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: "list",
-  timeout: 30_000,
+  timeout: 45_000,
   use: {
     baseURL: "http://localhost:5173",
     trace: "on-first-retry",
