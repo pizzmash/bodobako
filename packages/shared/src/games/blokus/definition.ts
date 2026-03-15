@@ -129,10 +129,9 @@ export const blokusDefinition: GameDefinition<BlokusState, BlokusMove> = {
 
     const { colorIndex } = newState.lastMove;
     const owner = prevState.colorOwner[colorIndex];
-    // 3人戦のフリーカラー（owner=-1）は記録しない
-    if (owner < 0) return [];
-
-    const playerId = prevState.playerIds[owner];
+    // フリーカラー（owner=-1）は freeColorNextPlayer が打ったプレイヤー
+    const playerIndex = owner >= 0 ? owner : prevState.freeColorNextPlayer;
+    const playerId = prevState.playerIds[playerIndex];
     // 配置されたピースを特定
     const prevRemaining = prevState.remainingPieces[colorIndex];
     const newRemaining = newState.remainingPieces[colorIndex];
