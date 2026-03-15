@@ -232,6 +232,12 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 | `game-othello.spec.ts` | 2タブで対戦開始・手を打つ                       |
 | `reconnect.spec.ts`    | リロード後の sessionToken 再接続                |
 
+## エージェント利用ガイドライン
+
+- Agent ツールでサブエージェントを起動する際は **必ず `mode: "bypassPermissions"` を指定する**
+  - 指定しないとサブエージェントが Edit/Bash ツールの権限を得られず作業できない
+  - worktree で並列作業させる場合も同様
+
 ## コーディング規約
 
 - コミットメッセージは日本語（例: `feat: ロビー画面をカードベースの1画面UIにリッチ化`）
