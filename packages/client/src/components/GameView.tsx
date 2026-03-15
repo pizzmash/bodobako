@@ -14,7 +14,7 @@ import {
 import type { GameStateEntry } from "../context/RoomContext";
 import { useRoom } from "../context/RoomContext";
 import { getBlokusTrigonPlayerColorMap, renderBlokusTrigonLogItemExtra } from "../games/blokus-trigon/sidebarExtras";
-import { getBlokusPlayerColorMap } from "../games/blokus/sidebarExtras";
+import { getBlokusPlayerColorMap, renderBlokusLogItemExtra } from "../games/blokus/sidebarExtras";
 import type { GameLogItem } from "../hooks/useGameLog";
 import { useGameLog } from "../hooks/useGameLog";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -123,7 +123,10 @@ interface SidebarExtras {
 }
 
 const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
-  blokus: { getPlayerColorMap: (s) => getBlokusPlayerColorMap(s as never) },
+  blokus: {
+    getPlayerColorMap: (s) => getBlokusPlayerColorMap(s as never),
+    renderLogItemExtra: renderBlokusLogItemExtra,
+  },
   "blokus-trigon": {
     getPlayerColorMap: (s) => getBlokusTrigonPlayerColorMap(s as never),
     renderLogItemExtra: renderBlokusTrigonLogItemExtra,
