@@ -189,4 +189,170 @@ test.describe("あいうえバトル", () => {
     await contextA.close();
     await contextB.close();
   });
+
+  test("削除ボタンで入力した文字を1文字ずつ消せる", async ({ browser }) => {
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await setupPlayer(pageA, "Alice");
+    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
+    const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await setupPlayer(pageB, "Bob");
+    await pageB.getByRole("textbox", { name: "ルームコード入力" }).fill(code);
+    await pageB.getByRole("button", { name: "ルームに参加" }).click();
+    await expect(pageA.getByText("Bob")).toBeVisible({ timeout: 10_000 });
+
+    await pageA.getByRole("button", { name: "ゲーム開始" }).click();
+    await Promise.race([
+      pageA.getByText("お題を選んでください").waitFor({ state: "visible", timeout: 10_000 }),
+      pageB.getByText("お題を選んでください").waitFor({ state: "visible", timeout: 10_000 }),
+    ]);
+    const selectorPage = (await pageA.getByText("お題を選んでください").isVisible()) ? pageA : pageB;
+    await selectorPage.locator(".ab-topic-btn").first().click();
+
+    await expect(pageA.getByText("2〜7文字の言葉を入力してください")).toBeVisible({ timeout: 10_000 });
+
+    const deleteBtn = pageA.getByRole("button", { name: "削除" });
+
+    // 初期状態: 削除ボタンは無効（0文字）
+    await expect(deleteBtn).toBeDisabled();
+
+    // 「あ」を3回入力 → 3文字
+    const charBtnA = pageA.locator(".ab-char-btn").filter({ hasText: "あ" });
+    await charBtnA.click();
+    await charBtnA.click();
+    await charBtnA.click();
+    await expect(pageA.getByText("3 / 7 文字")).toBeVisible();
+
+    // 削除ボタンが有効になっている
+    await expect(deleteBtn).toBeEnabled();
+
+    // 1回削除 → 2文字
+    await deleteBtn.click();
+    await expect(pageA.getByText("2 / 7 文字")).toBeVisible();
+
+    // もう1回削除 → 1文字
+    await deleteBtn.click();
+    await expect(pageA.getByText("1 / 7 文字")).toBeVisible();
+
+    // 確認ボタンは2文字未満なので無効
+    await expect(pageA.getByRole("button", { name: "確認" })).toBeDisabled();
+
+    // 最後の1文字を削除 → 0文字、削除ボタンも無効に
+    await deleteBtn.click();
+    await expect(pageA.getByText("0 / 7 文字")).toBeVisible();
+    await expect(deleteBtn).toBeDisabled();
+
+    await contextA.close();
+    await contextB.close();
+  });
+
+  test("7文字入力すると文字ボタンが無効化される", async ({ browser }) => {
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await setupPlayer(pageA, "Alice");
+    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
+    const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await setupPlayer(pageB, "Bob");
+    await pageB.getByRole("textbox", { name: "ルームコード入力" }).fill(code);
+    await pageB.getByRole("button", { name: "ルームに参加" }).click();
+    await expect(pageA.getByText("Bob")).toBeVisible({ timeout: 10_000 });
+
+    await pageA.getByRole("button", { name: "ゲーム開始" }).click();
+    await Promise.race([
+      pageA.getByText("お題を選んでください").waitFor({ state: "visible", timeout: 10_000 }),
+      pageB.getByText("お題を選んでください").waitFor({ state: "visible", timeout: 10_000 }),
+    ]);
+    const selectorPage = (await pageA.getByText("お題を選んでください").isVisible()) ? pageA : pageB;
+    await selectorPage.locator(".ab-topic-btn").first().click();
+
+    await expect(pageA.getByText("2〜7文字の言葉を入力してください")).toBeVisible({ timeout: 10_000 });
+
+    // 「あ」を7回クリックして最大文字数まで入力
+    const charBtnA = pageA.locator(".ab-char-btn").filter({ hasText: "あ" });
+    for (let i = 0; i < 7; i++) {
+      await charBtnA.click();
+    }
+    await expect(pageA.getByText("7 / 7 文字")).toBeVisible();
+
+    // 文字ボタンがすべて disabled になっている
+    await expect(charBtnA).toBeDisabled();
+    // 別の文字ボタンも disabled
+    await expect(pageA.locator(".ab-char-btn").filter({ hasText: "か" })).toBeDisabled();
+
+    // 確認ボタンは有効
+    await expect(pageA.getByRole("button", { name: "確認" })).toBeEnabled();
+
+    // 削除して6文字に戻すと文字ボタンが再び有効になる
+    await pageA.getByRole("button", { name: "削除" }).click();
+    await expect(pageA.getByText("6 / 7 文字")).toBeVisible();
+    await expect(charBtnA).toBeEnabled();
+
+    await contextA.close();
+    await contextB.close();
+  });
+
+  test("確認モーダルで「戻る」を押すと入力画面に戻れる", async ({ browser }) => {
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await setupPlayer(pageA, "Alice");
+    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
+    const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await setupPlayer(pageB, "Bob");
+    await pageB.getByRole("textbox", { name: "ルームコード入力" }).fill(code);
+    await pageB.getByRole("button", { name: "ルームに参加" }).click();
+    await expect(pageA.getByText("Bob")).toBeVisible({ timeout: 10_000 });
+
+    await pageA.getByRole("button", { name: "ゲーム開始" }).click();
+    await Promise.race([
+      pageA.getByText("お題を選んでください").waitFor({ state: "visible", timeout: 10_000 }),
+      pageB.getByText("お題を選んでください").waitFor({ state: "visible", timeout: 10_000 }),
+    ]);
+    const selectorPage = (await pageA.getByText("お題を選んでください").isVisible()) ? pageA : pageB;
+    await selectorPage.locator(".ab-topic-btn").first().click();
+
+    await expect(pageA.getByText("2〜7文字の言葉を入力してください")).toBeVisible({ timeout: 10_000 });
+
+    // 「あ」を2文字入力して確認ボタンを押す
+    const charBtnA = pageA.locator(".ab-char-btn").filter({ hasText: "あ" });
+    await charBtnA.click();
+    await charBtnA.click();
+    await pageA.getByRole("button", { name: "確認" }).click();
+
+    // 確認モーダルが表示される
+    await expect(pageA.getByText("この回答でよろしいですか？")).toBeVisible();
+    await expect(pageA.getByRole("button", { name: "決定" })).toBeVisible();
+    await expect(pageA.getByRole("button", { name: "戻る" })).toBeVisible();
+
+    // 「戻る」を押すとモーダルが閉じ、入力画面に戻る
+    await pageA.getByRole("button", { name: "戻る" }).click();
+    await expect(pageA.getByText("この回答でよろしいですか？")).not.toBeVisible();
+
+    // 入力状態が維持されている（2文字のまま）
+    await expect(pageA.getByText("2 / 7 文字")).toBeVisible();
+
+    // 引き続き文字を追加して再度確認→決定できる
+    await charBtnA.click();
+    await expect(pageA.getByText("3 / 7 文字")).toBeVisible();
+    await pageA.getByRole("button", { name: "確認" }).click();
+    await expect(pageA.getByText("この回答でよろしいですか？")).toBeVisible();
+    await pageA.getByRole("button", { name: "決定" }).click();
+
+    // 送信後は待機画面に遷移
+    await expect(pageA.getByText("他のプレイヤーを待っています")).toBeVisible({ timeout: 10_000 });
+
+    await contextA.close();
+    await contextB.close();
+  });
 });
