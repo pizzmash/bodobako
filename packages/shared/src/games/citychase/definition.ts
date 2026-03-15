@@ -1,4 +1,4 @@
-import type { GameDefinition } from "../../types/game.js";
+import type { GameDefinition, GameLogEntry } from "../../types/game.js";
 import {
     advancePolice,
     assignHelicopters,
@@ -453,6 +453,100 @@ export const citychaseDefinition: GameDefinition<
       default:
         return state.playerIds[0];
     }
+  },
+
+  getLogEntries(prevState: CitychaseState, newState: CitychaseState): GameLogEntry[] {
+    const entries: GameLogEntry[] = [];
+
+    // 役割決定
+    if (prevState.phase === "role-select" && newState.phase === "police-setup") {
+      entries.push({ playerId: prevState.hostId, message: "役割が決まりました" });
+      return entries;
+    }
+
+    // ヘリコプター配置（police-setup）
+    if (prevState.phase === "police-setup") {
+      for (let i = 0; i < newState.helicopters.length; i++) {
+        if (!prevState.helicopters[i] && newState.helicopters[i]) {
+          // helicopterAssignments[i] は担当プレイヤーID
+          const pid = newState.helicopterAssignments[i] ?? newState.policeIds[0]!;
+          entries.push({ playerId: pid, message: "ヘリコプターを配置しました" });
+        }
+      }
+      return entries;
+    }
+
+    // 犯人の初期位置設定
+    if (prevState.phase === "criminal-setup" && newState.phase === "police-turn") {
+      const pid = newState.criminalId ?? newState.playerIds[0]!;
+      entries.push({ playerId: pid, message: "犯人が初期位置を選びました" });
+      return entries;
+    }
+
+    // police-turn
+    if (prevState.phase === "police-turn" && newState.phase === "police-turn") {
+      const pid = prevState.policeIds[prevState.currentPoliceIndex] ?? prevState.policeIds[0]!;
+      // 捜索結果が変わった
+      const prevResult = prevState.lastSearchResult;
+      const nextResult = newState.lastSearchResult;
+      if (nextResult && nextResult !== prevResult) {
+        if (nextResult.found) {
+          entries.push({ playerId: pid, message: "犯人を発見しました！", tag: "発見", tagColor: "#dc2626" });
+        } else if (nextResult.traceFound) {
+          entries.push({ playerId: pid, message: "痕跡を発見しました", tag: "痕跡", tagColor: "#d97706" });
+        } else {
+          entries.push({ playerId: pid, message: "ビルを捜索しました（手がかりなし）" });
+        }
+        return entries;
+      }
+      // ヘリコプター移動
+      const heliMoved = prevState.helicopters.some((h, i) => {
+        const nh = newState.helicopters[i];
+        return h && nh && (h.row !== nh.row || h.col !== nh.col);
+      });
+      if (heliMoved) {
+        entries.push({ playerId: pid, message: "ヘリコプターを移動しました" });
+      }
+      return entries;
+    }
+
+    // 最後の捜索で警察ターン→犯人ターン遷移（lastSearchResultが変化）
+    if (prevState.phase === "police-turn" && newState.phase === "criminal-turn") {
+      const pid = prevState.policeIds[prevState.currentPoliceIndex] ?? prevState.policeIds[0]!;
+      const nextResult = newState.lastSearchResult;
+      if (nextResult && nextResult !== prevState.lastSearchResult) {
+        if (nextResult.found) {
+          entries.push({ playerId: pid, message: "犯人を発見しました！", tag: "発見", tagColor: "#dc2626" });
+        } else if (nextResult.traceFound) {
+          entries.push({ playerId: pid, message: "痕跡を発見しました", tag: "痕跡", tagColor: "#d97706" });
+        } else {
+          entries.push({ playerId: pid, message: "ビルを捜索しました（手がかりなし）" });
+        }
+      } else {
+        entries.push({ playerId: pid, message: "ヘリコプターを移動しました" });
+      }
+      return entries;
+    }
+
+    // 犯人の移動
+    if (prevState.phase === "criminal-turn" && newState.phase === "police-turn") {
+      const pid = prevState.criminalId ?? prevState.playerIds[0]!;
+      entries.push({ playerId: pid, message: "移動しました" });
+      return entries;
+    }
+
+    // ゲーム終了
+    if (!prevState.finished && newState.finished) {
+      if (newState.winningSide === "police") {
+        const pid = newState.policeIds[0] ?? newState.playerIds[0]!;
+        entries.push({ playerId: pid, message: "警察の勝利！犯人を捕まえました", tag: "勝利", tagColor: "#16a34a" });
+      } else if (newState.winningSide === "criminal") {
+        const pid = newState.criminalId ?? newState.playerIds[0]!;
+        entries.push({ playerId: pid, message: "犯人の勝利！逃げ切りました", tag: "勝利", tagColor: "#7c3aed" });
+      }
+    }
+
+    return entries;
   },
 
   getPlayerView(

@@ -1,4 +1,4 @@
-import type { GameDefinition, GameStatus } from "../../types/game.js";
+import type { GameDefinition, GameLogEntry, GameStatus } from "../../types/game.js";
 import {
     applyMoveToBoard,
     countDiscs,
@@ -95,5 +95,44 @@ export const othelloDefinition: GameDefinition<OthelloState, OthelloMove> = {
 
   getCurrentPlayerId(state: OthelloState): string {
     return state.playerIds[state.currentPlayerIndex];
+  },
+
+  getLogEntries(prevState: OthelloState, newState: OthelloState): GameLogEntry[] {
+    const playerId = prevState.playerIds[prevState.currentPlayerIndex]!;
+    // playerIndex 0 = black, 1 = white
+    const myColor: "black" | "white" = prevState.currentPlayerIndex === 0 ? "black" : "white";
+    const oppColor: "black" | "white" = myColor === "black" ? "white" : "black";
+
+    // ボードに変化がなければパス
+    const boardChanged = prevState.board.some((row, r) =>
+      row.some((cell, c) => cell !== newState.board[r]![c])
+    );
+
+    if (!boardChanged) {
+      return [{ playerId, message: "パスしました", tag: "Pass", tagColor: "#6366f1" }];
+    }
+
+    // 置いた位置を特定（empty → myColor になったセル）、ひっくり返した数を数える
+    let placedRow = -1;
+    let placedCol = -1;
+    let flippedCount = 0;
+
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const prev = prevState.board[r]![c]!;
+        const next = newState.board[r]![c]!;
+        if (prev === "empty" && next === myColor) {
+          placedRow = r;
+          placedCol = c;
+        } else if (prev === oppColor && next === myColor) {
+          flippedCount++;
+        }
+      }
+    }
+
+    const colLabel = String.fromCharCode(65 + placedCol); // A-H
+    const rowLabel = String(placedRow + 1);               // 1-8
+    const flipText = flippedCount > 0 ? `（${flippedCount}枚ひっくり返した）` : "";
+    return [{ playerId, message: `${colLabel}${rowLabel} に石を置きました${flipText}` }];
   },
 };

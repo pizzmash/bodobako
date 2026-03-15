@@ -2,7 +2,7 @@
  * 音速飯点（ソニックレストラン）- GameDefinition 実装
  */
 
-import type { GameDefinition } from "../../types/game.js";
+import type { GameDefinition, GameLogEntry } from "../../types/game.js";
 import {
   buildMenuTree,
   createDeck,
@@ -295,6 +295,56 @@ export const sonicRestaurantGame: GameDefinition<
   getCurrentPlayerId(state: SonicRestaurantState): string {
     // 非ターン制のため、全員が常に行動可能（空文字を返す）
     return "";
+  },
+
+  getLogEntries(prevState: SonicRestaurantState, newState: SonicRestaurantState): GameLogEntry[] {
+    const entries: GameLogEntry[] = [];
+
+    // カウントダウン完了
+    if (prevState.phase === "countdown" && newState.phase === "playing") {
+      entries.push({ playerId: newState.playerIds[0]!, message: "ゲーム開始！" });
+      return entries;
+    }
+
+    // カードが出された
+    if (newState.playedCardsHistory.length > prevState.playedCardsHistory.length) {
+      const card = newState.playedCardsHistory[newState.playedCardsHistory.length - 1]!;
+
+      // 誰が出したか：手札枚数が減ったプレイヤーを探す
+      let cardPlayerId = newState.playerIds[0]!;
+      for (const pid of newState.playerIds) {
+        const prevLen = prevState.hands[pid]?.length ?? 0;
+        const newLen = newState.hands[pid]?.length ?? 0;
+        if (newLen < prevLen) {
+          cardPlayerId = pid;
+          break;
+        }
+      }
+
+      const message = card === "とりけし" ? "とりけしを使いました" : `「${card}」を出しました`;
+      entries.push({ playerId: cardPlayerId, message });
+
+      // メニュー完成
+      if (newState.lastCompletedMenu &&
+          newState.lastCompletedMenu !== prevState.lastCompletedMenu) {
+        entries.push({
+          playerId: newState.lastCompletedMenu.completedBy,
+          message: `「${newState.lastCompletedMenu.name}」を完成しました！`,
+          tag: "完成",
+          tagColor: "#16a34a",
+        });
+      }
+
+      // 上がり
+      const newlyFinished = newState.finishedOrder.filter(
+        (id) => !prevState.finishedOrder.includes(id)
+      );
+      for (const pid of newlyFinished) {
+        entries.push({ playerId: pid, message: "上がりました！", tag: "上がり", tagColor: "#6366f1" });
+      }
+    }
+
+    return entries;
   },
 
   getPlayerView(
