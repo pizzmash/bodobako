@@ -1,14 +1,11 @@
 import { getGameDefinition } from "@bodobako/shared";
 import clsx from "clsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
+import { useSoundSettings } from "../hooks/useSoundSettings";
 import { MAX_PLAYER_NAME_LENGTH } from "../lib/constants";
-import { API_BASE } from "../lib/socket";
 import { Z } from "../styles/tokens";
-import type { FriendRelation } from "./AppHeader/hooks/useFriendRelations";
-import { useFriendRelations } from "./AppHeader/hooks/useFriendRelations";
-import { useParticipantProfiles } from "./AppHeader/hooks/useParticipantProfiles";
 import { Avatar } from "./ui/Avatar";
 
 const GameIcon = () => (
@@ -19,42 +16,36 @@ const GameIcon = () => (
   </svg>
 );
 
+const SoundOnIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const SoundOffIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+    <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
 interface AppHeaderProps {
   onMenuClick: () => void;
 }
 
 export function AppHeader({ onMenuClick }: AppHeaderProps) {
-  const { room, playerId, playerName, setPlayerName } = useRoom();
-  const { firebaseUser, idToken } = useAuth();
+  const { room, playerName, setPlayerName } = useRoom();
+  const { firebaseUser } = useAuth();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(playerName);
-  const [activePopoverPlayerId, setActivePopoverPlayerId] = useState<string | null>(null);
-  const [requestingUid, setRequestingUid] = useState<string | null>(null);
-  const [approvingUid, setApprovingUid] = useState<string | null>(null);
-  const [requestError, setRequestError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const { muted, toggleMute } = useSoundSettings();
 
   const gameDef = room ? getGameDefinition(room.gameId) : null;
-  const myPlayer = room?.players.find((p) => p.id === playerId);
-  const displayName = myPlayer?.name ?? playerName;
-
-  const [profilesByUid, setProfile] = useParticipantProfiles(room?.players ?? null);
-  const { relationByUid, setRelation } = useFriendRelations(
-    room?.players ?? null,
-    idToken,
-    firebaseUser,
-  );
-
-  const activePlayer = useMemo(
-    () => room?.players.find((p) => p.id === activePopoverPlayerId) ?? null,
-    [room, activePopoverPlayerId],
-  );
-  const activeUid = activePlayer?.userId ?? "";
-  const activeProfile = activeUid ? profilesByUid[activeUid] : null;
-  const activeRelation: FriendRelation | null = activeUid
-    ? (relationByUid[activeUid] ?? "none")
-    : null;
+  const isPlaying = room?.status === "playing";
 
   const canEdit = !room && !firebaseUser;
 
@@ -68,19 +59,6 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
     if (editing) inputRef.current?.focus();
   }, [editing]);
 
-  useEffect(() => {
-    const onPointerDown = (event: PointerEvent) => {
-      if (!activePopoverPlayerId) return;
-      const target = event.target as Node;
-      if (popoverRef.current && !popoverRef.current.contains(target)) {
-        setActivePopoverPlayerId(null);
-        setRequestError(null);
-      }
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [activePopoverPlayerId]);
-
   const commitEdit = () => {
     const trimmed = draft.trim();
     if (trimmed) setPlayerName(trimmed);
@@ -92,116 +70,12 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
     if (e.key === "Escape") setEditing(false);
   };
 
-  const refreshParticipantStatus = async (targetUid: string) => {
-    if (!idToken || !firebaseUser || !room) return;
-    try {
-      const [profileRes, followingRes, followersRes] = await Promise.all([
-        fetch(`${API_BASE}/users/${targetUid}/profile`),
-        fetch(`${API_BASE}/users/me/friends`, { headers: { Authorization: `Bearer ${idToken}` } }),
-        fetch(`${API_BASE}/users/me/followers`, {
-          headers: { Authorization: `Bearer ${idToken}` },
-        }),
-      ]);
-
-      if (profileRes.ok) {
-        const profile = await profileRes.json();
-        setProfile(targetUid, profile);
-      }
-      if (!followingRes.ok || !followersRes.ok) return;
-
-      const following = (await followingRes.json()) as Array<{ uid: string }>;
-      const followers = (await followersRes.json()) as Array<{
-        uid: string;
-        isFollowing: boolean;
-      }>;
-      const followingSet = new Set(following.map((f) => f.uid));
-      const followerMap = new Map(followers.map((f) => [f.uid, f.isFollowing]));
-
-      const fi = followerMap.get(targetUid);
-      const nextRelation: FriendRelation =
-        fi === true
-          ? "friend"
-          : followingSet.has(targetUid)
-            ? "outgoing"
-            : followerMap.has(targetUid)
-              ? "incoming"
-              : "none";
-      setRelation(targetUid, nextRelation);
-    } catch {
-      // ignore
-    }
-  };
-
-  const sendFriendRequest = async (targetUid: string) => {
-    if (!idToken || !targetUid) return;
-    setRequestingUid(targetUid);
-    setRequestError(null);
-    try {
-      const res = await fetch(`${API_BASE}/users/me/friend-requests/${targetUid}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-      if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        setRequestError(err.error ?? "申請に失敗しました");
-        return;
-      }
-      setRelation(targetUid, "outgoing");
-    } catch {
-      setRequestError("申請に失敗しました");
-    } finally {
-      setRequestingUid(null);
-    }
-  };
-
-  const approveFriendRequest = async (targetUid: string) => {
-    if (!idToken || !targetUid) return;
-    setApprovingUid(targetUid);
-    setRequestError(null);
-    try {
-      const res = await fetch(`${API_BASE}/users/me/friend-requests/${targetUid}/approve`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-      if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        setRequestError(err.error ?? "承認に失敗しました");
-        return;
-      }
-      setRelation(targetUid, "friend");
-    } catch {
-      setRequestError("承認に失敗しました");
-    } finally {
-      setApprovingUid(null);
-    }
-  };
-
-  const handleParticipantClick = (player: NonNullable<typeof room>["players"][number]) => {
-    setRequestError(null);
-    setActivePopoverPlayerId((prev) => {
-      const next = prev === player.id ? null : player.id;
-      if (next && idToken && player.userId && player.userId !== firebaseUser?.uid) {
-        void refreshParticipantStatus(player.userId);
-      }
-      return next;
-    });
-  };
-
-  const renderParticipantAvatar = (player: NonNullable<typeof room>["players"][number]) => {
-    const uid = player.userId;
-    const profile = uid ? profilesByUid[uid] : null;
-    return (
-      <Avatar
-        photoURL={profile?.photoURL}
-        displayName={profile?.displayName ?? player.name}
-        size={24}
-      />
-    );
-  };
+  const displayName = playerName;
 
   return (
     <header
       className="sticky top-0 z-header w-full border-b border-indigo-300/20 bg-white/75 font-poppins shadow-[0_4px_16px_rgba(99,102,241,0.08)] backdrop-blur-xl animate-slide-down"
+      style={{ zIndex: Z.header }}
     >
       <div className="relative mx-auto max-w-[800px]">
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3.5">
@@ -230,22 +104,26 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
                   ROOM
                 </span>
                 <span className="tracking-[0.15em]">{room.code}</span>
-                <span className="inline-flex items-center gap-1 ml-0.5">
-                  {room.players.map((player) => (
-                    <button
-                      key={player.id}
-                      type="button"
-                      className="w-6 h-6 p-0 rounded-full border-0 bg-transparent cursor-pointer"
-                      onClick={() => handleParticipantClick(player)}
-                      aria-label={`${player.name} の情報を表示`}
-                      title={player.name}
-                    >
-                      {renderParticipantAvatar(player)}
-                    </button>
-                  ))}
-                </span>
               </span>
             </div>
+          )}
+
+          {/* 消音ボタン（ゲーム中のみ表示） */}
+          {isPlaying && (
+            <button
+              type="button"
+              className={clsx(
+                "flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] bg-indigo-50/80 p-0 backdrop-blur-sm transition-[background,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-indigo-300/15 hover:shadow-[0_2px_8px_rgba(99,102,241,0.2)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500",
+                muted
+                  ? "border-red-300/50 text-red-400"
+                  : "border-indigo-300/30 text-indigo-500",
+              )}
+              onClick={toggleMute}
+              aria-label={muted ? "消音中（クリックで音を出す）" : "音あり（クリックで消音）"}
+              title={muted ? "消音中" : "音あり"}
+            >
+              {muted ? <SoundOffIcon /> : <SoundOnIcon />}
+            </button>
           )}
 
           {/* Player name pill */}
@@ -304,77 +182,6 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           </button>
           </div>
         </div>
-
-        {/* 参加者ポップオーバー */}
-        {room && activePlayer && (
-          <div
-            ref={popoverRef}
-            className="absolute right-4 top-14 w-[280px] rounded-2xl border border-indigo-300/[35%] bg-[rgba(255,255,255,0.98)] p-3 shadow-[0_14px_32px_rgba(79,70,229,0.2)] backdrop-blur-[10px] sm:right-6"
-            style={{ zIndex: Z.headerPopover }}
-            role="dialog"
-            aria-label="参加者情報"
-          >
-            <div className="flex items-center gap-2.5">
-              <Avatar
-                photoURL={activeProfile?.photoURL}
-                displayName={activeProfile?.displayName ?? activePlayer.name}
-                size={38}
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="truncate text-[0.9rem] font-bold text-indigo-900">
-                    {activeProfile?.displayName ?? activePlayer.name}
-                  </div>
-                  {activeRelation === "friend" && (
-                    <span className="shrink-0 rounded-full border border-green-300 bg-green-50 px-2 py-px text-[0.72rem] font-bold leading-[1.4] text-green-800">
-                      フレンド
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
- 
-            {idToken && activeUid && activeUid !== firebaseUser?.uid && (
-              <div className="mt-2.5 flex flex-col gap-2">
-                {activeRelation === "none" && (
-                  <button
-                    type="button"
-                    className="min-h-[36px] cursor-pointer rounded-xl border-0 bg-indigo-700 text-[0.82rem] font-bold text-white disabled:opacity-60"
-                    onClick={() => void sendFriendRequest(activeUid)}
-                    disabled={requestingUid === activeUid}
-                  >
-                    {requestingUid === activeUid ? "申請中..." : "フレンド申請"}
-                  </button>
-                )}
-                {activeRelation === "outgoing" && (
-                  <div className="rounded-xl bg-indigo-50/90 px-2.5 py-2 text-[0.82rem] font-semibold text-indigo-700">
-                    フレンド申請中です
-                  </div>
-                )}
-                {activeRelation === "incoming" && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 rounded-xl bg-indigo-50/90 px-2.5 py-2 text-[0.82rem] font-semibold text-indigo-700">
-                      相手からフレンド申請が届いています
-                    </div>
-                    <button
-                      type="button"
-                      className="min-h-[34px] shrink-0 cursor-pointer rounded-xl border-0 bg-indigo-700 px-2.5 py-[7px] text-[0.78rem] font-bold text-white disabled:opacity-60"
-                      onClick={() => void approveFriendRequest(activeUid)}
-                      disabled={approvingUid === activeUid}
-                    >
-                      {approvingUid === activeUid ? "承認中..." : "承認"}
-                    </button>
-                  </div>
-                )}
-                {requestError && (
-                  <div className="rounded-xl bg-red-50 px-2 py-1.5 text-[0.78rem] font-semibold text-red-600">
-                    {requestError}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </header>
   );

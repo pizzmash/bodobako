@@ -99,31 +99,6 @@ test.describe("ルーム作成・参加フロー", () => {
     await contextB.close();
   });
 
-  test("ヘッダーに参加者アイコンが表示され、クリックで参加者情報が開く", async ({ browser }) => {
-    const contextA = await browser.newContext();
-    const pageA = await contextA.newPage();
-    await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("オセロのルームを作成").click();
-    await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
-
-    const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
-
-    const contextB = await browser.newContext();
-    const pageB = await contextB.newPage();
-    await setupPlayer(pageB, "Bob");
-    await pageB.getByRole("textbox", { name: "ルームコード入力" }).fill(code);
-    await pageB.getByRole("button", { name: "ルームに参加" }).click();
-    await expect(pageB).toHaveURL(`/room/${code}`);
-
-    await expect(pageA.getByRole("button", { name: "Alice の情報を表示" })).toBeVisible();
-    await expect(pageA.getByRole("button", { name: "Bob の情報を表示" })).toBeVisible();
-
-    await pageA.getByRole("button", { name: "Bob の情報を表示" }).click({ force: true });
-    await expect(pageA).toHaveURL(`/room/${code}`);
-
-    await contextA.close();
-    await contextB.close();
-  });
 });
 
 test.describe("ルームページ - 直接アクセス", () => {

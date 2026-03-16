@@ -18,6 +18,7 @@ import { getBlokusPlayerColorMap, renderBlokusLogItemExtra } from "../games/blok
 import type { GameLogItem } from "../hooks/useGameLog";
 import { useGameLog } from "../hooks/useGameLog";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { useTurnSound } from "../hooks/useTurnSound";
 import { APP_HEADER_HEIGHT_MOBILE, GAME_SIDEBAR_WIDTH, MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
 import { GameSidebar } from "./GameSidebar";
 import type { PlayerSlotProps } from "./GameSidebar/PlayerCard";
@@ -148,6 +149,10 @@ export function GameView() {
   const { room, gameState, playerId: _playerId, gameResult, gameStartCount } = useRoom();
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<"game" | "sidebar">("game");
+
+  // 手番通知音（条件リターンより前に呼ぶ）
+  const currentTurnPlayerIdForSound = resolveCurrentPlayerId(gameState, gameResult);
+  useTurnSound(currentTurnPlayerIdForSound, _playerId, gameStartCount);
 
   // CSS変数管理
   useEffect(() => {

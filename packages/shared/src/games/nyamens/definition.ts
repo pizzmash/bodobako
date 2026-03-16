@@ -626,23 +626,13 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
   getCurrentPlayerId(state: NyaMensState): string {
     const dutyPlayer = state.playerOrder[state.repairDutyIndex] ?? state.playerOrder[0]!;
     switch (state.phase) {
-      case "role-reveal": {
-        return (
-          state.playerOrder.find((id) => !state.readyPlayers.includes(id)) ?? dutyPlayer
-        );
-      }
-      case "card-selection": {
-        return (
-          state.playerOrder.find((id) => state.selectedCards[id] === undefined) ?? dutyPlayer
-        );
-      }
+      // 全員同時入力フェーズ：特定の手番プレイヤーなし
+      case "role-reveal":
+      case "card-selection":
+      case "vote":
+        return "";
       case "draw-cards":
         return state.drawQueue?.[0] ?? dutyPlayer;
-      case "vote": {
-        return (
-          state.playerOrder.find((id) => state.votes?.[id] === undefined) ?? dutyPlayer
-        );
-      }
       default:
         return dutyPlayer;
     }
