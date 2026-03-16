@@ -11,7 +11,7 @@ function playBeep(): void {
     gain.connect(ctx.destination);
     osc.type = "sine";
     osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.4);
@@ -31,20 +31,12 @@ export function useTurnSound(
   gameStartCount: number,
 ): void {
   const prevTurnRef = useRef<string | null>(null);
-  const prevGameStartRef = useRef(gameStartCount);
 
   useEffect(() => {
-    // ゲーム（再戦）開始直後は初期手番で音が鳴らないようスキップ
-    if (prevGameStartRef.current !== gameStartCount) {
-      prevGameStartRef.current = gameStartCount;
-      prevTurnRef.current = currentTurnPlayerId;
-      return;
-    }
-
     const prev = prevTurnRef.current;
     prevTurnRef.current = currentTurnPlayerId;
 
-    // 手番が自分に変わった時だけ音を鳴らす
+    // 手番が自分に変わった（または最初から自分の手番だった）時に音を鳴らす
     if (
       currentTurnPlayerId !== null &&
       currentTurnPlayerId === myPlayerId &&
