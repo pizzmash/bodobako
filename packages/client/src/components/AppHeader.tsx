@@ -23,7 +23,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ onMenuClick }: AppHeaderProps) {
   const { room, playerName, setPlayerName } = useRoom();
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, profilePhotoURL } = useAuth();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(playerName);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -161,7 +161,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           >
             <Avatar
               displayName={firebaseUser?.displayName ?? playerName}
-              photoURL={firebaseUser?.photoURL ?? undefined}
+              photoURL={profilePhotoURL ?? firebaseUser?.photoURL ?? undefined}
               size={36}
             />
           </button>

@@ -4,7 +4,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -14,6 +13,7 @@ import { API_BASE } from "../lib/socket";
 interface UserProfile {
   displayName: string;
   friendCode: string;
+  photoURL?: string;
 }
 
 interface AuthContextValue {
@@ -24,10 +24,14 @@ interface AuthContextValue {
   appDisplayName: string | null;
   /** ユーザー固有のフレンドコード（認証済みのみ） */
   friendCode: string | null;
+  /** カスタムアバター画像URL（R2にアップロード済み） */
+  profilePhotoURL: string | null;
   isProfileLoading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
+  updateAvatar: (file: File) => Promise<void>;
+  deleteAvatar: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>(null!);
@@ -42,45 +46,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [appDisplayName, setAppDisplayName] = useState<string | null>(null);
   const [friendCode, setFriendCode] = useState<string | null>(null);
+  const [profilePhotoURL, setProfilePhotoURL] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
-  const firebaseUserRef = useRef<User | null>(null);
 
   function applyProfile(profile: UserProfile) {
     setAppDisplayName(profile.displayName);
     setFriendCode(profile.friendCode || null);
+    setProfilePhotoURL(profile.photoURL ? `${profile.photoURL}?v=${Date.now()}` : null);
   }
 
   // Firebase トークンの自動更新に対応するため onIdTokenChanged を使う
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setFirebaseUser(user);
-      firebaseUserRef.current = user;
       if (user) {
         const token = await user.getIdToken();
         setIdToken(token);
-        const photoURL = user.photoURL ?? "";
-        // プロフィールを UserRegistry から取得（photoURL も常に同期）
+        // プロフィールを UserRegistry から取得
         setIsProfileLoading(true);
         try {
           const res = await fetch(`${API_BASE}/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
-            // 既存ユーザー: photoURL を最新化するため PUT で上書き
             const existing = await res.json() as UserProfile;
-            const putRes = await fetch(`${API_BASE}/users/me`, {
-              method: "PUT",
-              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ displayName: existing.displayName, photoURL }),
-            });
-            applyProfile(putRes.ok ? await putRes.json() as UserProfile : existing);
+            applyProfile(existing);
           } else if (res.status === 404) {
             // 未登録 → Google 表示名をデフォルトとして登録
             const defaultName = user.displayName?.slice(0, 20) ?? "ゲスト";
             const putRes = await fetch(`${API_BASE}/users/me`, {
               method: "PUT",
               headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ displayName: defaultName, photoURL }),
+              body: JSON.stringify({ displayName: defaultName }),
             });
             if (putRes.ok) applyProfile(await putRes.json() as UserProfile);
           }
@@ -93,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIdToken(null);
         setAppDisplayName(null);
         setFriendCode(null);
+        setProfilePhotoURL(null);
       }
       setIsAuthLoading(false);
     });
@@ -111,11 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateDisplayName = useCallback(async (name: string) => {
     if (!idToken) throw new Error("ログインが必要です");
-    const photoURL = firebaseUserRef.current?.photoURL ?? "";
     const res = await fetch(`${API_BASE}/users/me`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName: name, photoURL }),
+      body: JSON.stringify({ displayName: name }),
     });
     if (!res.ok) {
       const err = await res.json() as { error: string };
@@ -123,6 +120,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const data = await res.json() as UserProfile;
     applyProfile(data);
+  }, [idToken]);
+
+  const updateAvatar = useCallback(async (file: File) => {
+    if (!idToken) throw new Error("ログインが必要です");
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const res = await fetch(`${API_BASE}/users/me/avatar`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${idToken}` },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json() as { error: string };
+      throw new Error(err.error ?? "アバターの更新に失敗しました");
+    }
+    const data = await res.json() as { photoURL: string };
+    setProfilePhotoURL(`${data.photoURL}?v=${Date.now()}`);
+  }, [idToken]);
+
+  const deleteAvatar = useCallback(async () => {
+    if (!idToken) throw new Error("ログインが必要です");
+    const res = await fetch(`${API_BASE}/users/me/avatar`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) {
+      const err = await res.json() as { error: string };
+      throw new Error(err.error ?? "アバターの削除に失敗しました");
+    }
+    setProfilePhotoURL(null);
   }, [idToken]);
 
   return (
@@ -133,10 +160,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthLoading,
         appDisplayName,
         friendCode,
+        profilePhotoURL,
         isProfileLoading,
         signInWithGoogle,
         signOut,
         updateDisplayName,
+        updateAvatar,
+        deleteAvatar,
       }}
     >
       {children}

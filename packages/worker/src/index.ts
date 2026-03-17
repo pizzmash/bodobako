@@ -137,6 +137,81 @@ app.get("/users/me", async (c) => {
   return c.json(profile);
 });
 
+app.put("/users/me/avatar", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const bucket = c.env.USER_DATA;
+  const contentType = c.req.header("Content-Type") ?? "";
+  if (!contentType.includes("multipart/form-data")) {
+    return c.json({ error: "multipart/form-data で送信してください" }, 400);
+  }
+
+  const formData = await c.req.raw.formData();
+  const file = formData.get("avatar") as unknown;
+
+  if (!file || typeof file === "string" || !(file instanceof Blob)) {
+    return c.json({ error: "avatar フィールドが必要です" }, 400);
+  }
+
+  const blob = file as Blob & { name?: string; type: string };
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(blob.type)) {
+    return c.json({ error: "JPEG、PNG、WebP のみ対応しています" }, 400);
+  }
+
+  const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+  if (blob.size > MAX_SIZE) {
+    return c.json({ error: "ファイルサイズは 2MB 以下にしてください" }, 400);
+  }
+
+  const data = await blob.arrayBuffer();
+  await r2UserStorage.putAvatar(bucket, verified.uid, data, blob.type);
+
+  const origin = new URL(c.req.url).origin;
+  const avatarUrl = `${origin}/users/${verified.uid}/avatar`;
+  await r2UserStorage.updateProfilePhotoURL(bucket, verified.uid, avatarUrl);
+
+  return c.json({ photoURL: avatarUrl });
+});
+
+app.delete("/users/me/avatar", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  const bucket = c.env.USER_DATA;
+  await Promise.all([
+    bucket.delete(`users/${verified.uid}/avatar`),
+    r2UserStorage.updateProfileFields(bucket, verified.uid, { photoURL: "" }),
+  ]);
+
+  return c.json({ ok: true });
+});
+
+app.get("/users/:uid/avatar", async (c) => {
+  const uid = c.req.param("uid");
+  const bucket = c.env.USER_DATA;
+  const obj = await r2UserStorage.getAvatar(bucket, uid);
+
+  if (!obj) return c.notFound();
+
+  const contentType = obj.httpMetadata?.contentType ?? "image/jpeg";
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+});
+
 app.put("/users/me", async (c) => {
   const authHeader = c.req.header("Authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -157,12 +232,20 @@ app.put("/users/me", async (c) => {
     return c.json({ error: "displayName は1〜20文字で入力してください" }, 400);
   }
 
-  const profile = await r2UserStorage.upsertProfile(
-    c.env.USER_DATA,
-    verified.uid,
-    displayName.trim(),
-    typeof photoURL === "string" ? photoURL : "",
-  );
+  const existingProfile = await r2UserStorage.getProfile(c.env.USER_DATA, verified.uid);
+  let profile;
+  if (existingProfile) {
+    profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, {
+      displayName: displayName.trim(),
+    });
+  } else {
+    profile = await r2UserStorage.upsertProfile(
+      c.env.USER_DATA,
+      verified.uid,
+      displayName.trim(),
+      typeof photoURL === "string" ? photoURL : "",
+    );
+  }
   return c.json(profile);
 });
 
