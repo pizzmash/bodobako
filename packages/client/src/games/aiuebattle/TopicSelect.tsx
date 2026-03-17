@@ -28,21 +28,6 @@ export function TopicSelect({
     return (
       <div className="w-full max-w-[700px] animate-ab-fadeIn">
         <p style={styles.subtitle}>お題を選んでください</p>
-        <div style={styles.topicGrid}>
-          {TOPIC_LIST.map((topic, i) => (
-            <button
-              key={topic}
-              className="ab-topic-btn"
-              style={{
-                ...styles.topicButton,
-                animationDelay: `${i * 30}ms`,
-              }}
-              onClick={() => sendTypedMove({ type: "select-topic", topic })}
-            >
-              {topic}
-            </button>
-          ))}
-        </div>
         <div style={styles.customTopicRow}>
           <input
             className="ab-input"
@@ -64,6 +49,26 @@ export function TopicSelect({
           >
             決定
           </button>
+        </div>
+        <div className="flex items-center gap-3 my-1 w-full">
+          <div className="flex-1 h-px bg-neutral-200" />
+          <span className="text-sm font-semibold text-neutral-400 whitespace-nowrap">または例から選ぶ</span>
+          <div className="flex-1 h-px bg-neutral-200" />
+        </div>
+        <div style={styles.topicGrid}>
+          {TOPIC_LIST.map((topic, i) => (
+            <button
+              key={topic}
+              className="ab-topic-btn"
+              style={{
+                ...styles.topicButton,
+                animationDelay: `${i * 30}ms`,
+              }}
+              onClick={() => sendTypedMove({ type: "select-topic", topic })}
+            >
+              {topic}
+            </button>
+          ))}
         </div>
       </div>
     );

@@ -30,7 +30,7 @@ export function AiueBattleBoard() {
   // カラフルでポップなタイトル
   const Title = (
     <h2
-      className="m-0 my-4 text-4xl font-black tracking-[0.05em] text-center flex items-center justify-center flex-wrap"
+      className="m-0 my-4 text-4xl font-black tracking-[0.05em] text-center flex items-center justify-center flex-nowrap whitespace-nowrap"
       style={{ gap: "clamp(4px, 1vw, 8px)", fontFamily: FONT }}
     >
       {[
