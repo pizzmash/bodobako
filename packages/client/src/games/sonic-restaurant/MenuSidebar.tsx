@@ -4,6 +4,7 @@
 
 import type { SonicRestaurantState } from "@bodobako/shared";
 import { MENUS } from "@bodobako/shared";
+import { BookOpen, Utensils } from "lucide-react";
 import React from "react";
 import { Z } from "../../styles/tokens";
 import { C, LAYOUT, styles } from "./constants";
@@ -31,7 +32,7 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
         <div style={styles.titleSign}>
           <div style={styles.titleInner}>
             <div className="flex items-center justify-center gap-0.5 mb-0">
-              <span style={{ fontSize: "0.625rem" }}>🍜</span>
+              <Utensils size={10} />
               <span
                 style={{
                   fontSize: "0.4375rem",
@@ -62,7 +63,7 @@ export const MenuSidebar = React.memo(function MenuSidebar({ state }: MenuSideba
 
       {/* お品書きヘッダー */}
       <div style={styles.menuHeader}>
-        <span style={{ fontSize: "0.75rem" }}>📖</span>
+        <BookOpen size={12} />
         <h2 style={styles.menuTitle}>お品書き</h2>
       </div>
 

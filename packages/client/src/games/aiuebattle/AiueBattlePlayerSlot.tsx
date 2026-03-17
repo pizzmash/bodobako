@@ -1,5 +1,6 @@
 import type { AiueBattleState } from "@bodobako/shared";
 import type { PlayerSlotProps } from "../../components/GameSidebar/PlayerCard";
+import { Target } from "lucide-react";
 import { useRoom } from "../../context/RoomContext";
 import { C } from "./constants";
 
@@ -25,7 +26,7 @@ export function AiueBattlePlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlo
     const isSelector = state.topicSelectorId === slotPlayerId;
     return (
       <div className="text-xs font-semibold mt-0.5" style={{ color: isSelector ? C.warning : C.textSub }}>
-        {isSelector ? "🎯 お題選択中" : "待機中"}
+        {isSelector ? <><Target size={12} className="inline mr-1" />お題選択中</> : "待機中"}
       </div>
     );
   }

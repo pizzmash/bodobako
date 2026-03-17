@@ -1,4 +1,5 @@
 import type { NyaMensPlayerView } from "@bodobako/shared";
+import { PawPrint } from "lucide-react";
 import { PlayingCard } from "../../components/PlayingCard";
 import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
 import { cardColor } from "./nyaUtils";
@@ -81,7 +82,7 @@ export function PlayerHandArea({ state, myId, playerNames, onSelectCards, onConf
               fontSize: "0.75rem",
             }}
           >
-            🐺 オオカミ！全員最低1枚
+            <PawPrint size={12} className="inline mr-1" /> オオカミ！全員最低1枚
           </span>
         )}
         <span style={{ color: "#94a3b8", fontSize: "0.78rem", marginLeft: "auto" }}>

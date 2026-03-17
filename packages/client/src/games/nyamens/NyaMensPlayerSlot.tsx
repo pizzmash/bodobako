@@ -1,5 +1,6 @@
 import type { NyaMensPlayerView } from "@bodobako/shared";
 import type { PlayerSlotProps } from "../../components/GameSidebar/PlayerCard";
+import { Sword, Wrench } from "lucide-react";
 import { useRoom } from "../../context/RoomContext";
 import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
 
@@ -50,14 +51,14 @@ export function NyaMensPlayerSlot({ playerId: slotPlayerId, isMe }: PlayerSlotPr
       </span>
       {/* 修理当番（パルスアニメーション付き） */}
       {isDuty && (
-        <span className="text-xs font-bold" style={{ color: ACCENT }}>
-          🛠️ 当番
+        <span className="text-xs font-bold inline-flex items-center gap-0.5" style={{ color: ACCENT }}>
+          <Wrench size={12} /> 当番
         </span>
       )}
       {/* 自分のみ役割表示（アサシンの場合） */}
       {isKnownAssassin && (
-        <span className="text-xs text-red-500">
-          🗡️
+        <span className="text-xs text-red-500 inline-flex items-center">
+          <Sword size={12} />
         </span>
       )}
     </div>

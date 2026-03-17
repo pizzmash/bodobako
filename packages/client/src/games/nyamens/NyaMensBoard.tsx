@@ -1,4 +1,6 @@
 import type { NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
+import { Bird, Cat, Dice5, Ghost, Music, PawPrint, Skull, Sword, Target, Wrench } from "lucide-react";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { PlayingCard } from "../../components/PlayingCard";
@@ -68,7 +70,7 @@ function PlayerBar({
               {name}{isMe ? <span style={{ color: "#475569", fontSize: "0.7rem" }}>（自分）</span> : ""}
             </span>
             {isKnownAssassin && (
-              <span title="アサシン" style={{ fontSize: "0.85rem" }}>🗡️</span>
+              <span title="アサシン"><Sword size={14} /></span>
             )}
             {phase !== "finished" && (
               <span style={{ color: "#475569", fontSize: "0.7rem" }}>
@@ -78,7 +80,7 @@ function PlayerBar({
               </span>
             )}
             {isDuty && (
-              <span style={{ fontSize: "0.8rem", marginLeft: 2 }} title="修理当番">🛠️</span>
+              <span style={{ marginLeft: 2 }} title="修理当番"><Wrench size={13} /></span>
             )}
           </div>
         );
@@ -164,7 +166,7 @@ function Dice3D({
 }
 
 // ---- フェーズバナー ----
-function PhaseBanner({ text, color = ACCENT }: { text: string; color?: string }) {
+function PhaseBanner({ text, color = ACCENT }: { text: ReactNode; color?: string }) {
   return (
     <div
       style={{
@@ -338,7 +340,7 @@ export function NyaMensBoard() {
             gap: 12,
           }}
         >
-          <div style={{ fontSize: "3rem" }}>{isAssassin ? "🗡️" : "😺"}</div>
+          <div>{isAssassin ? <Sword size={48} /> : <Cat size={48} />}</div>
           <div
             style={{
               fontSize: "1.5rem",
@@ -418,12 +420,12 @@ export function NyaMensBoard() {
       (state.result?.winner === "nyamens" && state.myRole === "nyamens") ||
       (state.result?.winner === "assassin" && state.myRole === "assassin");
     const winnerTeam = state.result?.winner === "nyamens" ? "ニャーメンズ" : "アサシン";
-    const reasonLabel: Record<string, string> = {
-      "repair-complete": "🔧 全カード修理完了！",
-      "correct-arrest": "🎯 アサシンを正しく逮捕！",
-      "no-assassin": "🕊️ アサシン不在で修理失敗も無投票勝利",
-      "wrong-arrest": "💀 無実のプレイヤーを逮捕してしまいました",
-      "missed-assassin": "👻 アサシンを特定できませんでした",
+    const reasonLabel: Record<string, ReactNode> = {
+      "repair-complete": <><Wrench size={14} className="inline mr-1" />全カード修理完了！</>,
+      "correct-arrest": <><Target size={14} className="inline mr-1" />アサシンを正しく逮捕！</>,
+      "no-assassin": <><Bird size={14} className="inline mr-1" />アサシン不在で修理失敗も無投票勝利</>,
+      "wrong-arrest": <><Skull size={14} className="inline mr-1" />無実のプレイヤーを逮捕してしまいました</>,
+      "missed-assassin": <><Ghost size={14} className="inline mr-1" />アサシンを特定できませんでした</>,
     };
     const winColor = state.result?.winner === "nyamens" ? ACCENT : DANGER;
     return (
@@ -464,7 +466,7 @@ export function NyaMensBoard() {
                 color: "#94a3b8",
               }}
             >
-              {ev === "okami" ? "🐺" : ev === "shirokuma" ? "🐻‍❄️" : "🎵"}
+              {ev === "okami" ? <PawPrint size={12} className="inline mr-1" /> : ev === "shirokuma" ? <PawPrint size={12} className="inline mr-1 text-blue-200" /> : <Music size={12} className="inline mr-1" />}
               {ev}
             </span>
           ))}
@@ -514,7 +516,7 @@ export function NyaMensBoard() {
           }}
         >
           {state.okamiActive && state.phase === "dice-roll" && (
-            <PhaseBanner text="🐺 オオカミ発動中 — 次のターンは全員最低1枚！" color="#D97706" />
+            <PhaseBanner text={<><PawPrint size={14} className="inline mr-1" />オオカミ発動中 — 次のターンは全員最低1枚！</>} color="#D97706" />
           )}
 
           {/* サイコロ - 全員に表示。key が変わるたびに remount → アニメーション確実に再起動 */}
@@ -547,7 +549,7 @@ export function NyaMensBoard() {
                   boxShadow: `0 0 16px ${ACCENT}60`,
                 }}
               >
-                🎲 サイコロを振る
+                <Dice5 size={16} className="inline mr-1" />サイコロを振る
               </button>
             </>
           )}
@@ -566,11 +568,11 @@ export function NyaMensBoard() {
         <>
           {!diceAnimating && !diceShowingResult && !state.okamiActive && state.diceResult !== null && (
             <PhaseBanner
-              text={`🎲 サイコロの目: ${state.diceResult} — 全員で合計${state.diceResult}枚のカードを選んでください`}
+              text={<><Dice5 size={14} className="inline mr-1" />サイコロの目: {state.diceResult} — 全員で合計{state.diceResult}枚のカードを選んでください</>}
             />
           )}
           {!diceAnimating && !diceShowingResult && state.okamiActive && (
-            <PhaseBanner text="🐺 オオカミ発動！全員最低1枚カードを選んでください" color="#D97706" />
+            <PhaseBanner text={<><PawPrint size={14} className="inline mr-1" />オオカミ発動！全員最低1枚カードを選んでください</>} color="#D97706" />
           )}
           <PlayerHandArea
             state={state}
@@ -611,8 +613,8 @@ export function NyaMensBoard() {
             gap: 14,
           }}
         >
-          <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#7DD3FC" }}>
-            🐻‍❄️ シロクマ！
+          <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#7DD3FC", display: "flex", alignItems: "center", gap: 6 }}>
+            <PawPrint size={20} className="text-blue-200" /> シロクマ！
           </div>
           <div style={{ color: "#94a3b8", fontSize: "0.82rem" }}>
             1名を指名してください。その手札からランダムに1枚が修理に使われます。
@@ -672,8 +674,8 @@ export function NyaMensBoard() {
             gap: 14,
           }}
         >
-          <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#C4B5FD" }}>
-            🎵 チューニング！
+          <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#C4B5FD", display: "flex", alignItems: "center", gap: 6 }}>
+            <Music size={20} /> チューニング！
           </div>
 
           {isDuty ? (
@@ -915,7 +917,7 @@ export function NyaMensBoard() {
                     <span style={{ color: "#cbd5e1", fontSize: "0.72rem" }}>—</span>
                   )}
                   <span style={{ marginLeft: "auto", color: isAssassin ? "#dc2626" : role ? ACCENT : "transparent", fontWeight: 700, fontSize: "0.78rem", whiteSpace: "nowrap" }}>
-                    {isAssassin ? "🗡️ アサシン" : role ? "😺 ニャーメンズ" : ""}
+                    {isAssassin ? <><Sword size={14} className="inline mr-1" />アサシン</> : role ? <><Cat size={14} className="inline mr-1" />ニャーメンズ</> : ""}
                   </span>
                 </div>
               );

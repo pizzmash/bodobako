@@ -1,4 +1,5 @@
 import type { NanaCardView, NanaMove, NanaStateView } from "@bodobako/shared";
+import { MousePointer } from "lucide-react";
 import { memo, useCallback, useMemo, useRef } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { useRoom } from "../../context/RoomContext";
@@ -98,7 +99,7 @@ const GuideBanner = memo(function GuideBanner({
           gap: 8,
         }}
       >
-        <span>👆</span>
+        <MousePointer size={16} />
         {msgs[turnFlipsCount]}
       </div>
     </div>

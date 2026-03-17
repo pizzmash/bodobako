@@ -1,5 +1,6 @@
 import { getGameDefinition } from "@bodobako/shared";
 import clsx from "clsx";
+import { Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
@@ -13,22 +14,6 @@ const GameIcon = () => (
     <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#6366F1" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M2 17L12 22L22 17" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M2 12L12 17L22 12" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const SoundOnIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
-    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-
-const SoundOffIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
-    <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
 
@@ -122,7 +107,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
               aria-label={muted ? "消音中（クリックで音を出す）" : "音あり（クリックで消音）"}
               title={muted ? "消音中" : "音あり"}
             >
-              {muted ? <SoundOffIcon /> : <SoundOnIcon />}
+              {muted ? <VolumeX size={18} aria-hidden="true" /> : <Volume2 size={18} aria-hidden="true" />}
             </button>
           )}
 

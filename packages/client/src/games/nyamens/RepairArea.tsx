@@ -1,4 +1,5 @@
 import type { NyaMensTrack } from "@bodobako/shared";
+import { Flame, Package } from "lucide-react";
 import { PlayingCard } from "../../components/PlayingCard";
 import { Z } from "../../styles/tokens";
 import { cardColor } from "./nyaUtils";
@@ -168,7 +169,7 @@ export function RepairArea({
             gap: 8,
           }}
         >
-          <span style={{ color: RECYCLE_COLOR, fontWeight: 700, fontSize: "0.75rem" }}>📦</span>
+          <Package size={14} color={RECYCLE_COLOR} />
           {track.recycleBox !== null ? (
             <CardChip num={track.recycleBox} small />
           ) : (
@@ -275,7 +276,7 @@ export function RepairArea({
       {/* 廃棄済みカード */}
       {burnedCards.length > 0 && (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ color: "#475569", fontSize: "0.7rem" }}>🔥廃棄:</span>
+          <span style={{ color: "#475569", fontSize: "0.7rem", display: "inline-flex", alignItems: "center", gap: 2 }}><Flame size={12} className="inline mr-0.5" />廃棄:</span>
           {burnedCards.map((c) => (
             <div
               key={c}
@@ -383,7 +384,7 @@ export function RepairArea({
                   transition: "all 0.15s",
                 }}
               >
-                📦 リサイクル
+                <Package size={14} className="inline mr-1" /> リサイクル
               </button>
             </div>
           )}

@@ -1,29 +1,31 @@
 import type { NyaCard, NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
+import { CreditCard, Music, PawPrint } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { PlayingCard } from "../../components/PlayingCard";
 import { Z } from "../../styles/tokens";
 import { cardColor } from "./nyaUtils";
 
 // ---- イベントカード情報 ----
-function eventInfo(ev: NyaEventCard): { emoji: string; name: string; desc: string; bg: string } {
+function eventInfo(ev: NyaEventCard): { icon: ReactNode; name: string; desc: string; bg: string } {
   switch (ev) {
     case "okami":
       return {
-        emoji: "🐺",
+        icon: <PawPrint size={64} />,
         name: "オオカミ",
         desc: "全員から強制的にカードを1枚ずつ公開させます",
         bg: "linear-gradient(135deg, #7c3aed, #4c1d95)",
       };
     case "shirokuma":
       return {
-        emoji: "🐻‍❄️",
+        icon: <PawPrint size={64} className="text-blue-200" />,
         name: "シロクマ",
         desc: "誰かの手札を1枚ランダムで強制公開します",
         bg: "linear-gradient(135deg, #0369a1, #0c4a6e)",
       };
     case "tuning":
       return {
-        emoji: "🎵",
+        icon: <Music size={64} />,
         name: "チューニング",
         desc: "トラックのカードと手札を交換します",
         bg: "linear-gradient(135deg, #7e22ce, #3b0764)",
@@ -75,7 +77,7 @@ function EventCardOverlay({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: "4rem", lineHeight: 1 }}>{info.emoji}</div>
+        <div style={{ lineHeight: 1 }}>{info.icon}</div>
         <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#fff" }}>{info.name}</div>
         <div style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", lineHeight: 1.5 }}>
           {isMe ? info.desc : `${drawerName} が ${info.name} を引きました`}
@@ -215,7 +217,7 @@ export function DrawCardsView({ state, myId, playerNames, onDraw }: DrawCardsVie
             fontSize: "0.85rem",
           }}
         >
-          🃏 手札補充フェーズ
+          手札補充フェーズ
         </div>
         <div style={{ color: "#64748b", fontSize: "0.75rem" }}>
           {currentDrawer === myId
@@ -247,7 +249,7 @@ export function DrawCardsView({ state, myId, playerNames, onDraw }: DrawCardsVie
                 fontWeight: isFirst ? 600 : 400,
               }}
             >
-              {isFirst && <span style={{ fontSize: "0.9rem" }}>🎴</span>}
+              {isFirst && <CreditCard size={14} />}
               <span>{name}{pid === myId ? "（自分）" : ""}</span>
               <span style={{ color: "#475569", fontSize: "0.7rem" }}>
                 あと{remaining}枚

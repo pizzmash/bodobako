@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Gamepad2, Users } from "lucide-react";
 import { MOBILE_TAB_BAR_HEIGHT } from "../lib/constants";
 import { Z } from "../styles/tokens";
 
@@ -7,11 +8,6 @@ type MobileTab = "game" | "sidebar";
 const TAB_LABELS: Record<MobileTab, string> = {
   game: "ゲーム",
   sidebar: "プレイヤー",
-};
-
-const TAB_ICONS: Record<MobileTab, string> = {
-  game: "🎮",
-  sidebar: "👥",
 };
 
 interface MobileTabBarProps {
@@ -41,7 +37,7 @@ export function MobileTabBar({ activeTab, onTabChange }: MobileTabBarProps) {
             )}
             onClick={() => onTabChange(tab)}
           >
-            <span className="text-base">{TAB_ICONS[tab]}</span>
+            {tab === "game" ? <Gamepad2 size={20} /> : <Users size={20} />}
             {TAB_LABELS[tab]}
           </button>
         );

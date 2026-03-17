@@ -6,7 +6,14 @@
 
 import type { RoomInfo } from "@bodobako/shared";
 import type { ReactNode } from "react";
+import { PartyPopper, Trophy } from "lucide-react";
 import { Z } from "../styles/tokens";
+
+const RANK_COLOR: Record<number, string> = {
+  1: "#FFD700",
+  2: "#C0C0C0",
+  3: "#CD7F32",
+};
 
 interface GameRankingResultProps {
   ranking: string[];
@@ -42,7 +49,7 @@ export function GameRankingResult({
             className="text-4xl font-extrabold m-0 mb-2"
             style={{ color: isWinner ? accentColor : "#374151" }}
           >
-            {isWinner ? "🎉 優勝！" : "ゲーム終了"}
+            {isWinner ? <><PartyPopper size={32} className="inline mr-2" />優勝！</> : "ゲーム終了"}
           </h2>
           <p className="text-xl font-bold m-0" style={{ color: accentColor }}>
             あなたは {myRank}位
@@ -69,11 +76,14 @@ export function GameRankingResult({
                 <div
                   className="text-2xl font-extrabold min-w-[2.5rem] text-center"
                   style={{
-                    color:
-                      rank === 1 ? "#FFD700" : rank === 2 ? "#C0C0C0" : rank === 3 ? "#CD7F32" : "#6b7280",
+                    color: RANK_COLOR[rank] ?? "#6b7280",
                   }}
                 >
-                  {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}位`}
+                  {rank <= 3 ? (
+                    <Trophy size={24} color={RANK_COLOR[rank]} />
+                  ) : (
+                    `${rank}位`
+                  )}
                 </div>
 
                 {/* プレイヤー情報 */}

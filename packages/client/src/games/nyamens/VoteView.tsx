@@ -1,4 +1,5 @@
 import type { NyaMensPlayerView } from "@bodobako/shared";
+import { AlertTriangle, HelpCircle } from "lucide-react";
 import { Avatar } from "../../components/ui/Avatar";
 import { NYAMENS_ACCENT as ACCENT } from "../../styles/tokens";
 import { DANGER } from "./nyaUtils";
@@ -29,8 +30,8 @@ export function VoteView({ state, myId, playerNames, photoURLs = {}, onVote }: V
       }}
     >
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#fca5a5", marginBottom: 4 }}>
-          ⚠️ 修理失敗！
+        <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#fca5a5", marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <AlertTriangle size={20} className="inline mr-2" /> 修理失敗！
         </div>
         <div style={{ color: "#94a3b8", fontSize: "0.85rem" }}>
           アサシンは誰ですか？投票してください。
@@ -118,7 +119,7 @@ export function VoteView({ state, myId, playerNames, photoURLs = {}, onVote }: V
           alignSelf: "center",
         }}
       >
-        🤷 無投票（アサシンはいないと思う）
+        <HelpCircle size={14} className="inline mr-1" /> 無投票（アサシンはいないと思う）
       </button>
 
       {myVote !== undefined && (
