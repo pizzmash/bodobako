@@ -24,6 +24,7 @@ async function startBlokusTrigonGame(browser: {
   const contextA = await browser.newContext();
   const pageA = await contextA.newPage();
   await setupPlayer(pageA, "Alice");
+  await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("ブロックストライゴン");
   await pageA.getByLabel("ブロックストライゴンのルームを作成").click();
   await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
   const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;

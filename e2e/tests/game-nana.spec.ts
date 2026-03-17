@@ -24,8 +24,7 @@ async function startNanaGame(browser: {
   const contextA = await browser.newContext();
   const pageA = await contextA.newPage();
   await setupPlayer(pageA, "Alice");
-  // ナナは2ページ目にあるので次のページへ移動
-  await pageA.getByLabel("次のページ").click();
+  await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("ナナ");
   await pageA.getByLabel("ナナのルームを作成").click();
   await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
   const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;

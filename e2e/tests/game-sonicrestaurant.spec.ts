@@ -24,6 +24,7 @@ async function startSonicRestaurantGame(browser: {
   const contextA = await browser.newContext();
   const pageA = await contextA.newPage();
   await setupPlayer(pageA, "Alice");
+  await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("音速飯点");
   await pageA.getByLabel("音速飯点のルームを作成").click();
   await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
   const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -93,7 +94,8 @@ test.describe("音速飯店", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("音速飯点のルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("音速飯点");
+  await pageA.getByLabel("音速飯点のルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
 
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -127,7 +129,8 @@ test.describe("音速飯店", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("音速飯点のルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("音速飯点");
+  await pageA.getByLabel("音速飯点のルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
@@ -296,7 +299,8 @@ test.describe("音速飯店", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("音速飯点のルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("音速飯点");
+  await pageA.getByLabel("音速飯点のルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 

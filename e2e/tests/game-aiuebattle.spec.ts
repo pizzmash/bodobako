@@ -23,7 +23,8 @@ test.describe("あいうえバトル", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("あいうえバトル");
+  await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
 
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -76,7 +77,8 @@ test.describe("あいうえバトル", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("あいうえバトル");
+  await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
@@ -144,7 +146,8 @@ test.describe("あいうえバトル", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("あいうえバトル");
+  await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
@@ -194,7 +197,8 @@ test.describe("あいうえバトル", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("あいうえバトル");
+  await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
@@ -254,7 +258,8 @@ test.describe("あいうえバトル", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("あいうえバトル");
+  await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
@@ -303,7 +308,8 @@ test.describe("あいうえバトル", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("あいうえバトルのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("あいうえバトル");
+  await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 

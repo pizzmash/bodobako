@@ -49,6 +49,7 @@ async function createRoomAndStartGame(browser: {
   const contextA = await browser.newContext();
   const pageA = await contextA.newPage();
   await setupPlayer(pageA, "Alice");
+  await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("シティチェイス");
   await pageA.getByLabel("シティチェイスのルームを作成").click();
   await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
   const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -150,7 +151,8 @@ test.describe("シティチェイス", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("シティチェイスのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("シティチェイス");
+  await pageA.getByLabel("シティチェイスのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
 
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -190,7 +192,8 @@ test.describe("シティチェイス", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("シティチェイスのルームを作成").click();
+    await pageA.getByRole("searchbox", { name: "ゲーム検索" }).fill("シティチェイス");
+  await pageA.getByLabel("シティチェイスのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
