@@ -47,7 +47,7 @@ function createMsgQueue(ws: WebSocket) {
 /** ルームを作成して code と sessionToken を返す */
 async function createRoom(
   playerName = "Alice",
-  gameId = "othello"
+  gameId = "aiuebattle"
 ): Promise<{ code: string; sessionToken: string; playerId: string }> {
   const sessionToken = crypto.randomUUID();
   const res = await SELF.fetch("http://example.com/rooms", {
@@ -127,30 +127,36 @@ describe("room:join", () => {
     ws.close();
   });
 
-  it("異常: ルームが満員（2人埋まり）→ ack(error)", async () => {
-    const { code } = await createRoom();
+  it("異常: ルームが満員（blokus: 4人埋まり）→ ack(error)", async () => {
+    // blokus は maxPlayers=4 なので5人目の参加を拒否する
+    const { code } = await createRoom("Alice", "blokus");
 
-    // Bob 参加
-    const bobToken = crypto.randomUUID();
-    const { ws: bobWs, queue: bobQueue } = await connectWs(code, bobToken);
-    await sendMsg(bobWs, bobQueue, {
-      type: "room:join", reqId: "join-bob", roomCode: code,
-      playerName: "Bob", sessionToken: bobToken,
-    });
+    // Bob〜Dave（2〜4人目）を参加させる
+    const names = ["Bob", "Charlie", "Dave"];
+    const wsList: WebSocket[] = [];
+    for (const name of names) {
+      const token = crypto.randomUUID();
+      const { ws, queue } = await connectWs(code, token);
+      await sendMsg(ws, queue, {
+        type: "room:join", reqId: `join-${name}`, roomCode: code,
+        playerName: name, sessionToken: token,
+      });
+      wsList.push(ws);
+    }
 
-    // Charlie（3人目）が参加しようとする
-    const charlieToken = crypto.randomUUID();
-    const { ws: charlieWs, queue: charlieQueue } = await connectWs(code, charlieToken);
-    const ack = await sendMsg(charlieWs, charlieQueue, {
-      type: "room:join", reqId: "join-charlie", roomCode: code,
-      playerName: "Charlie", sessionToken: charlieToken,
+    // Eve（5人目）が参加しようとする → 満員エラー
+    const eveToken = crypto.randomUUID();
+    const { ws: eveWs, queue: eveQueue } = await connectWs(code, eveToken);
+    const ack = await sendMsg(eveWs, eveQueue, {
+      type: "room:join", reqId: "join-eve", roomCode: code,
+      playerName: "Eve", sessionToken: eveToken,
     }) as { type: string; ok: boolean; error?: string };
 
     expect(ack.ok).toBe(false);
     expect(ack.error).toMatch(/満員/);
 
-    bobWs.close();
-    charlieWs.close();
+    for (const ws of wsList) ws.close();
+    eveWs.close();
   });
 });
 
@@ -300,7 +306,8 @@ describe("game:move", () => {
       gameState, alicePlayerId, aliceWs, aliceQueue, bobWs, bobQueue
     );
 
-    currentWs.send(JSON.stringify({ type: "game:move", move: { row: 2, col: 3 } }));
+    // aiuebattle の初期フェーズは topic-select。有効な手はお題選択
+    currentWs.send(JSON.stringify({ type: "game:move", move: { type: "select-topic", topic: "動物" } }));
     const msg = await currentQueue.nextOfType("game:stateUpdated") as { type: string };
 
     expect(msg.type).toBe("game:stateUpdated");
@@ -316,7 +323,7 @@ describe("game:move", () => {
       gameState, alicePlayerId, aliceWs, aliceQueue, bobWs, bobQueue
     );
 
-    // 無効な手（初期状態で白石が置かれているマス）
+    // 無効な手（aiuebattle が解釈できないフォーマット）
     currentWs.send(JSON.stringify({ type: "game:move", move: { row: 3, col: 3 } }));
     const errorMsg = await currentQueue.nextOfType("error") as { type: string };
 

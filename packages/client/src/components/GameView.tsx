@@ -25,9 +25,6 @@ import type { PlayerSlotProps } from "./GameSidebar/PlayerCard";
 import { GameSidebarContent } from "./GameSidebarContent";
 import { MobileTabBar } from "./MobileTabBar";
 
-const OthelloBoard = lazy(() =>
-  import("../games/othello/OthelloBoard").then((m) => ({ default: m.OthelloBoard }))
-);
 const AiueBattleBoard = lazy(() =>
   import("../games/aiuebattle/AiueBattleBoard").then((m) => ({ default: m.AiueBattleBoard }))
 );
@@ -190,9 +187,6 @@ export function GameView() {
 
   let board: ReactElement;
   switch (room.gameId) {
-    case "othello":
-      board = <OthelloBoard />;
-      break;
     case "aiuebattle":
       board = <AiueBattleBoard />;
       break;
