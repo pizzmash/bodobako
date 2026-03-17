@@ -62,7 +62,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
       className="sticky top-0 z-header w-full border-b border-indigo-300/20 bg-white/75 font-poppins shadow-[0_4px_16px_rgba(99,102,241,0.08)] backdrop-blur-xl animate-slide-down"
       style={{ zIndex: Z.header }}
     >
-      <div className="relative mx-auto max-w-[800px]">
+      <div className="relative mx-auto max-w-full">
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3.5">
           {/* Brand */}
           <div className="flex select-none items-center gap-2.5" role="heading" aria-level={1}>
