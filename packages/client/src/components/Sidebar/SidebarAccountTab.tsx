@@ -1,21 +1,51 @@
+import { Camera, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE } from "../../lib/socket";
 import { MAX_APP_DISPLAY_NAME_LENGTH } from "../../lib/constants";
 import { Avatar } from "../ui/Avatar";
+import { Spinner } from "../ui/Spinner";
+
+async function cropAndResizeAvatar(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  const size = Math.min(bitmap.width, bitmap.height);
+  const sx = (bitmap.width - size) / 2;
+  const sy = (bitmap.height - size) / 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(bitmap, sx, sy, size, size, 0, 0, 128, 128);
+  bitmap.close();
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("画像の変換に失敗しました"))),
+      "image/jpeg",
+      0.85,
+    );
+  });
+}
 
 interface SidebarAccountTabProps {
   isOpen: boolean;
 }
 
 export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
-  const { firebaseUser, appDisplayName, friendCode, updateDisplayName, signOut } = useAuth();
+  const { firebaseUser, appDisplayName, friendCode, profilePhotoURL, updateDisplayName, updateAvatar, deleteAvatar, signOut } = useAuth();
   const [nameDraft, setNameDraft] = useState(appDisplayName ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasCustomAvatar = profilePhotoURL !== null && profilePhotoURL.startsWith(API_BASE);
 
   const isDirty = nameDraft.trim() !== "" && nameDraft.trim() !== appDisplayName;
 
@@ -36,6 +66,17 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
     },
     [],
   );
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showMenu]);
 
   const handleCopy = async () => {
     if (!friendCode) return;
@@ -77,11 +118,98 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
     <>
       <div className="px-5 py-3.5">
         <div className="flex items-center gap-3.5">
-          <Avatar
-            photoURL={firebaseUser.photoURL ?? ""}
-            displayName={firebaseUser.displayName ?? firebaseUser.email ?? "?"}
-            size={48}
+          {/* hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              setUploadError(null);
+              setIsUploading(true);
+              cropAndResizeAvatar(file)
+                .then((blob) => updateAvatar(new File([blob], "avatar.jpg", { type: "image/jpeg" })))
+                .catch((err) => setUploadError(err instanceof Error ? err.message : "アップロードに失敗しました"))
+                .finally(() => setIsUploading(false));
+            }}
+            aria-label="アバター画像をアップロード"
           />
+
+          {/* アバターボタン + ドロップダウンメニュー */}
+          <div ref={menuRef} className="relative shrink-0">
+            <button
+              type="button"
+              className="relative rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+              onClick={() => !isUploading && setShowMenu((v) => !v)}
+              disabled={isUploading}
+              aria-label="アバター画像を変更"
+              aria-haspopup="true"
+              aria-expanded={showMenu}
+            >
+              <Avatar
+                photoURL={profilePhotoURL ?? firebaseUser.photoURL ?? ""}
+                displayName={firebaseUser.displayName ?? firebaseUser.email ?? "?"}
+                size={48}
+              />
+              <span
+                className="absolute -bottom-[5px] -right-[5px] flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 ring-2 ring-white shadow-sm"
+                aria-hidden="true"
+              >
+                {isUploading
+                  ? <Spinner size={10} colorClass="border-white/40 border-t-white" />
+                  : <Camera size={11} strokeWidth={2.5} className="text-white" />
+                }
+              </span>
+            </button>
+
+            {showMenu && (
+              <div
+                className="absolute left-0 top-[calc(100%+6px)] z-50 min-w-[168px] rounded-xl border border-indigo-100/60 bg-white py-1 shadow-lg"
+                role="menu"
+              >
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[0.88rem] font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:bg-indigo-50 focus-visible:outline-none"
+                  role="menuitem"
+                  onClick={() => {
+                    setShowMenu(false);
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <Camera size={14} strokeWidth={2} className="shrink-0" />
+                  写真を変更
+                </button>
+                {hasCustomAvatar && (
+                  <>
+                    <div className="mx-2 my-1 h-px bg-indigo-100/60" />
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[0.88rem] font-medium text-red-500 hover:bg-red-50/60 focus-visible:bg-red-50/60 focus-visible:outline-none"
+                      role="menuitem"
+                      onClick={() => {
+                        setShowMenu(false);
+                        setUploadError(null);
+                        setIsUploading(true);
+                        deleteAvatar()
+                          .catch((err) => setUploadError(err instanceof Error ? err.message : "削除に失敗しました"))
+                          .finally(() => setIsUploading(false));
+                      }}
+                    >
+                      <Trash2 size={14} strokeWidth={2} className="shrink-0" />
+                      デフォルトに戻す
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {uploadError && (
+            <p className="text-[0.8rem] text-red-500 mt-1.5 mb-0" role="alert">{uploadError}</p>
+          )}
           <div className="min-w-0">
             <div className="text-[0.95rem] font-semibold text-indigo-900 truncate">
               {firebaseUser.displayName}

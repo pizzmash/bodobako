@@ -47,6 +47,7 @@ interface R2InviteList {
 // Key helpers
 // ---------------------------------------------------------------------------
 const profileKey = (uid: string) => `users/${uid}/profile.json`;
+const avatarKey = (uid: string) => `users/${uid}/avatar`;
 const followingKey = (uid: string) => `users/${uid}/following.json`;
 const followersKey = (uid: string) => `users/${uid}/followers.json`;
 const invitesKey = (uid: string) => `users/${uid}/invites.json`;
@@ -152,6 +153,48 @@ export async function upsertProfile(
       createdAt: current?.createdAt ?? now,
       updatedAt: now,
     };
+  });
+}
+
+export async function putAvatar(
+  bucket: R2Bucket,
+  uid: string,
+  data: ArrayBuffer,
+  contentType: string,
+): Promise<void> {
+  await bucket.put(avatarKey(uid), data, { httpMetadata: { contentType } });
+}
+
+export async function getAvatar(
+  bucket: R2Bucket,
+  uid: string,
+): Promise<R2ObjectBody | null> {
+  return bucket.get(avatarKey(uid));
+}
+
+export async function updateProfilePhotoURL(
+  bucket: R2Bucket,
+  uid: string,
+  photoURL: string,
+): Promise<R2UserProfile | null> {
+  const existing = await getProfile(bucket, uid);
+  if (!existing) return null;
+  return updateWithOptimisticLock<R2UserProfile>(bucket, profileKey(uid), (current) => {
+    if (!current) return existing;
+    return { ...current, photoURL, updatedAt: Date.now() };
+  });
+}
+
+export async function updateProfileFields(
+  bucket: R2Bucket,
+  uid: string,
+  fields: Partial<Pick<R2UserProfile, "displayName" | "photoURL">>,
+): Promise<R2UserProfile | null> {
+  const existing = await getProfile(bucket, uid);
+  if (!existing) return null;
+  return updateWithOptimisticLock<R2UserProfile>(bucket, profileKey(uid), (current) => {
+    if (!current) return existing;
+    return { ...current, ...fields, updatedAt: Date.now() };
   });
 }
 
