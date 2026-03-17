@@ -4,7 +4,7 @@ import type {
     BlokusTrigonState,
     CitychasePlayerView, GameResult, NanaStateView,
     NyaMensPlayerView,
-    OthelloState, RoomInfo, SonicRestaurantState, WsServerMessage
+    RoomInfo, SonicRestaurantState, WsServerMessage
 } from "@bodobako/shared";
 import {
     createContext,
@@ -25,7 +25,6 @@ import { useAuth } from "./AuthContext";
  * 各ゲームボードでは `gameState.gameId` で分岐することで `as` キャストが不要になる。
  */
 export type GameStateEntry =
-  | { gameId: "othello"; state: OthelloState }
   | { gameId: "aiuebattle"; state: AiueBattleState }
   | { gameId: "citychase"; state: CitychasePlayerView }
   | { gameId: "sonic-restaurant"; state: SonicRestaurantState }

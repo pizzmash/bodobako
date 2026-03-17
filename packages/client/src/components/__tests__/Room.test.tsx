@@ -18,7 +18,7 @@ function baseRoomState() {
   return {
     room: {
       code: "ABCD",
-      gameId: "othello",
+      gameId: "aiuebattle",
       players: [
         { id: "p1", name: "Alice", userId: "uid-1" },
         { id: "p2", name: "Bob", userId: "uid-2" },

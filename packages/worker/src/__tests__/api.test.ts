@@ -15,7 +15,7 @@ describe("POST /rooms", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerName: "Alice",
-        gameId: "othello",
+        gameId: "aiuebattle",
         sessionToken: crypto.randomUUID(),
       }),
     });
@@ -33,7 +33,7 @@ describe("POST /rooms", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerName: "",
-        gameId: "othello",
+        gameId: "aiuebattle",
         sessionToken: crypto.randomUUID(),
       }),
     });
@@ -49,7 +49,7 @@ describe("POST /rooms", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerName: "A".repeat(21),
-        gameId: "othello",
+        gameId: "aiuebattle",
         sessionToken: crypto.randomUUID(),
       }),
     });
@@ -79,7 +79,7 @@ describe("POST /rooms", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerName: "Alice",
-        gameId: "othello",
+        gameId: "aiuebattle",
       }),
     });
 
@@ -102,7 +102,7 @@ describe("POST /rooms", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerName: "   ",
-        gameId: "othello",
+        gameId: "aiuebattle",
         sessionToken: crypto.randomUUID(),
       }),
     });
@@ -132,7 +132,7 @@ describe("GET /rooms/:code/ws", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerName: "Alice",
-        gameId: "othello",
+        gameId: "aiuebattle",
         sessionToken: crypto.randomUUID(),
       }),
     });
@@ -157,7 +157,7 @@ describe("GET /rooms/:code/ws", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerName: "Alice",
-        gameId: "othello",
+        gameId: "aiuebattle",
         sessionToken: crypto.randomUUID(),
       }),
     });

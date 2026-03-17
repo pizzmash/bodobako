@@ -47,10 +47,6 @@ export type {
     NyaCard, NyaEventCard, NyaMensMove, NyaMensPhase, NyaMensPlayerView,
     NyaMensState, NyaMensTrack, NyaRole
 } from "./games/nyamens/types.js";
-export { othelloDefinition } from "./games/othello/index.js";
-export { countDiscs, getValidMoves } from "./games/othello/logic.js";
-export { BOARD_SIZE } from "./games/othello/types.js";
-export type { CellState, OthelloBoard, OthelloMove, OthelloState } from "./games/othello/types.js";
 export { sonicRestaurantGame } from "./games/sonic-restaurant/index.js";
 export { buildMenuTree, canPlayCard } from "./games/sonic-restaurant/logic.js";
 export { CARD_COUNTS, MENUS } from "./games/sonic-restaurant/types.js";

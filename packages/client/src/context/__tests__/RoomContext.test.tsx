@@ -128,12 +128,12 @@ describe("createRoom", () => {
     const { getContext } = await renderRoomProvider();
 
     act(() => {
-      getContext().createRoom("Alice", "othello");
+      getContext().createRoom("Alice", "aiuebattle");
     });
 
     await waitFor(() => {
       expect(mockWsClient.createRoom).toHaveBeenCalledWith(
-        expect.objectContaining({ playerName: "Alice", gameId: "othello" })
+        expect.objectContaining({ playerName: "Alice", gameId: "aiuebattle" })
       );
     });
   });
@@ -144,7 +144,7 @@ describe("createRoom", () => {
     const { getContext } = await renderRoomProvider();
 
     act(() => {
-      getContext().createRoom("Alice", "othello");
+      getContext().createRoom("Alice", "aiuebattle");
     });
 
     await waitFor(() => {
@@ -158,7 +158,7 @@ describe("createRoom", () => {
     const { getContext } = await renderRoomProvider();
 
     act(() => {
-      getContext().createRoom("Alice", "othello");
+      getContext().createRoom("Alice", "aiuebattle");
     });
 
     await waitFor(() => {
@@ -176,7 +176,7 @@ describe("createRoom", () => {
     const { getContext } = await renderRoomProvider();
 
     act(() => {
-      getContext().createRoom("Alice", "othello");
+      getContext().createRoom("Alice", "aiuebattle");
     });
 
     expect(getContext().isCreatingRoom).toBe(true);
@@ -207,7 +207,7 @@ describe("leaveRoom", () => {
     act(() => {
       simulateServerEvent("room:updated", {
         type: "room:updated",
-        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+        room: { code: "ABCD", gameId: "aiuebattle", players: [], hostId: "p1", status: "waiting", gameState: null },
       });
     });
 
@@ -239,7 +239,7 @@ describe("サーバーイベント - room:updated", () => {
 
     const roomData = {
       code: "ABCD",
-      gameId: "othello",
+      gameId: "aiuebattle",
       players: [{ id: "p1", name: "Alice" }],
       hostId: "p1",
       status: "waiting" as const,
@@ -265,7 +265,7 @@ describe("サーバーイベント - room:updated", () => {
     const { getContext } = await renderRoomProvider();
 
     act(() => {
-      getContext().createRoom("Alice", "othello");
+      getContext().createRoom("Alice", "aiuebattle");
     });
     expect(getContext().isCreatingRoom).toBe(true);
 
@@ -276,7 +276,7 @@ describe("サーバーイベント - room:updated", () => {
     act(() => {
       simulateServerEvent("room:updated", {
         type: "room:updated",
-        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+        room: { code: "ABCD", gameId: "aiuebattle", players: [], hostId: "p1", status: "waiting", gameState: null },
       });
     });
 
@@ -291,7 +291,7 @@ describe("サーバーイベント - game:started / game:stateUpdated / game:end
     act(() => {
       simulateServerEvent("room:updated", {
         type: "room:updated",
-        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+        room: { code: "ABCD", gameId: "aiuebattle", players: [], hostId: "p1", status: "waiting", gameState: null },
       });
     });
 
@@ -300,7 +300,7 @@ describe("サーバーイベント - game:started / game:stateUpdated / game:end
       simulateServerEvent("game:started", { type: "game:started", state: mockState });
     });
 
-    expect(getContext().gameState).toEqual({ gameId: "othello", state: mockState });
+    expect(getContext().gameState).toEqual({ gameId: "aiuebattle", state: mockState });
     expect(getContext().gameResult).toBeNull();
   });
 
@@ -310,7 +310,7 @@ describe("サーバーイベント - game:started / game:stateUpdated / game:end
     act(() => {
       simulateServerEvent("room:updated", {
         type: "room:updated",
-        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+        room: { code: "ABCD", gameId: "aiuebattle", players: [], hostId: "p1", status: "waiting", gameState: null },
       });
     });
 
@@ -319,7 +319,7 @@ describe("サーバーイベント - game:started / game:stateUpdated / game:end
       simulateServerEvent("game:stateUpdated", { type: "game:stateUpdated", state: newState });
     });
 
-    expect(getContext().gameState).toEqual({ gameId: "othello", state: newState });
+    expect(getContext().gameState).toEqual({ gameId: "aiuebattle", state: newState });
   });
 
   it("game:endedでgameResultが設定される", async () => {
@@ -342,7 +342,7 @@ describe("サーバーイベント - room:left", () => {
     act(() => {
       simulateServerEvent("room:updated", {
         type: "room:updated",
-        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+        room: { code: "ABCD", gameId: "aiuebattle", players: [], hostId: "p1", status: "waiting", gameState: null },
       });
     });
 
@@ -420,7 +420,7 @@ describe("localStorageからのplayerName初期化", () => {
 describe("joinRoom", () => {
   const roomData = {
     code: "ABCD",
-    gameId: "othello",
+    gameId: "aiuebattle",
     players: [
       { id: "p1", name: "Alice" },
       { id: "p2", name: "Bob" },
@@ -473,7 +473,7 @@ describe("joinRoom", () => {
 describe("connectToRoom", () => {
   const roomData = {
     code: "ABCD",
-    gameId: "othello",
+    gameId: "aiuebattle",
     players: [{ id: "p1", name: "Alice" }],
     hostId: "p1",
     status: "waiting" as const,
@@ -592,7 +592,7 @@ describe("bfcache (pageshow) 復元", () => {
     act(() => {
       simulateServerEvent("room:updated", {
         type: "room:updated",
-        room: { code: "ABCD", gameId: "othello", players: [], hostId: "p1", status: "waiting", gameState: null },
+        room: { code: "ABCD", gameId: "aiuebattle", players: [], hostId: "p1", status: "waiting", gameState: null },
       });
     });
 
