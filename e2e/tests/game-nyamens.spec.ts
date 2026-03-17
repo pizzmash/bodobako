@@ -60,8 +60,8 @@ async function rollDice(
   pageB: Page
 ): Promise<{ dutyPage: Page; otherPage: Page }> {
   // 当番プレイヤーのサイコロボタンが表示されるのを待つ
-  const diceButtonA = pageA.getByRole("button", { name: "🎲 サイコロを振る" });
-  const diceButtonB = pageB.getByRole("button", { name: "🎲 サイコロを振る" });
+  const diceButtonA = pageA.getByRole("button", { name: "サイコロを振る" });
+  const diceButtonB = pageB.getByRole("button", { name: "サイコロを振る" });
 
   // どちらかにサイコロボタンが表示されるまで待つ
   await Promise.race([
@@ -80,7 +80,7 @@ async function rollDice(
   const dutyPage = aVisible ? pageA : pageB;
   const otherPage = aVisible ? pageB : pageA;
 
-  await dutyPage.getByRole("button", { name: "🎲 サイコロを振る" }).click();
+  await dutyPage.getByRole("button", { name: "サイコロを振る" }).click();
   return { dutyPage, otherPage };
 }
 
@@ -119,11 +119,11 @@ test.describe("ニャーメンズゲーム", () => {
 
     // サイコロフェーズへ遷移: どちらかに「サイコロを振る」ボタンまたは待機テキストが表示される
     const diceButtonA = pageA.getByRole("button", {
-      name: "🎲 サイコロを振る",
+      name: "サイコロを振る",
     });
     const waitingTextA = pageA.getByText(/がサイコロを振っています/);
     const diceButtonB = pageB.getByRole("button", {
-      name: "🎲 サイコロを振る",
+      name: "サイコロを振る",
     });
     const waitingTextB = pageB.getByText(/がサイコロを振っています/);
 
