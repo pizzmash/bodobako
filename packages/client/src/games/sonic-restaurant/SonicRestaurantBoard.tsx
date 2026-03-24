@@ -7,7 +7,7 @@ import type {
     MenuTreeNode,
     SonicRestaurantMove,
 } from "@bodobako/shared";
-import { buildMenuTree } from "@bodobako/shared";
+import { buildMenuTree, getGameDefinition } from "@bodobako/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRoom } from "../../context/RoomContext";
 import { CenterTable } from "./CenterTable";
@@ -18,7 +18,7 @@ import { MenuSidebar } from "./MenuSidebar";
 import { OrderStartCountdown } from "./OrderStartCountdown";
 import { SonicRestaurantResult } from "./SonicRestaurantResult";
 export function SonicRestaurantBoard() {
-  const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom } = useRoom();
+  const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom, resultPlayers, rematchRequests, requestRematch } = useRoom();
   const rawState = gameState?.gameId === "sonic-restaurant" ? gameState.state : null;
 
   // Socket.IOでシリアライズされたMapを復元
@@ -110,8 +110,12 @@ export function SonicRestaurantBoard() {
           room={room}
           playerId={playerId}
           ranking={gameResult.ranking}
+          players={resultPlayers ?? undefined}
           onRestart={startGame}
           onLeave={leaveRoom}
+          rematchRequests={rematchRequests}
+          minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+          onRematchRequest={requestRematch}
         />
       )}
 

@@ -2,8 +2,8 @@
  * ブロックストライゴン — ルートコンポーネント
  */
 
-import type { BlokusTrigonMove, BlokusTrigonState, GameResult, RoomInfo } from "@bodobako/shared";
-import { trigonBoardToGrid, trigonComputePlayerScore } from "@bodobako/shared";
+import type { BlokusTrigonMove, BlokusTrigonState, GameResult, Player, RoomInfo } from "@bodobako/shared";
+import { trigonBoardToGrid, trigonComputePlayerScore, getGameDefinition } from "@bodobako/shared";
 import { useCallback, useMemo } from "react";
 import { GameRankingResult } from "../../components/GameRankingResult";
 import { useRoom } from "../../context/RoomContext";
@@ -29,6 +29,10 @@ interface ContentProps {
   room: RoomInfo;
   startGame: () => void;
   leaveRoom: () => void;
+  resultPlayers?: Player[] | null;
+  rematchRequests?: string[];
+  minPlayers?: number;
+  onRematchRequest?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -36,7 +40,7 @@ interface ContentProps {
 // ---------------------------------------------------------------------------
 
 export function BlokusTrigonBoard() {
-  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
+  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom, resultPlayers, rematchRequests, requestRematch } =
     useRoom();
   if (gameState !== null && gameState.gameId !== "blokus-trigon") return null;
   const state = gameState?.state ?? null;
@@ -52,6 +56,10 @@ export function BlokusTrigonBoard() {
       room={room}
       startGame={startGame}
       leaveRoom={leaveRoom}
+      resultPlayers={resultPlayers}
+      rematchRequests={rematchRequests}
+      minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+      onRematchRequest={requestRematch}
     />
   );
 }
@@ -68,6 +76,10 @@ function BlokusTrigonBoardContent({
   room,
   startGame,
   leaveRoom,
+  resultPlayers,
+  rematchRequests,
+  minPlayers,
+  onRematchRequest,
 }: ContentProps) {
   const isWide = useBreakpoint(760);
   const [boardOuterRef, boardScale] = useBoardScale(BOARD_PX);
@@ -197,6 +209,7 @@ function BlokusTrigonBoardContent({
           ranking={gameResult.ranking}
           room={room}
           playerId={playerId}
+          players={resultPlayers ?? undefined}
           accentColor={TRIGON_COLORS[0].fill}
           renderPlayerDetail={(pid) => {
             const pIdx = state.playerIds.indexOf(pid);
@@ -210,6 +223,9 @@ function BlokusTrigonBoardContent({
           }}
           onRestart={startGame}
           onLeave={leaveRoom}
+          rematchRequests={rematchRequests}
+          minPlayers={minPlayers}
+          onRematchRequest={onRematchRequest}
         />
       )}
     </div>

@@ -32,7 +32,7 @@ export function GameSidebarContent({
   playerColorMap,
   renderLogItemExtra,
 }: GameSidebarContentProps) {
-  const { room, playerId } = useRoom();
+  const { room, playerId, resultPlayers } = useRoom();
   const { firebaseUser, idToken } = useAuth();
   const isMobile = useIsMobile();
 
@@ -51,8 +51,8 @@ export function GameSidebarContent({
   );
 
   const activePlayer = useMemo(
-    () => room?.players.find((p) => p.id === activePopoverPlayerId) ?? null,
-    [room, activePopoverPlayerId],
+    () => (resultPlayers ?? room?.players ?? []).find((p) => p.id === activePopoverPlayerId) ?? null,
+    [room, resultPlayers, activePopoverPlayerId],
   );
   const activeUid = activePlayer?.userId ?? "";
   const activeProfile = activeUid ? profilesByUid[activeUid] : null;
@@ -178,40 +178,48 @@ export function GameSidebarContent({
         <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-2">
           プレイヤー
         </div>
-        {room.players.map((player, index) => {
-          const isMe = player.id === playerId;
-          const isCurrentPlayer =
-            currentTurnPlayerId === null ? null : player.id === currentTurnPlayerId;
-          const uid = player.userId;
-          const profile = uid ? profilesByUid[uid] : null;
-          const accentColorOverride = playerColorMap?.[player.id];
-          // 自分はFirebase Authのphoto（常に最新）→ プロフィールAPI の順で使用
-          const photoURL = isMe
-            ? (firebaseUser?.photoURL ?? profile?.photoURL ?? undefined)
-            : (profile?.photoURL || undefined);
-          return (
-            <PlayerCard
-              key={player.id}
-              playerId={player.id}
-              playerName={player.name}
-              colorIndex={index}
-              accentColor={accentColorOverride}
-              isMe={isMe}
-              isCurrentPlayer={isCurrentPlayer}
-              photoURL={photoURL}
-              avatarDisplayName={profile?.displayName ?? player.name}
-              onAvatarClick={(e) => handleAvatarClick(player, e)}
-            >
-              {PlayerSlot && (
-                <PlayerSlot
-                  playerId={player.id}
-                  isMe={isMe}
-                  isCurrentPlayer={isCurrentPlayer}
-                />
-              )}
-            </PlayerCard>
-          );
-        })}
+        {(() => {
+          const displayPlayers = (room.status === "finished" && resultPlayers) ? resultPlayers : room.players;
+          const livePlayers = room.players;
+          return displayPlayers.map((player, index) => {
+            const isMe = player.id === playerId;
+            const isCurrentPlayer =
+              currentTurnPlayerId === null ? null : player.id === currentTurnPlayerId;
+            const uid = player.userId;
+            const profile = uid ? profilesByUid[uid] : null;
+            const accentColorOverride = playerColorMap?.[player.id];
+            // 自分はFirebase Authのphoto（常に最新）→ プロフィールAPI の順で使用
+            const photoURL = isMe
+              ? (firebaseUser?.photoURL ?? profile?.photoURL ?? undefined)
+              : (profile?.photoURL || undefined);
+            const isOnline = room.status !== "finished"
+              ? undefined
+              : livePlayers.some((p) => p.id === player.id);
+            return (
+              <PlayerCard
+                key={player.id}
+                playerId={player.id}
+                playerName={player.name}
+                colorIndex={index}
+                accentColor={accentColorOverride}
+                isMe={isMe}
+                isCurrentPlayer={isCurrentPlayer}
+                photoURL={photoURL}
+                avatarDisplayName={profile?.displayName ?? player.name}
+                onAvatarClick={(e) => handleAvatarClick(player, e)}
+                isOnline={isOnline}
+              >
+                {PlayerSlot && (
+                  <PlayerSlot
+                    playerId={player.id}
+                    isMe={isMe}
+                    isCurrentPlayer={isCurrentPlayer}
+                  />
+                )}
+              </PlayerCard>
+            );
+          });
+        })()}
       </div>
 
       {/* ゲームログ */}

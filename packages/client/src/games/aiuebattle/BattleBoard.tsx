@@ -1,4 +1,4 @@
-import type { AiueBattleMove, AiueBattleState, GameResult, RoomInfo } from "@bodobako/shared";
+import type { AiueBattleMove, AiueBattleState, GameResult, Player, RoomInfo } from "@bodobako/shared";
 import { GameResultCard } from "../../components/GameResultCard";
 import {
     BOARD_LAYOUT,
@@ -27,6 +27,10 @@ interface BattleBoardProps {
   leaveRoom: () => void;
   attackAnim: "hit" | "miss" | null;
   newlyRevealed: Set<string>;
+  resultPlayers?: Player[] | null;
+  rematchRequests?: string[];
+  minPlayers?: number;
+  onRematchRequest?: () => void;
 }
 
 export function BattleBoard({
@@ -39,6 +43,10 @@ export function BattleBoard({
   leaveRoom,
   attackAnim,
   newlyRevealed,
+  resultPlayers,
+  rematchRequests,
+  minPlayers,
+  onRematchRequest,
 }: BattleBoardProps) {
   const currentPlayer = room.players.find(
     (p) => p.id === state.playerIds[state.currentPlayerIndex]
@@ -293,10 +301,15 @@ export function BattleBoard({
       {gameResult && (
         <GameResultCard
           result={gameResult.ranking?.[0] === playerId ? "win" : "lose"}
-          winnerName={room.players.find((p) => p.id === gameResult.ranking?.[0])?.name ?? "?"}
+          winnerName={(resultPlayers ?? room.players).find((p) => p.id === gameResult.ranking?.[0])?.name ?? "?"}
           isHost={playerId === room.hostId}
           onRematch={startGame}
           onLeave={leaveRoom}
+          playerId={playerId}
+          rematchRequests={rematchRequests}
+          resultPlayers={resultPlayers ?? room.players}
+          minPlayers={minPlayers}
+          onRematchRequest={onRematchRequest}
         />
       )}
 

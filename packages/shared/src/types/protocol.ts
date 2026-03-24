@@ -3,6 +3,8 @@ import type { RoomInfo } from "./room.js";
 export interface GameResult {
   ranking: string[] | null;
   reason: string;
+  /** ゲーム中に退出したプレイヤー（強制終了時のみ付与） */
+  forfeitedBy?: { id: string; name: string };
 }
 
 // --- ネイティブWebSocket用プロトコル型（Workers/DO向け） ---
@@ -14,6 +16,7 @@ export type WsClientMessage =
   | { type: "room:leave" }
   | { type: "game:start" }
   | { type: "game:move"; move: unknown }
+  | { type: "game:rematch-request" }
 
 export type WsAckSuccess<T = unknown> = { type: "ack"; reqId: string; ok: true; data: T };
 export type WsAckError = { type: "ack"; reqId: string; ok: false; error: string };
@@ -27,3 +30,4 @@ export type WsServerMessage =
   | { type: "game:ended"; result: GameResult }
   | { type: "room:left" }
   | { type: "error"; message: string }
+  | { type: "game:rematch-updated"; playerIds: string[] }

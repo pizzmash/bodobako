@@ -627,3 +627,206 @@ describe("creatingGameId", () => {
     });
   });
 });
+
+describe("サーバーイベント - game:ended (forfeit)", () => {
+  it("forfeitedByがある場合はforfeitNotificationが設定される", async () => {
+    const { getContext } = await renderRoomProvider();
+
+    act(() => {
+      simulateServerEvent("game:ended", {
+        type: "game:ended",
+        result: {
+          ranking: ["p1"],
+          forfeitedBy: { id: "p2", name: "Bob" },
+        },
+      });
+    });
+
+    expect(getContext().forfeitNotification).toBe("Bob が退出したため、ゲームが終了しました");
+  });
+
+  it("forfeitedByがない場合はforfeitNotificationはnull", async () => {
+    const { getContext } = await renderRoomProvider();
+
+    act(() => {
+      simulateServerEvent("game:ended", {
+        type: "game:ended",
+        result: {
+          ranking: ["p1", "p2"],
+        },
+      });
+    });
+
+    expect(getContext().forfeitNotification).toBeNull();
+  });
+
+  it("game:endedでresultPlayersにroomのplayersスナップショットが保存される", async () => {
+    const { getContext } = await renderRoomProvider();
+
+    // まず room:updated で room を設定
+    act(() => {
+      simulateServerEvent("room:updated", {
+        type: "room:updated",
+        room: {
+          code: "ABCD",
+          gameId: "aiuebattle",
+          players: [{ id: "p1", name: "Alice" }],
+          hostId: "p1",
+          status: "playing",
+          gameState: null,
+        },
+      });
+    });
+
+    // game:ended を発火
+    act(() => {
+      simulateServerEvent("game:ended", {
+        type: "game:ended",
+        result: { ranking: ["p1"] },
+      });
+    });
+
+    expect(getContext().resultPlayers).toEqual([{ id: "p1", name: "Alice" }]);
+  });
+});
+
+describe("サーバーイベント - game:rematch-updated", () => {
+  it("game:rematch-updatedでrematchRequestsが更新される", async () => {
+    const { getContext } = await renderRoomProvider();
+
+    act(() => {
+      simulateServerEvent("game:rematch-updated", {
+        type: "game:rematch-updated",
+        playerIds: ["p1", "p2"],
+      });
+    });
+
+    expect(getContext().rematchRequests).toEqual(["p1", "p2"]);
+  });
+
+  it("game:startedでrematchRequestsがリセットされる", async () => {
+    const { getContext } = await renderRoomProvider();
+
+    // まず rematch-updated で ["p1"] を設定
+    act(() => {
+      simulateServerEvent("game:rematch-updated", {
+        type: "game:rematch-updated",
+        playerIds: ["p1"],
+      });
+    });
+    expect(getContext().rematchRequests).toEqual(["p1"]);
+
+    // room:updated で room を設定してから game:started を発火
+    act(() => {
+      simulateServerEvent("room:updated", {
+        type: "room:updated",
+        room: {
+          code: "ABCD",
+          gameId: "aiuebattle",
+          players: [{ id: "p1", name: "Alice" }],
+          hostId: "p1",
+          status: "playing",
+          gameState: null,
+        },
+      });
+    });
+
+    act(() => {
+      simulateServerEvent("game:started", {
+        type: "game:started",
+        state: { currentPlayerIndex: 0 },
+      });
+    });
+
+    expect(getContext().rematchRequests).toEqual([]);
+  });
+});
+
+describe("requestRematch", () => {
+  it("requestRematchがgame:rematch-requestメッセージを送信する", async () => {
+    (mockWsClient.request as Mock).mockResolvedValue({
+      room: {
+        code: "ABCD",
+        gameId: "aiuebattle",
+        players: [{ id: "p1", name: "Alice" }],
+        hostId: "p1",
+        status: "waiting",
+        gameState: null,
+      },
+      playerId: "p1",
+    });
+
+    const { getContext } = await renderRoomProvider();
+
+    // joinRoom で playerId を設定
+    act(() => {
+      getContext().joinRoom("ABCD", "Alice");
+    });
+
+    await waitFor(() => {
+      expect(getContext().playerId).toBe("p1");
+    });
+
+    act(() => {
+      getContext().requestRematch();
+    });
+
+    expect(mockWsClient.send).toHaveBeenCalledWith({ type: "game:rematch-request" });
+  });
+
+  it("requestRematchが楽観的にrematchRequestsに自分を追加する", async () => {
+    (mockWsClient.request as Mock).mockResolvedValue({
+      room: {
+        code: "ABCD",
+        gameId: "aiuebattle",
+        players: [{ id: "p1", name: "Alice" }],
+        hostId: "p1",
+        status: "waiting",
+        gameState: null,
+      },
+      playerId: "p1",
+    });
+
+    const { getContext } = await renderRoomProvider();
+
+    // joinRoom で playerId を設定
+    act(() => {
+      getContext().joinRoom("ABCD", "Alice");
+    });
+
+    await waitFor(() => {
+      expect(getContext().playerId).toBe("p1");
+    });
+
+    act(() => {
+      getContext().requestRematch();
+    });
+
+    expect(getContext().rematchRequests).toContain("p1");
+  });
+});
+
+describe("clearForfeitNotification", () => {
+  it("clearForfeitNotificationでforfeitNotificationがnullになる", async () => {
+    const { getContext } = await renderRoomProvider();
+
+    // game:ended with forfeitedBy で通知を設定
+    act(() => {
+      simulateServerEvent("game:ended", {
+        type: "game:ended",
+        result: {
+          ranking: ["p1"],
+          forfeitedBy: { id: "p2", name: "Bob" },
+        },
+      });
+    });
+
+    expect(getContext().forfeitNotification).not.toBeNull();
+
+    act(() => {
+      getContext().clearForfeitNotification();
+    });
+
+    expect(getContext().forfeitNotification).toBeNull();
+  });
+});

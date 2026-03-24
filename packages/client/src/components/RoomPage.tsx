@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { useRoom } from "../context/RoomContext";
+import { Z } from "../styles/tokens";
 import { GameView } from "./GameView";
 import { NameEntryModal } from "./NameEntryModal";
 import { Room } from "./Room";
@@ -24,6 +25,8 @@ export function RoomPage() {
     proceedLeave,
     errorMsg,
     clearError,
+    forfeitNotification,
+    clearForfeitNotification,
   } = useRoom();
   // マウント時点で room が既にセットされていれば接続済みとみなす
   // （joinRoom 等で room がセットされた後に RoomPage がマウントされるケースに対応）
@@ -45,6 +48,12 @@ export function RoomPage() {
   );
 
   useEffect(() => {
+    if (!forfeitNotification) return;
+    const timer = setTimeout(() => clearForfeitNotification(), 5000);
+    return () => clearTimeout(timer);
+  }, [forfeitNotification, clearForfeitNotification]);
+
+  useEffect(() => {
     if (blocker.state !== "blocked") return;
     const confirmed = window.confirm("ルームを退出しますか？");
     if (confirmed) {
@@ -60,9 +69,23 @@ export function RoomPage() {
     return <NameEntryModal />;
   }
 
+  const toast = forfeitNotification ? (
+    <div
+      className="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-800/90 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-xl backdrop-blur-sm pointer-events-none animate-fade-in"
+      style={{ zIndex: Z.invite }}
+    >
+      {forfeitNotification}
+    </div>
+  ) : null;
+
   // ゲーム中 or 終了
   if (room && (room.status === "playing" || room.status === "finished")) {
-    return <GameView />;
+    return (
+      <>
+        {toast}
+        <GameView />
+      </>
+    );
   }
 
   // 待機室 → Room モーダルのみ（Lobby は Layout 側で常時表示中）

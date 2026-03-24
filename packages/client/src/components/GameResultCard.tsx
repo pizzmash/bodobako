@@ -1,3 +1,7 @@
+import type { Player } from "@bodobako/shared";
+import { useState } from "react";
+import { RematchConfirmModal } from "./RematchConfirmModal";
+
 const TrophyIcon = () => (
   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M6 9C6 10.5913 6.63214 12.1174 7.75736 13.2426C8.88258 14.3679 10.4087 15 12 15C13.5913 15 15.1174 14.3679 16.2426 13.2426C17.3679 12.1174 18 10.5913 18 9V4H6V9Z" fill="url(#trophy-gradient)" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -19,6 +23,12 @@ interface GameResultCardProps {
   isHost: boolean;
   onRematch: () => void;
   onLeave: () => void;
+  playerId?: string;
+  rematchRequests?: string[];
+  resultPlayers?: Player[];
+  /** ゲームの最小プレイ人数（GameDefinition.minPlayers）。省略時は 2 */
+  minPlayers?: number;
+  onRematchRequest?: () => void;
 }
 
 export function GameResultCard({
@@ -27,9 +37,25 @@ export function GameResultCard({
   isHost,
   onRematch,
   onLeave,
+  playerId,
+  rematchRequests,
+  resultPlayers,
+  minPlayers = 2,
+  onRematchRequest,
 }: GameResultCardProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const isWin = result === "win";
   const isDraw = result === "draw";
+  const hasRequested = playerId ? (rematchRequests ?? []).includes(playerId) : false;
+
+  const handleRematchClick = () => {
+    onRematchRequest?.();
+    setIsModalOpen(true);
+  };
+  const handleConfirm = () => {
+    setIsModalOpen(false);
+    onRematch();
+  };
   const cardClass = isWin
     ? "bg-result-win border-indigo-300/40 shadow-card-indigo-strong text-indigo-600"
     : "bg-slate-50/85 border-indigo-300/20 shadow-card-indigo text-indigo-900";
@@ -54,15 +80,43 @@ export function GameResultCard({
             ? "引き分けです"
             : `${winnerName ?? "相手"} の勝ちです`}
       </div>
-      <div className="flex gap-3 justify-center mt-2 w-full flex-nowrap items-center">
-        {isHost && (
-          <button
-            className={`${primaryButtonClass} border-0 bg-green-gradient shadow-action-green hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(34,197,94,0.35)]`}
-            onClick={onRematch}
-            aria-label="再戦する"
-          >
-            再戦
-          </button>
+      <div className="flex gap-3 justify-center">
+        {isHost ? (
+          onRematchRequest ? (
+            <button
+              className={`${primaryButtonClass} border-0 bg-green-gradient shadow-action-green hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(34,197,94,0.35)]`}
+              onClick={handleRematchClick}
+              aria-label="再戦する"
+            >
+              再戦
+            </button>
+          ) : (
+            <button
+              className={`${primaryButtonClass} border-0 bg-green-gradient shadow-action-green hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(34,197,94,0.35)]`}
+              onClick={onRematch}
+              aria-label="再戦する"
+            >
+              再戦
+            </button>
+          )
+        ) : (
+          hasRequested ? (
+            <div className={`${primaryButtonClass} flex items-center justify-center border-2 border-green-200 bg-green-50 text-green-600 cursor-default select-none`}>
+              ホスト待ち...
+            </div>
+          ) : onRematchRequest ? (
+            <button
+              className={`${primaryButtonClass} border-0 bg-green-gradient shadow-action-green hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(34,197,94,0.35)]`}
+              onClick={onRematchRequest}
+              aria-label="再戦を希望する"
+            >
+              再戦を希望する
+            </button>
+          ) : (
+            <div className={`${primaryButtonClass} flex items-center justify-center border-2 border-green-200 bg-green-50 text-green-600 cursor-default select-none`}>
+              ホスト待ち...
+            </div>
+          )
         )}
         <button
           className={`${primaryButtonClass} border-0 bg-indigo-gradient shadow-action-indigo hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(99,102,241,0.35)]`}
@@ -72,6 +126,16 @@ export function GameResultCard({
           ロビーに戻る
         </button>
       </div>
+      {isModalOpen && (
+        <RematchConfirmModal
+          rematchRequests={rematchRequests ?? []}
+          allPlayers={resultPlayers ?? []}
+          playerId={playerId ?? null}
+          minPlayers={minPlayers}
+          onConfirm={handleConfirm}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

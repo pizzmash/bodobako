@@ -22,6 +22,8 @@ interface PlayerCardProps {
   avatarDisplayName?: string;
   /** アバタークリック時のコールバック */
   onAvatarClick?: (event: React.MouseEvent) => void;
+  /** false の場合はオフライン（退出済み）表示 */
+  isOnline?: boolean;
   children?: ReactNode;
 }
 
@@ -34,6 +36,7 @@ export function PlayerCard({
   photoURL,
   avatarDisplayName,
   onAvatarClick,
+  isOnline,
   children,
 }: PlayerCardProps) {
   const accentColor = accentColorOverride ?? PLAYER_COLORS[colorIndex % PLAYER_COLORS.length];
@@ -56,7 +59,7 @@ export function PlayerCard({
 
   return (
     <div
-      className="rounded-xl mb-2 px-3 py-2.5 transition-[box-shadow,transform] duration-300 ease-in-out"
+      className={`rounded-xl mb-2 px-3 py-2.5 transition-[box-shadow,transform,opacity] duration-300 ease-in-out${isOnline === false ? " opacity-50" : ""}`}
       style={cardStyle}
     >
       {/* 名前行 */}
@@ -94,6 +97,12 @@ export function PlayerCard({
             }}
           >
             あなた
+          </span>
+        )}
+        {/* 退出済みバッジ */}
+        {isOnline === false && (
+          <span className="text-[0.7rem] font-bold px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-500 flex-shrink-0">
+            退出済み
           </span>
         )}
       </div>

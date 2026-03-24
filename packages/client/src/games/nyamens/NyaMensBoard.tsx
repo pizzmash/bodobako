@@ -1,4 +1,5 @@
 import type { NyaEventCard, NyaMensPlayerView } from "@bodobako/shared";
+import { getGameDefinition } from "@bodobako/shared";
 import { Bird, Cat, Dice5, Ghost, Music, PawPrint, Skull, Sword, Target, Wrench } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -208,7 +209,7 @@ function WaitingDots() {
 
 // ---- メインコンポーネント ----
 export function NyaMensBoard() {
-  const { gameState, sendMove, playerId, room, startGame, leaveRoom } = useRoom();
+  const { gameState, sendMove, playerId, room, startGame, leaveRoom, gameResult, resultPlayers, rematchRequests, requestRematch } = useRoom();
   const state = (gameState?.gameId === "nyamens" ? gameState.state : null) as NyaMensPlayerView | null;
   const [selectedRevealedCard, setSelectedRevealedCard] = useState<number | null>(null);
   const [diceAnimating, setDiceAnimating] = useState(false);
@@ -415,7 +416,25 @@ export function NyaMensBoard() {
 
   // ---- 共通レイアウト ----
   const finishedOverlay = (() => {
-    if (state.phase !== "finished" || !room) return null;
+    if (!room) return null;
+    // 退出強制終了（state.phase が finished にならないケース）
+    if (state.phase !== "finished") {
+      if (!gameResult) return null;
+      return (
+        <GameResultCard
+          result={gameResult.ranking?.[0] === myId ? "win" : "lose"}
+          winnerName={gameResult.ranking?.[0] === myId ? undefined : gameResult.forfeitedBy?.name}
+          isHost={room.hostId === myId}
+          onRematch={startGame}
+          onLeave={leaveRoom}
+          playerId={myId}
+          rematchRequests={rematchRequests}
+          resultPlayers={resultPlayers ?? room.players}
+          minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+          onRematchRequest={requestRematch}
+        />
+      );
+    }
     const isWinner =
       (state.result?.winner === "nyamens" && state.myRole === "nyamens") ||
       (state.result?.winner === "assassin" && state.myRole === "assassin");
@@ -436,6 +455,11 @@ export function NyaMensBoard() {
           isHost={room.hostId === myId}
           onRematch={startGame}
           onLeave={leaveRoom}
+          playerId={myId}
+          rematchRequests={rematchRequests}
+          resultPlayers={resultPlayers ?? room.players}
+          minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+          onRematchRequest={requestRematch}
         />
         {state.result && (
           <div style={{ background: `${winColor}12`, border: `1px solid ${winColor}40`, borderRadius: 12, padding: "10px 16px", textAlign: "center" }}>

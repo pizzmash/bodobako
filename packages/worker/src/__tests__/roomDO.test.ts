@@ -476,3 +476,192 @@ describe("game:move（ターン外）", () => {
     bobWs.close();
   });
 });
+
+describe("game:leave（ゲーム中）forfeit", () => {
+  /** ゲームが進行中の2人ルームをセットアップする */
+  async function setupPlayingRoom2P() {
+    const { code, sessionToken: aliceToken, playerId: alicePlayerId } = await createRoom();
+    const bobToken = crypto.randomUUID();
+
+    const { ws: aliceWs, queue: aliceQueue } = await connectWs(code, aliceToken);
+    const { ws: bobWs, queue: bobQueue } = await connectWs(code, bobToken);
+
+    // Bob 参加
+    const joinAck = await sendMsg(bobWs, bobQueue, {
+      type: "room:join", reqId: "join-bob", roomCode: code,
+      playerName: "Bob", sessionToken: bobToken,
+    }) as { data?: { playerId: string } };
+    const bobPlayerId = joinAck.data?.playerId ?? "";
+
+    // Alice がゲーム開始
+    aliceWs.send(JSON.stringify({ type: "game:start" }));
+    await aliceQueue.nextOfType("game:started");
+
+    return { aliceWs, aliceQueue, bobWs, bobQueue, alicePlayerId, bobPlayerId };
+  }
+
+  it("ゲーム中にroom:leaveすると残プレイヤーにgame:endedが配信され、forfeitedByが設定される", async () => {
+    const { aliceWs, aliceQueue, bobWs, bobQueue } = await setupPlayingRoom2P();
+
+    // Bob が退出
+    bobWs.send(JSON.stringify({ type: "room:leave" }));
+
+    // Bob は room:left を受け取る
+    const bobLeft = await bobQueue.nextOfType("room:left") as { type: string };
+    expect(bobLeft.type).toBe("room:left");
+
+    // Alice は game:ended を受け取る
+    const gameEnded = await aliceQueue.nextOfType("game:ended") as {
+      type: string;
+      result: {
+        ranking: string[];
+        forfeitedBy: { id: string; name: string };
+      };
+    };
+    expect(gameEnded.type).toBe("game:ended");
+    expect(gameEnded.result.forfeitedBy.name).toBe("Bob");
+
+    // Alice の playerId が ranking[0]（1位）になっている
+    // ranking は [残プレイヤーID..., 退出者ID] の順なのでranking[0] === alicePlayerId
+    expect(gameEnded.result.ranking[0]).toBeTruthy();
+
+    aliceWs.close();
+    bobWs.close();
+  });
+});
+
+describe("game:rematch-request", () => {
+  /** ゲーム終了状態（forfeit）のルームをセットアップする */
+  async function setupFinishedRoom() {
+    const { code, sessionToken: aliceToken, playerId: alicePlayerId } = await createRoom();
+    const bobToken = crypto.randomUUID();
+
+    const { ws: aliceWs, queue: aliceQueue } = await connectWs(code, aliceToken);
+    const { ws: bobWs, queue: bobQueue } = await connectWs(code, bobToken);
+
+    // Bob 参加
+    await sendMsg(bobWs, bobQueue, {
+      type: "room:join", reqId: "join-bob", roomCode: code,
+      playerName: "Bob", sessionToken: bobToken,
+    });
+
+    // Alice がゲーム開始
+    aliceWs.send(JSON.stringify({ type: "game:start" }));
+    await aliceQueue.nextOfType("game:started");
+
+    // Bob が退出 → forfeit でゲーム終了
+    bobWs.send(JSON.stringify({ type: "room:leave" }));
+    await bobQueue.nextOfType("room:left");
+    // Alice に game:ended が届く
+    await aliceQueue.nextOfType("game:ended");
+
+    return { aliceWs, aliceQueue, alicePlayerId };
+  }
+
+  it("ゲーム終了後にgame:rematch-requestを送ると全員にgame:rematch-updatedが配信される", async () => {
+    const { aliceWs, aliceQueue, alicePlayerId } = await setupFinishedRoom();
+
+    // Alice が再戦リクエストを送る
+    aliceWs.send(JSON.stringify({ type: "game:rematch-request" }));
+
+    // Alice は game:rematch-updated を受け取る
+    const rematchUpdated = await aliceQueue.nextOfType("game:rematch-updated") as {
+      type: string;
+      playerIds: string[];
+    };
+
+    expect(rematchUpdated.type).toBe("game:rematch-updated");
+    expect(rematchUpdated.playerIds).toContain(alicePlayerId);
+
+    aliceWs.close();
+  });
+
+  it("ゲーム終了前にgame:rematch-requestを送っても無視される", async () => {
+    const { code, sessionToken: aliceToken } = await createRoom();
+    const bobToken = crypto.randomUUID();
+
+    const { ws: aliceWs, queue: aliceQueue } = await connectWs(code, aliceToken);
+    const { ws: bobWs, queue: bobQueue } = await connectWs(code, bobToken);
+
+    // Bob 参加
+    await sendMsg(bobWs, bobQueue, {
+      type: "room:join", reqId: "join-bob", roomCode: code,
+      playerName: "Bob", sessionToken: bobToken,
+    });
+
+    // Alice がゲーム開始
+    aliceWs.send(JSON.stringify({ type: "game:start" }));
+    await aliceQueue.nextOfType("game:started");
+
+    // playing 状態で rematch-request を送る → 無視されるはず
+    aliceWs.send(JSON.stringify({ type: "game:rematch-request" }));
+
+    // 200ms 待っても game:rematch-updated が来ないことを確認
+    const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 200));
+    const result = await Promise.race([aliceQueue.nextOfType("game:rematch-updated"), timeout]);
+    expect(result).toBe("timeout");
+
+    aliceWs.close();
+    bobWs.close();
+  });
+});
+
+describe("game:start（再戦）", () => {
+  it("再戦時にrematchRequestsに含まれないプレイヤーはroom:leftを受け取る", async () => {
+    // 3人ゲーム（aiuebattle は minPlayers=2 なので3人可）
+    const { code, sessionToken: aliceToken } = await createRoom("Alice");
+    const bobToken = crypto.randomUUID();
+    const charlieToken = crypto.randomUUID();
+
+    const { ws: aliceWs, queue: aliceQueue } = await connectWs(code, aliceToken);
+    const { ws: bobWs, queue: bobQueue } = await connectWs(code, bobToken);
+    const { ws: charlieWs, queue: charlieQueue } = await connectWs(code, charlieToken);
+
+    // Bob 参加
+    await sendMsg(bobWs, bobQueue, {
+      type: "room:join", reqId: "join-bob", roomCode: code,
+      playerName: "Bob", sessionToken: bobToken,
+    });
+
+    // Charlie 参加
+    await sendMsg(charlieWs, charlieQueue, {
+      type: "room:join", reqId: "join-charlie", roomCode: code,
+      playerName: "Charlie", sessionToken: charlieToken,
+    });
+
+    // Alice がゲーム開始
+    aliceWs.send(JSON.stringify({ type: "game:start" }));
+    await aliceQueue.nextOfType("game:started");
+    // Bob と Charlie の game:started を消費
+    await bobQueue.nextOfType("game:started");
+    await charlieQueue.nextOfType("game:started");
+
+    // Bob が退出 → forfeit
+    bobWs.send(JSON.stringify({ type: "room:leave" }));
+    await bobQueue.nextOfType("room:left");
+
+    // Alice と Charlie に game:ended が届く
+    await aliceQueue.nextOfType("game:ended");
+    await charlieQueue.nextOfType("game:ended");
+
+    // Alice のみ rematch-request を送る（Charlie は送らない）
+    aliceWs.send(JSON.stringify({ type: "game:rematch-request" }));
+    await aliceQueue.nextOfType("game:rematch-updated");
+    // Charlie も game:rematch-updated を受け取る（ブロードキャストされる）
+    await charlieQueue.nextOfType("game:rematch-updated");
+
+    // Alice（ホスト）が game:start を送る
+    aliceWs.send(JSON.stringify({ type: "game:start" }));
+
+    // Charlie は room:left を受け取る（再戦リクエストを送っていないため）
+    const charlieLeft = await charlieQueue.nextOfType("room:left") as { type: string };
+    expect(charlieLeft.type).toBe("room:left");
+
+    // Alice は game:started を受け取る
+    const aliceStarted = await aliceQueue.nextOfType("game:started") as { type: string };
+    expect(aliceStarted.type).toBe("game:started");
+
+    aliceWs.close();
+    charlieWs.close();
+  });
+});

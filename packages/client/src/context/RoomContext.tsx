@@ -4,6 +4,7 @@ import type {
     BlokusTrigonState,
     CitychasePlayerView, GameResult, NanaStateView,
     NyaMensPlayerView,
+    Player,
     RoomInfo, SonicRestaurantState, WsServerMessage
 } from "@bodobako/shared";
 import {
@@ -71,6 +72,14 @@ interface RoomContextValue {
   sendMove: (move: unknown) => void;
   clearError: () => void;
   gameStartCount: number;
+  /** game:ended 時点のプレイヤースナップショット（退出後も名前を保持） */
+  resultPlayers: Player[] | null;
+  /** 退出強制終了の通知メッセージ（5秒後に自動クリア） */
+  forfeitNotification: string | null;
+  clearForfeitNotification: () => void;
+  /** 再戦希望を送ったplayerId一覧（リアルタイム更新） */
+  rematchRequests: string[];
+  requestRematch: () => void;
 }
 
 const RoomContext = createContext<RoomContextValue>(null!);
@@ -93,6 +102,9 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [gameState, setGameState] = useState<GameStateEntry | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
   const [gameStartCount, setGameStartCount] = useState(0);
+  const [resultPlayers, setResultPlayers] = useState<Player[] | null>(null);
+  const [forfeitNotification, setForfeitNotification] = useState<string | null>(null);
+  const [rematchRequests, setRematchRequests] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [creatingGameId, setCreatingGameId] = useState<string | null>(null);
@@ -161,6 +173,9 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       const gameId = roomRef.current?.gameId ?? "";
       setGameState({ gameId, state: msg.state } as GameStateEntry);
       setGameResult(null);
+      setResultPlayers(null);
+      setForfeitNotification(null);
+      setRematchRequests([]);
       setGameStartCount((c) => c + 1);
     };
     const onGameStateUpdated = (msg: Extract<WsServerMessage, { type: "game:stateUpdated" }>) => {
@@ -169,14 +184,23 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     };
     const onGameEnded = (msg: Extract<WsServerMessage, { type: "game:ended" }>) => {
       setGameResult(msg.result);
+      setResultPlayers(roomRef.current?.players ?? null);
+      if (msg.result.forfeitedBy) {
+        setForfeitNotification(`${msg.result.forfeitedBy.name} が退出したため、ゲームが終了しました`);
+      }
     };
     const onRoomLeft = (_msg: Extract<WsServerMessage, { type: "room:left" }>) => {
       setRoom(null);
       setPlayerId(null);
       setGameState(null);
       setGameResult(null);
+      setResultPlayers(null);
+      setForfeitNotification(null);
       clearRoomSession();
       navigate("/");
+    };
+    const onRematchUpdated = (msg: Extract<WsServerMessage, { type: "game:rematch-updated" }>) => {
+      setRematchRequests(msg.playerIds);
     };
     const onError = (msg: Extract<WsServerMessage, { type: "error" }>) => {
       setErrorMsg(msg.message);
@@ -189,6 +213,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     wsClient.on("game:stateUpdated", onGameStateUpdated);
     wsClient.on("game:ended", onGameEnded);
     wsClient.on("room:left", onRoomLeft);
+    wsClient.on("game:rematch-updated", onRematchUpdated);
     wsClient.on("error", onError);
 
     return () => {
@@ -197,6 +222,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       wsClient.off("game:stateUpdated", onGameStateUpdated);
       wsClient.off("game:ended", onGameEnded);
       wsClient.off("room:left", onRoomLeft);
+      wsClient.off("game:rematch-updated", onRematchUpdated);
       wsClient.off("error", onError);
     };
   }, [clearRoomSession, navigate]);
@@ -308,6 +334,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setPlayerId(null);
     setGameState(null);
     setGameResult(null);
+    setResultPlayers(null);
+    setForfeitNotification(null);
     setIsCreatingRoom(false);
     setCreatingGameId(null);
     clearRoomSession();
@@ -355,6 +383,9 @@ export function RoomProvider({ children }: { children: ReactNode }) {
               : null;
             setGameState(gsEntry);
             setGameResult(data.gameResult ?? null);
+            if (data.gameResult) {
+              setResultPlayers(data.room.players);
+            }
             saveRoomSession(code, data.playerId);
           })
           .catch(() => {
@@ -398,6 +429,15 @@ export function RoomProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setErrorMsg(null), []);
 
+  const clearForfeitNotification = useCallback(() => setForfeitNotification(null), []);
+
+  const requestRematch = useCallback(() => {
+    wsClient.send({ type: "game:rematch-request" });
+    if (playerId) {
+      setRematchRequests((prev) => prev.includes(playerId) ? prev : [...prev, playerId]);
+    }
+  }, [playerId]);
+
   return (
     <RoomContext.Provider
       value={{
@@ -419,6 +459,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         sendMove,
         clearError,
         gameStartCount,
+        resultPlayers,
+        forfeitNotification,
+        clearForfeitNotification,
+        rematchRequests,
+        requestRematch,
       }}
     >
       {children}

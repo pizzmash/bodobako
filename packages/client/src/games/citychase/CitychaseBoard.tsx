@@ -1,4 +1,5 @@
 import type { CitychaseMove } from "@bodobako/shared";
+import { getGameDefinition } from "@bodobako/shared";
 import { useCallback } from "react";
 import { useRoom } from "../../context/RoomContext";
 import { Z } from "../../styles/tokens";
@@ -26,7 +27,7 @@ function CityChaseTitle() {
 }
 
 export function CitychaseBoard() {
-  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
+  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom, resultPlayers, rematchRequests, requestRematch } =
     useRoom();
 
   const sendTypedMove = useCallback(
@@ -66,6 +67,10 @@ export function CitychaseBoard() {
             gameResult={gameResult}
             startGame={startGame}
             leaveRoom={leaveRoom}
+            resultPlayers={resultPlayers}
+            rematchRequests={rematchRequests}
+            minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+            onRematchRequest={requestRematch}
           />
         )}
     </div>
