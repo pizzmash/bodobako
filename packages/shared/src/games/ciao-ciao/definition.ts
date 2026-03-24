@@ -29,7 +29,7 @@ function isDeclareValue(v: unknown): v is 1 | 2 | 3 | 4 {
 export const ciaoCiaoDefinition: GameDefinition<CiaoCiaoState, CiaoCiaoMove> = {
   id: "ciao-ciao",
   name: "チャオチャオ",
-  description: "2〜4人、サイコロを振ってウソをつけ！橋を渡るブラフすごろく",
+  description: "サイコロを振ってウソをつけ！橋を渡るブラフすごろく",
   minPlayers: 2,
   maxPlayers: 4,
 
