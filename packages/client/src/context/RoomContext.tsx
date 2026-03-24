@@ -2,6 +2,7 @@ import type {
     AiueBattleState,
     BlokusState,
     BlokusTrigonState,
+    CiaoCiaoStateView,
     CitychasePlayerView, GameResult, NanaStateView,
     NyaMensPlayerView,
     Player,
@@ -31,6 +32,7 @@ export type GameStateEntry =
   | { gameId: "sonic-restaurant"; state: SonicRestaurantState }
   | { gameId: "blokus"; state: BlokusState }
   | { gameId: "blokus-trigon"; state: BlokusTrigonState }
+  | { gameId: "ciao-ciao"; state: CiaoCiaoStateView }
   | { gameId: "nana"; state: NanaStateView }
   | { gameId: "nyamens"; state: NyaMensPlayerView };
 

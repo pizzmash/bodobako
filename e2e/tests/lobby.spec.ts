@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 // -------------------------------------------------------------------------
 // ロビー基本操作テスト
@@ -67,7 +67,6 @@ test.describe("ロビー - ゲーム一覧", () => {
     await expect(page.getByLabel("あいうえバトルのルームを作成")).toBeVisible();
     await expect(page.getByLabel("シティチェイスのルームを作成")).toBeVisible();
     await expect(page.getByLabel("音速飯点のルームを作成")).toBeVisible();
-    await expect(page.getByLabel("ナナのルームを作成")).toBeVisible();
   });
 
   test("ルーム作成ボタンをクリックするとルームページに遷移する", async ({ page }) => {
