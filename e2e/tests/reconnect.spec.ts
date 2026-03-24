@@ -20,7 +20,7 @@ async function setupPlayer(page: Page, name: string) {
 test.describe("再接続", () => {
   test("ページリロード後もルームに留まる（待機室）", async ({ page }) => {
     await setupPlayer(page, "Alice");
-    await page.getByLabel("オセロのルームを作成").click();
+    await page.getByLabel("あいうえバトルのルームを作成").click();
 
     // ルームページへの遷移を待つ
     await expect(page).toHaveURL(/\/room\/[A-Z0-9]{4}/, { timeout: 15_000 });
@@ -42,7 +42,7 @@ test.describe("再接続", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("オセロのルームを作成").click();
+    await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/, { timeout: 15_000 });
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
 
@@ -56,8 +56,8 @@ test.describe("再接続", () => {
 
     // Alice がゲームを開始
     await pageA.getByRole("button", { name: "ゲーム開始" }).click();
-    await expect(pageA.getByRole("heading", { name: "オセロ" })).toBeVisible({ timeout: 10_000 });
-    await expect(pageB.getByRole("heading", { name: "オセロ" })).toBeVisible({ timeout: 10_000 });
+    await expect(pageA.getByRole("heading", { name: /バトル/ })).toBeVisible({ timeout: 10_000 });
+    await expect(pageB.getByRole("heading", { name: /バトル/ })).toBeVisible({ timeout: 10_000 });
 
     // Alice（タブ A）がリロード
     await pageA.reload();
@@ -66,12 +66,12 @@ test.describe("再接続", () => {
     await expect(pageA).toHaveURL(`/room/${code}`, { timeout: 15_000 });
 
     // ゲームボードが復帰している（「ゲーム状態を読み込み中...」でフリーズしていない）
-    await expect(pageA.getByRole("heading", { name: "オセロ" })).toBeVisible({ timeout: 15_000 });
+    await expect(pageA.getByRole("heading", { name: /バトル/ })).toBeVisible({ timeout: 15_000 });
 
     // タブ B（Bob）もリロードしてゲームに復帰できる
     await pageB.reload();
     await expect(pageB).toHaveURL(`/room/${code}`, { timeout: 15_000 });
-    await expect(pageB.getByRole("heading", { name: "オセロ" })).toBeVisible({ timeout: 15_000 });
+    await expect(pageB.getByRole("heading", { name: /バトル/ })).toBeVisible({ timeout: 15_000 });
 
     await contextA.close();
     await contextB.close();
