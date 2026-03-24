@@ -1,7 +1,7 @@
 import type { CiaoCiaoStateView } from "@bodobako/shared";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BridgeTile } from "./BridgeTile";
-import { CC, CIAO_PLAYER_COLORS } from "./constants";
+import { CIAO_PLAYER_COLORS } from "./constants";
 import { GoalArea } from "./GoalArea";
 import { Meeple } from "./Meeple";
 import { MeepleBubble } from "./MeepleBubble";

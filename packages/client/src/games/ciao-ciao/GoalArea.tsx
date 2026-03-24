@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
 import { Star } from "lucide-react";
+import { forwardRef } from "react";
 import { FONT_HEADLINE } from "./constants";
 import { Meeple } from "./Meeple";
 
