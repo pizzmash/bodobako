@@ -23,7 +23,7 @@ test.describe("ルーム作成・参加フロー", () => {
   test("ルームを作成すると /room/:code に遷移する", async ({ page }) => {
     await setupPlayer(page, "Alice");
 
-    await page.getByLabel("オセロのルームを作成").click();
+    await page.getByLabel("あいうえバトルのルームを作成").click();
 
     await expect(page).toHaveURL(/\/room\/[A-Z0-9]{4}/);
   });
@@ -33,7 +33,7 @@ test.describe("ルーム作成・参加フロー", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("オセロのルームを作成").click({ force: true });
+    await pageA.getByLabel("あいうえバトルのルームを作成").click({ force: true });
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
 
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -59,7 +59,7 @@ test.describe("ルーム作成・参加フロー", () => {
 
   test("退出ボタンでロビーに戻る", async ({ page }) => {
     await setupPlayer(page, "Alice");
-    await page.getByLabel("オセロのルームを作成").click();
+    await page.getByLabel("あいうえバトルのルームを作成").click();
     await expect(page).toHaveURL(/\/room\/[A-Z0-9]{4}/);
 
     // 退出ボタンをクリック
@@ -76,7 +76,7 @@ test.describe("ルーム作成・参加フロー", () => {
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     await setupPlayer(pageA, "Alice");
-    await pageA.getByLabel("オセロのルームを作成").click();
+    await pageA.getByLabel("あいうえバトルのルームを作成").click();
     await expect(pageA).toHaveURL(/\/room\/[A-Z0-9]{4}/);
 
     const code = pageA.url().match(/\/room\/([A-Z0-9]{4})/)?.[1]!;
@@ -106,7 +106,7 @@ test.describe("ルームページ - 直接アクセス", () => {
     // まずルームを API で作成する
     const sessionToken = crypto.randomUUID();
     const res = await page.request.post("http://localhost:8787/rooms", {
-      data: { playerName: "Alice", gameId: "othello", sessionToken },
+      data: { playerName: "Alice", gameId: "aiuebattle", sessionToken },
       headers: { "Content-Type": "application/json" },
     });
     expect(res.ok()).toBe(true);

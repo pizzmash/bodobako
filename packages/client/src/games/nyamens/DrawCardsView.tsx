@@ -173,6 +173,16 @@ export function DrawCardsView({ state, myId, playerNames, onDraw }: DrawCardsVie
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDrawer, state.drawPileCount]);
 
+  // 自分の番かつ山札あり → 自動ドロー（オーバーレイ表示中は待機）
+  useEffect(() => {
+    if (currentDrawer !== myId) return;
+    if (state.drawPileCount === 0) return;
+    if (overlayCard != null) return;
+    const t = setTimeout(() => onDraw(), 800);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDrawer, myId, state.drawPileCount, overlayCard]);
+
   useEffect(() => {
     if (drawnCard == null) return;
     const ack = drawQueue.length === 0 && (state.lastDrawer ?? null) === myId;

@@ -48,7 +48,7 @@ test.describe("ロビー - 名前入力モーダル", () => {
     await expect(page.getByRole("textbox", { name: "プレイヤー名入力" })).not.toBeVisible();
 
     // ゲーム一覧が表示されている
-    await expect(page.getByLabel("オセロのルームを作成")).toBeVisible();
+    await expect(page.getByLabel("あいうえバトルのルームを作成")).toBeVisible();
   });
 });
 
@@ -62,16 +62,16 @@ test.describe("ロビー - ゲーム一覧", () => {
     await expect(page.getByRole("textbox", { name: "プレイヤー名入力" })).not.toBeVisible();
   });
 
-  test("ゲーム一覧に4ゲームが表示される", async ({ page }) => {
-    // 実装済み 4 ゲーム
-    await expect(page.getByLabel("オセロのルームを作成")).toBeVisible();
+  test("ゲーム一覧に複数ゲームが表示される", async ({ page }) => {
+    // 実装済みゲームの確認
     await expect(page.getByLabel("あいうえバトルのルームを作成")).toBeVisible();
     await expect(page.getByLabel("シティチェイスのルームを作成")).toBeVisible();
     await expect(page.getByLabel("音速飯点のルームを作成")).toBeVisible();
+    await expect(page.getByLabel("ナナのルームを作成")).toBeVisible();
   });
 
   test("ルーム作成ボタンをクリックするとルームページに遷移する", async ({ page }) => {
-    await page.getByLabel("オセロのルームを作成").click();
+    await page.getByLabel("あいうえバトルのルームを作成").click();
 
     // /room/:code に遷移する
     await expect(page).toHaveURL(/\/room\/[A-Z0-9]{4}/);
@@ -97,6 +97,6 @@ test.describe("ロビー - localStorage からの復元", () => {
     await expect(page.getByRole("textbox", { name: "プレイヤー名入力" })).not.toBeVisible();
 
     // ゲーム一覧が表示される
-    await expect(page.getByLabel("オセロのルームを作成")).toBeVisible();
+    await expect(page.getByLabel("あいうえバトルのルームを作成")).toBeVisible();
   });
 });
