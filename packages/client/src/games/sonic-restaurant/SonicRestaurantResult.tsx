@@ -2,7 +2,7 @@
  * 音速飯店 - リザルト画面
  */
 
-import type { RoomInfo, SonicRestaurantState } from "@bodobako/shared";
+import type { Player, RoomInfo, SonicRestaurantState } from "@bodobako/shared";
 import { GameRankingResult } from "../../components/GameRankingResult";
 import { C } from "./constants";
 
@@ -11,8 +11,12 @@ interface SonicRestaurantResultProps {
   room: RoomInfo;
   playerId: string;
   ranking: string[];
+  players?: Player[];
   onRestart: () => void;
   onLeave: () => void;
+  rematchRequests?: string[];
+  minPlayers?: number;
+  onRematchRequest?: () => void;
 }
 
 export function SonicRestaurantResult({
@@ -20,14 +24,19 @@ export function SonicRestaurantResult({
   room,
   playerId,
   ranking,
+  players,
   onRestart,
   onLeave,
+  rematchRequests,
+  minPlayers,
+  onRematchRequest,
 }: SonicRestaurantResultProps) {
   return (
     <GameRankingResult
       ranking={ranking}
       room={room}
       playerId={playerId}
+      players={players}
       accentColor={C.primary}
       renderPlayerDetail={(id) => {
         const handCount = state.hands[id]?.length || 0;
@@ -35,6 +44,9 @@ export function SonicRestaurantResult({
       }}
       onRestart={onRestart}
       onLeave={onLeave}
+      rematchRequests={rematchRequests}
+      minPlayers={minPlayers}
+      onRematchRequest={onRematchRequest}
     />
   );
 }

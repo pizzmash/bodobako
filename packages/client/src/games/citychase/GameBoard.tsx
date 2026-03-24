@@ -5,6 +5,7 @@ import type {
     CitychaseState,
     GameResult,
     IntersectionPos,
+    Player,
     RoomInfo,
 } from "@bodobako/shared";
 import {
@@ -13,6 +14,7 @@ import {
     getValidCriminalMoves,
     isSamePos,
 } from "@bodobako/shared";
+
 import { clsx } from "clsx";
 import { useCallback, useMemo } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
@@ -26,6 +28,10 @@ interface Props {
   gameResult: GameResult | null;
   startGame: () => void;
   leaveRoom: () => void;
+  resultPlayers?: Player[] | null;
+  rematchRequests?: string[];
+  minPlayers?: number;
+  onRematchRequest?: () => void;
 }
 
 export function GameBoard({
@@ -36,6 +42,10 @@ export function GameBoard({
   gameResult,
   startGame,
   leaveRoom,
+  resultPlayers,
+  rematchRequests,
+  minPlayers,
+  onRematchRequest,
 }: Props) {
   const isCriminal = state.isCriminal;
   const isFinished = !!gameResult;
@@ -120,7 +130,7 @@ export function GameBoard({
     if (state.winningSide === "police") {
       return "警察陣営";
     }
-    const criminal = room.players.find((p) => p.id === state.criminalId);
+    const criminal = (resultPlayers ?? room.players).find((p) => p.id === state.criminalId);
     return criminal?.name ?? "犯人";
   };
 
@@ -247,6 +257,11 @@ export function GameBoard({
           isHost={playerId === room.hostId}
           onRematch={startGame}
           onLeave={leaveRoom}
+          playerId={playerId}
+          rematchRequests={rematchRequests}
+          resultPlayers={resultPlayers ?? room.players}
+          minPlayers={minPlayers}
+          onRematchRequest={onRematchRequest}
         />
       )}
     </div>

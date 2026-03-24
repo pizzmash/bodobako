@@ -6,8 +6,8 @@
  * 委譲で解決している。
  */
 
-import type { BlokusMove, BlokusState, GameResult, RoomInfo } from "@bodobako/shared";
-import { boardToGrid, computePlayerRemainingCells } from "@bodobako/shared";
+import type { BlokusMove, BlokusState, GameResult, Player, RoomInfo } from "@bodobako/shared";
+import { boardToGrid, computePlayerRemainingCells, getGameDefinition } from "@bodobako/shared";
 import { useCallback, useMemo } from "react";
 import { GameRankingResult } from "../../components/GameRankingResult";
 import { useRoom } from "../../context/RoomContext";
@@ -33,6 +33,10 @@ interface BlokusBoardContentProps {
   room: RoomInfo;
   startGame: () => void;
   leaveRoom: () => void;
+  resultPlayers?: Player[] | null;
+  rematchRequests?: string[];
+  minPlayers?: number;
+  onRematchRequest?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -40,7 +44,7 @@ interface BlokusBoardContentProps {
 // ---------------------------------------------------------------------------
 
 export function BlokusBoard() {
-  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } = useRoom();
+  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom, resultPlayers, rematchRequests, requestRematch } = useRoom();
   if (gameState !== null && gameState.gameId !== "blokus") return null;
   const state = gameState?.state ?? null;
 
@@ -55,6 +59,10 @@ export function BlokusBoard() {
       room={room}
       startGame={startGame}
       leaveRoom={leaveRoom}
+      resultPlayers={resultPlayers}
+      rematchRequests={rematchRequests}
+      minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+      onRematchRequest={requestRematch}
     />
   );
 }
@@ -71,6 +79,10 @@ function BlokusBoardContent({
   room,
   startGame,
   leaveRoom,
+  resultPlayers,
+  rematchRequests,
+  minPlayers,
+  onRematchRequest,
 }: BlokusBoardContentProps) {
   const isWide = useBreakpoint(760);
   const [boardOuterRef, boardScale] = useBoardScale(BOARD_PX);
@@ -199,6 +211,7 @@ function BlokusBoardContent({
           ranking={gameResult.ranking}
           room={room}
           playerId={playerId}
+          players={resultPlayers ?? undefined}
           accentColor={BLOKUS_COLORS[0].fill}
           renderPlayerDetail={(id) => {
             const playerIndex = state.playerIds.indexOf(id);
@@ -207,6 +220,9 @@ function BlokusBoardContent({
           }}
           onRestart={startGame}
           onLeave={leaveRoom}
+          rematchRequests={rematchRequests}
+          minPlayers={minPlayers}
+          onRematchRequest={onRematchRequest}
         />
       )}
     </div>

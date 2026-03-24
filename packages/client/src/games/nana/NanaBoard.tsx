@@ -1,4 +1,5 @@
 import type { NanaCardView, NanaMove, NanaStateView } from "@bodobako/shared";
+import { getGameDefinition } from "@bodobako/shared";
 import { MousePointer } from "lucide-react";
 import { memo, useCallback, useMemo, useRef } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
@@ -358,7 +359,7 @@ const HandFooter = memo(function HandFooter({
 // ── メインコンポーネント ──────────────────────────────────────────────
 
 export function NanaBoard() {
-  const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom } = useRoom();
+  const { gameState, playerId, sendMove, room, gameResult, startGame, leaveRoom, resultPlayers, rematchRequests, requestRematch } = useRoom();
   // フックはすべて条件リターンより前に呼ぶ（React Hooks のルール）
   const state = gameState?.gameId === "nana" ? gameState.state : null;
   const isMobile = useIsMobile();
@@ -390,7 +391,7 @@ export function NanaBoard() {
   if (gameResult) {
     const winnerId = gameResult.ranking?.[0] ?? null;
     const myResult = winnerId === playerId ? "win" : "lose";
-    const winnerName = room.players.find((p) => p.id === winnerId)?.name;
+    const winnerName = (resultPlayers ?? room.players).find((p) => p.id === winnerId)?.name;
     resultOverlay = (
       <div
         style={{
@@ -413,6 +414,11 @@ export function NanaBoard() {
             isHost={room.hostId === playerId}
             onRematch={startGame}
             onLeave={leaveRoom}
+            playerId={playerId}
+            rematchRequests={rematchRequests}
+            resultPlayers={resultPlayers ?? room.players}
+            minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+            onRematchRequest={requestRematch}
           />
         </div>
       </div>

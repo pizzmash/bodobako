@@ -194,6 +194,9 @@ export function Lobby() {
               該当するゲームが見つかりませんでした
             </div>
           )}
+          {pagedGames.length % 2 !== 0 && (
+            <div className="w-[360px] max-w-full" aria-hidden="true" />
+          )}
         </div>
 
         {/* Pagination */}

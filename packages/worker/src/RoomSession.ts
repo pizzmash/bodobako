@@ -38,6 +38,9 @@ function parseClientMessage(raw: unknown): WsClientMessage | null {
     case "game:start":
       return { type: "game:start" };
 
+    case "game:rematch-request":
+      return { type: "game:rematch-request" };
+
     case "game:move":
       if (!("move" in msg)) return null;
       return { type: "game:move", move: msg.move };
@@ -59,6 +62,8 @@ interface RoomState {
   sessions: Record<string, string>;
   /** playerId -> 切断時刻 (msエポック) — alarm用 */
   pendingRemovals: Record<string, number>;
+  /** 再戦希望を送ったplayerId一覧 */
+  rematchRequests: string[];
 }
 
 interface RoomSessionEnv {
@@ -110,16 +115,36 @@ export class RoomSession implements DurableObject {
 
     const now = Date.now();
     let changed = false;
+    let rematchChanged = false;
 
     for (const [playerId, scheduledAt] of Object.entries(this.room.pendingRemovals)) {
       if (now >= scheduledAt) {
+        const leavingPlayer = this.room.players.find((p) => p.id === playerId);
+        const wasPlaying = this.room.status === "playing";
+
         this.room.players = this.room.players.filter((p) => p.id !== playerId);
         // セッションも削除
         for (const [token, pid] of Object.entries(this.room.sessions)) {
           if (pid === playerId) delete this.room.sessions[token];
         }
         delete this.room.pendingRemovals[playerId];
+        if (!wasPlaying && this.room.rematchRequests.includes(playerId)) {
+          this.room.rematchRequests = this.room.rematchRequests.filter((id) => id !== playerId);
+          rematchChanged = true;
+        }
         changed = true;
+
+        if (wasPlaying && leavingPlayer && this.room.players.length > 0) {
+          const remaining = this.room.players.map((p) => p.id);
+          const result: GameResult = {
+            ranking: [...remaining, playerId],
+            reason: "退出",
+            forfeitedBy: { id: playerId, name: leavingPlayer.name },
+          };
+          this.room.status = "finished";
+          this.room.gameResult = result;
+          this.broadcast({ type: "game:ended", result });
+        }
       }
     }
 
@@ -130,6 +155,9 @@ export class RoomSession implements DurableObject {
       } else {
         await this.saveRoom();
         this.broadcast({ type: "room:updated", room: this.toRoomInfo() });
+        if (rematchChanged) {
+          this.broadcast({ type: "game:rematch-updated", playerIds: this.room.rematchRequests });
+        }
       }
     }
 
@@ -196,6 +224,7 @@ export class RoomSession implements DurableObject {
       gameResult: null,
       sessions: { [sessionToken]: playerId },
       pendingRemovals: {},
+      rematchRequests: [],
     };
     await this.saveRoom();
     return Response.json({ playerId });
@@ -380,6 +409,10 @@ export class RoomSession implements DurableObject {
       case "game:move":
         if (playerId) await this.handleGameMove(ws, playerId, msg.move);
         break;
+
+      case "game:rematch-request":
+        if (playerId) await this.handleRematchRequest(playerId);
+        break;
     }
   }
 
@@ -458,20 +491,42 @@ export class RoomSession implements DurableObject {
   private async handleLeave(ws: WebSocket, playerId: string, sessionToken: string): Promise<void> {
     if (!this.room) return;
 
+    const leavingPlayer = this.room.players.find((p) => p.id === playerId);
+    const wasPlaying = this.room.status === "playing";
+    const wasFinished = this.room.status === "finished";
+
     this.room.players = this.room.players.filter((p) => p.id !== playerId);
     delete this.room.sessions[sessionToken];
     delete this.room.pendingRemovals[playerId];
     this.wsToPlayer.delete(ws);
+
+    const rematchLengthBefore = this.room.rematchRequests.length;
+    this.room.rematchRequests = this.room.rematchRequests.filter((id) => id !== playerId);
+    const rematchChanged = wasFinished && this.room.rematchRequests.length !== rematchLengthBefore;
 
     ws.send(JSON.stringify({ type: "room:left" } satisfies WsServerMessage));
 
     if (this.room.players.length === 0) {
       await this.state.storage.deleteAll();
       this.room = null;
+    } else if (wasPlaying && leavingPlayer) {
+      const remaining = this.room.players.map((p) => p.id);
+      const result: GameResult = {
+        ranking: [...remaining, playerId],
+        reason: "退出",
+        forfeitedBy: { id: playerId, name: leavingPlayer.name },
+      };
+      this.room.status = "finished";
+      this.room.gameResult = result;
+      await this.saveRoom();
+      this.broadcastExcept(ws, { type: "game:ended", result });
+      this.broadcastExcept(ws, { type: "room:updated", room: this.toRoomInfo() });
     } else {
       await this.saveRoom();
-      // 退室したWSを除いた残りのプレイヤーにのみ送信
       this.broadcastExcept(ws, { type: "room:updated", room: this.toRoomInfo() });
+      if (rematchChanged) {
+        this.broadcastExcept(ws, { type: "game:rematch-updated", playerIds: this.room.rematchRequests });
+      }
     }
   }
 
@@ -488,9 +543,29 @@ export class RoomSession implements DurableObject {
     }
 
     if (this.room.status === "finished") {
+      const requestingIds = this.room.rematchRequests.length > 0
+        ? this.room.rematchRequests
+        : this.room.players.map((p) => p.id);
+
+      // 希望しなかったプレイヤーを除外して room:left を送信
+      const removedPlayers = this.room.players.filter((p) => !requestingIds.includes(p.id));
+      for (const removed of removedPlayers) {
+        for (const removedWs of this.state.getWebSockets()) {
+          const token = this.state.getTags(removedWs)[0] ?? "";
+          if (this.room.sessions[token] === removed.id) {
+            removedWs.send(JSON.stringify({ type: "room:left" } satisfies WsServerMessage));
+          }
+        }
+        this.room.players = this.room.players.filter((p) => p.id !== removed.id);
+        for (const [token, pid] of Object.entries(this.room.sessions)) {
+          if (pid === removed.id) delete this.room.sessions[token];
+        }
+      }
+
       this.room.status = "waiting";
       this.room.gameState = null;
       this.room.gameResult = null;
+      this.room.rematchRequests = [];
     }
 
     try {
@@ -512,6 +587,15 @@ export class RoomSession implements DurableObject {
       this.broadcastGameState("game:started");
     } catch (e: unknown) {
       ws.send(JSON.stringify({ type: "error", message: (e as Error).message } satisfies WsServerMessage));
+    }
+  }
+
+  private async handleRematchRequest(playerId: string): Promise<void> {
+    if (!this.room || this.room.status !== "finished") return;
+    if (!this.room.rematchRequests.includes(playerId)) {
+      this.room.rematchRequests.push(playerId);
+      await this.saveRoom();
+      this.broadcast({ type: "game:rematch-updated", playerIds: this.room.rematchRequests });
     }
   }
 

@@ -1,4 +1,5 @@
 import type { AiueBattleMove, AiueBattleState } from "@bodobako/shared";
+import { getGameDefinition } from "@bodobako/shared";
 import { useCallback, useState } from "react";
 import { useRoom } from "../../context/RoomContext";
 import { BattleBoard } from "./BattleBoard";
@@ -8,7 +9,7 @@ import { TopicSelect } from "./TopicSelect";
 import { WordInput } from "./WordInput";
 
 export function AiueBattleBoard() {
-  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom } =
+  const { gameState, playerId, sendMove, gameResult, room, startGame, leaveRoom, resultPlayers, rematchRequests, requestRematch } =
     useRoom();
   // ゲームIDが一致する場合のみ state を取得。フックは早期 return より前に呼ぶ必要があるため
   // ここで型を絞り込む（gameId 不一致時は null を渡してフックを安全に稼働させる）
@@ -100,6 +101,10 @@ export function AiueBattleBoard() {
           leaveRoom={leaveRoom}
           attackAnim={attackAnim}
           newlyRevealed={newlyRevealed}
+          resultPlayers={resultPlayers}
+          rematchRequests={rematchRequests}
+          minPlayers={getGameDefinition(room.gameId)?.minPlayers ?? 2}
+          onRematchRequest={requestRematch}
         />
       )}
     </div>

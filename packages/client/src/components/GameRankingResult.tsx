@@ -6,8 +6,10 @@
 
 import type { RoomInfo } from "@bodobako/shared";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { PartyPopper, Trophy } from "lucide-react";
 import { Z } from "../styles/tokens";
+import { RematchConfirmModal } from "./RematchConfirmModal";
 
 const RANK_COLOR: Record<number, string> = {
   1: "#FFD700",
@@ -21,10 +23,16 @@ interface GameRankingResultProps {
   playerId: string;
   /** ハイライトカラー（デフォルト: "#ef4444"） */
   accentColor?: string;
+  /** プレイヤーリストの上書き（リザルト画面でスナップショットを使う場合） */
+  players?: RoomInfo["players"];
   /** プレイヤーごとの詳細行（ゲーム固有の情報） */
   renderPlayerDetail: (playerId: string) => ReactNode;
   onRestart: () => void;
   onLeave: () => void;
+  rematchRequests?: string[];
+  /** ゲームの最小プレイ人数（GameDefinition.minPlayers）。省略時は 2 */
+  minPlayers?: number;
+  onRematchRequest?: () => void;
 }
 
 export function GameRankingResult({
@@ -32,13 +40,29 @@ export function GameRankingResult({
   room,
   playerId,
   accentColor = "#ef4444",
+  players,
   renderPlayerDetail,
   onRestart,
   onLeave,
+  rematchRequests,
+  minPlayers = 2,
+  onRematchRequest,
 }: GameRankingResultProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const myRank = ranking.indexOf(playerId) + 1;
   const isWinner = myRank === 1;
   const isHost = playerId === room.hostId;
+  const displayPlayers = players ?? room.players;
+  const hasRequested = (rematchRequests ?? []).includes(playerId);
+
+  const handleRematchClick = () => {
+    onRematchRequest?.();
+    setIsModalOpen(true);
+  };
+  const handleConfirm = () => {
+    setIsModalOpen(false);
+    onRestart();
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in" style={{ zIndex: Z.overlay, paddingRight: "var(--sidebar-right-offset, 0px)" }}>
@@ -59,7 +83,7 @@ export function GameRankingResult({
         {/* 順位表 */}
         <div className="mb-8 max-h-[300px] overflow-y-auto">
           {ranking.map((id, index) => {
-            const player = room.players.find((p) => p.id === id);
+            const player = displayPlayers.find((p) => p.id === id);
             const rank = index + 1;
             const isMe = id === playerId;
 
@@ -105,14 +129,48 @@ export function GameRankingResult({
 
         {/* ボタン */}
         <div className="flex gap-3">
-          {isHost && (
-            <button
-              onClick={onRestart}
-              className="flex-1 py-3.5 text-white border-0 rounded-xl text-base font-bold cursor-pointer transition-opacity hover:opacity-85"
-              style={{ backgroundColor: accentColor }}
-            >
-              もう一度プレイ
-            </button>
+          {isHost ? (
+            onRematchRequest ? (
+              <button
+                onClick={handleRematchClick}
+                className="flex-1 py-3.5 text-white border-0 rounded-xl text-base font-bold cursor-pointer transition-opacity hover:opacity-85"
+                style={{ backgroundColor: accentColor }}
+              >
+                もう一度プレイ
+              </button>
+            ) : (
+              <button
+                onClick={onRestart}
+                className="flex-1 py-3.5 text-white border-0 rounded-xl text-base font-bold cursor-pointer transition-opacity hover:opacity-85"
+                style={{ backgroundColor: accentColor }}
+              >
+                もう一度プレイ
+              </button>
+            )
+          ) : (
+            hasRequested ? (
+              <div
+                className="flex-1 py-3.5 rounded-xl text-base font-bold border-2 text-center select-none"
+                style={{ color: accentColor, borderColor: `${accentColor}55`, backgroundColor: `${accentColor}15` }}
+              >
+                ホスト待ち...
+              </div>
+            ) : onRematchRequest ? (
+              <button
+                onClick={onRematchRequest}
+                className="flex-1 py-3.5 text-white border-0 rounded-xl text-base font-bold cursor-pointer transition-opacity hover:opacity-85"
+                style={{ backgroundColor: accentColor }}
+              >
+                再戦を希望する
+              </button>
+            ) : (
+              <div
+                className="flex-1 py-3.5 rounded-xl text-base font-bold border-2 text-center select-none"
+                style={{ color: accentColor, borderColor: `${accentColor}55`, backgroundColor: `${accentColor}15` }}
+              >
+                ホスト待ち...
+              </div>
+            )
           )}
           <button
             onClick={onLeave}
@@ -121,6 +179,16 @@ export function GameRankingResult({
             ロビーに戻る
           </button>
         </div>
+        {isModalOpen && (
+          <RematchConfirmModal
+            rematchRequests={rematchRequests ?? []}
+            allPlayers={displayPlayers}
+            playerId={playerId}
+            minPlayers={minPlayers}
+            onConfirm={handleConfirm}
+            onClose={() => setIsModalOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
