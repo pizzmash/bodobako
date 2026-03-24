@@ -17,14 +17,14 @@ interface ModalProps {
  * ゲーム外（ロビー・ルーム）では --sidebar-right-offset が 0px のため影響なし。
  */
 export function Modal({ onClose, children, zIndex = Z.modal }: ModalProps) {
-  const modalStyle = {
-    "--modal-z": `${zIndex}`,
+  const modalStyle: CSSProperties = {
+    zIndex,
     paddingRight: "var(--sidebar-right-offset, 0px)",
-  } as CSSProperties;
+  };
 
   return (
     <div
-      className="fixed inset-0 z-[var(--modal-z)] flex items-center justify-center"
+      className="fixed inset-0 flex items-center justify-center"
       style={modalStyle}
       onClick={onClose}
     >

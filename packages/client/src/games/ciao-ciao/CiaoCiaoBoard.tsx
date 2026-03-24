@@ -88,16 +88,10 @@ export function CiaoCiaoBoard() {
     const winnerName = (resultPlayers ?? room.players).find((p) => p.id === winnerId)?.name;
     resultOverlay = (
       <div
+        className="fixed inset-0 flex items-center justify-center p-4 backdrop-blur-sm"
         style={{
-          position: "fixed",
-          inset: 0,
           zIndex: Z.overlay,
           background: "rgba(15,23,42,0.34)",
-          backdropFilter: "blur(2px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 16,
           paddingRight: "calc(16px + var(--sidebar-right-offset, 0px))",
         }}
       >

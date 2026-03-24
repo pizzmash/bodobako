@@ -35,16 +35,7 @@ const TurnFlipsSection = memo(function TurnFlipsSection({
   getPlayerColor: (pid: string) => string;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 6,
-        minHeight: 102,
-        justifyContent: "center",
-      }}
-    >
+    <div className="flex flex-col items-center gap-1.5 min-h-[102px] justify-center">
       <div
         style={{
           fontSize: 11,

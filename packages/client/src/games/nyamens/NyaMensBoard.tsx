@@ -32,15 +32,8 @@ function PlayerBar({
   const { playerOrder, repairDutyIndex, otherHandCounts, myHand, readyPlayers, phase, assassinIds, myRole } = state;
   return (
     <div
-      style={{
-        display: "flex",
-        gap: 6,
-        flexWrap: "wrap",
-        padding: "10px 12px",
-        background: BG_CARD,
-        borderRadius: 12,
-        alignItems: "center",
-      }}
+      className="flex gap-1.5 flex-wrap py-2.5 px-3 rounded-xl items-center"
+      style={{ background: BG_CARD }}
     >
       {playerOrder.map((pid: string, idx: number) => {
         const isMe = pid === myId;

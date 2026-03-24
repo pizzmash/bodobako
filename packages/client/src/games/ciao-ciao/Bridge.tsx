@@ -94,7 +94,7 @@ export function Bridge({ state, highlightedTile, getName, getPhotoURL }: BridgeP
       ))}
 
       {/* ゴールエリア */}
-      <GoalArea goalMeeples={goalMeeples} isHighlighted={highlightedTile !== null && highlightedTile > 9} />
+      <GoalArea goalMeeples={goalMeeples} isHighlighted={highlightedTile != null && highlightedTile > 9} />
     </div>
   );
 }
