@@ -1,20 +1,21 @@
 import type { GameId, GameResult } from "@bodobako/shared";
 import { getGameDefinition } from "@bodobako/shared";
 import {
-  Component,
-  lazy,
-  Suspense,
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentType,
-  type ReactElement,
-  type ReactNode,
+    Component,
+    lazy,
+    Suspense,
+    useEffect,
+    useMemo,
+    useState,
+    type ComponentType,
+    type ReactElement,
+    type ReactNode,
 } from "react";
 import type { GameStateEntry } from "../context/RoomContext";
 import { useRoom } from "../context/RoomContext";
 import { getBlokusTrigonPlayerColorMap, renderBlokusTrigonLogItemExtra } from "../games/blokus-trigon/sidebarExtras";
 import { getBlokusPlayerColorMap, renderBlokusLogItemExtra } from "../games/blokus/sidebarExtras";
+import { getCiaoCiaoPlayerColorMap } from "../games/ciao-ciao/sidebarExtras";
 import type { GameLogItem } from "../hooks/useGameLog";
 import { useGameLog } from "../hooks/useGameLog";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -45,6 +46,9 @@ const NyaMensBoard = lazy(() =>
 );
 const BlokusTrigonBoard = lazy(() =>
   import("../games/blokus-trigon/BlokusTrigonBoard").then((m) => ({ default: m.BlokusTrigonBoard }))
+);
+const CiaoCiaoBoard = lazy(() =>
+  import("../games/ciao-ciao/CiaoCiaoBoard").then((m) => ({ default: m.CiaoCiaoBoard }))
 );
 
 class GameErrorBoundary extends Component<
@@ -113,6 +117,9 @@ const SonicRestaurantPlayerSlot = lazy(() =>
 const BlokusTrigonPlayerSlot = lazy(() =>
   import("../games/blokus-trigon/BlokusTrigonPlayerSlot").then((m) => ({ default: m.BlokusTrigonPlayerSlot }))
 );
+const CiaoCiaoPlayerSlot = lazy(() =>
+  import("../games/ciao-ciao/CiaoCiaoPlayerSlot").then((m) => ({ default: m.CiaoCiaoPlayerSlot }))
+);
 
 /** ゲーム固有のサイドバー拡張 */
 interface SidebarExtras {
@@ -129,6 +136,9 @@ const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
     getPlayerColorMap: (s) => getBlokusTrigonPlayerColorMap(s as never),
     renderLogItemExtra: renderBlokusTrigonLogItemExtra,
   },
+  "ciao-ciao": {
+    getPlayerColorMap: (s) => getCiaoCiaoPlayerColorMap(s as never),
+  },
 };
 
 /** ゲームID → PlayerSlot コンポーネントのマップ */
@@ -140,6 +150,7 @@ const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
   citychase: CitychasePlayerSlot as ComponentType<PlayerSlotProps>,
   nyamens: NyaMensPlayerSlot as ComponentType<PlayerSlotProps>,
   "blokus-trigon": BlokusTrigonPlayerSlot as ComponentType<PlayerSlotProps>,
+  "ciao-ciao": CiaoCiaoPlayerSlot as ComponentType<PlayerSlotProps>,
 };
 
 export function GameView() {
@@ -207,6 +218,9 @@ export function GameView() {
       break;
     case "blokus-trigon":
       board = <BlokusTrigonBoard />;
+      break;
+    case "ciao-ciao":
+      board = <CiaoCiaoBoard />;
       break;
     default:
       board = <div>未対応のゲーム: {room.gameId}</div>;

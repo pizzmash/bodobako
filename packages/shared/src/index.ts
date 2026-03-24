@@ -2,7 +2,7 @@ export { aiuebattleDefinition } from "./games/aiuebattle/index.js";
 export { getActivePlayers, isValidWord, normalizeChar, padWord } from "./games/aiuebattle/logic.js";
 export { BOARD_CHARS, TOPIC_LIST, WORD_LENGTH } from "./games/aiuebattle/types.js";
 export type { AiueBattleMove, AiueBattleState } from "./games/aiuebattle/types.js";
-export { BORDER_MASK, ROW_RANGES, VALID_MASK, isUpTriangle, isTrigonBorderCell, isValidCell, startBitFor } from "./games/blokus-trigon/board.js";
+export { BORDER_MASK, ROW_RANGES, VALID_MASK, isTrigonBorderCell, isUpTriangle, isValidCell, startBitFor } from "./games/blokus-trigon/board.js";
 export {
     PIECES as TRIGON_PIECES, TOTAL_CELLS as TRIGON_TOTAL_CELLS, TOTAL_VARIANTS as TRIGON_TOTAL_VARIANTS, blokusTrigonDefinition, boardToGrid as trigonBoardToGrid,
     canPlace as trigonCanPlace, computePlayerPenalty as trigonComputePlayerScore, computeRemainingCells as trigonComputeRemainingCells,
@@ -26,6 +26,11 @@ export type {
     BlokusMove, BlokusState, ColorBoards, ColorOwner,
     PieceDefinition, PieceVariant, RemainingPieces
 } from "./games/blokus/types.js";
+export { ciaoCiaoDefinition } from "./games/ciao-ciao/index.js";
+export type {
+    ChallengeResult, CiaoCiaoMove, CiaoCiaoPhase,
+    CiaoCiaoState, CiaoCiaoStateView, DiceValue
+} from "./games/ciao-ciao/types.js";
 export { citychaseDefinition } from "./games/citychase/index.js";
 export {
     BOARD_SIZE as CITYCHASE_BOARD_SIZE, HELICOPTER_COUNT, INTERSECTION_SIZE, MAX_ROUNDS, getAdjacentBuildings,
