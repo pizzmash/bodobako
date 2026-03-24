@@ -9,7 +9,10 @@ interface MeepleBubbleProps {
 /** 駒の下に表示するプレイヤーアイコンの吹き出し */
 export function MeepleBubble({ name, photoURL, color }: MeepleBubbleProps) {
   return (
-    <div className="relative flex flex-col items-center">
+    <div
+      className="relative flex flex-col items-center"
+      style={{ transform: "rotateY(5deg) rotateX(-20deg)" }}
+    >
       {/* 三角（上向き） */}
       <div
         style={{
