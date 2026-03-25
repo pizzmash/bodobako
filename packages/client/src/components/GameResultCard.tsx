@@ -101,7 +101,7 @@ export function GameResultCard({
           )
         ) : (
           hasRequested ? (
-            <div className={`${primaryButtonClass} flex items-center justify-center border-2 border-green-200 bg-green-50 text-green-600 cursor-default select-none`}>
+            <div className={`${primaryButtonClass} flex items-center justify-center border-0 bg-green-300 cursor-default select-none`}>
               ホスト待ち...
             </div>
           ) : onRematchRequest ? (
@@ -113,7 +113,7 @@ export function GameResultCard({
               再戦を希望する
             </button>
           ) : (
-            <div className={`${primaryButtonClass} flex items-center justify-center border-2 border-green-200 bg-green-50 text-green-600 cursor-default select-none`}>
+            <div className={`${primaryButtonClass} flex items-center justify-center border-0 bg-green-300 cursor-default select-none`}>
               ホスト待ち...
             </div>
           )
