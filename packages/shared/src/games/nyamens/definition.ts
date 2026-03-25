@@ -255,12 +255,13 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
               (pid) => pid === dutyPlayer1 || (afterBurn.hands[pid] ?? []).length < afterBurn.handSize
             );
             if (needsDraw.length === 0 || afterBurn.drawPile.length === 0) {
-              return { ...processNextEvent(afterBurn), diceResult: 1 };
+              return processNextEvent(afterBurn);
             }
             return { ...afterBurn, phase: "draw-cards", drawQueue: needsDraw, drawnCard: null, lastDrawer: undefined, diceResult: 1 };
           }
-          // diceResult: 1 をクライアントに届けるため enterDrawPhase 後も保持
-          return { ...enterDrawPhase(afterBurn), diceResult: 1 };
+          // diceResult: 1 をクライアントに届けるため draw-cards フェーズ時のみ保持
+          const drawResult1 = enterDrawPhase(afterBurn);
+          return drawResult1.phase === "draw-cards" ? { ...drawResult1, diceResult: 1 } : drawResult1;
         }
 
         if (roll === 6) {
@@ -284,12 +285,13 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
               (pid) => pid === dutyPlayer || (afterRecycle.hands[pid] ?? []).length < afterRecycle.handSize
             );
             if (needsDraw.length === 0 || afterRecycle.drawPile.length === 0) {
-              return { ...processNextEvent(afterRecycle), diceResult: 6 };
+              return processNextEvent(afterRecycle);
             }
             return { ...afterRecycle, phase: "draw-cards", drawQueue: needsDraw, drawnCard: null, lastDrawer: undefined, diceResult: 6 };
           }
-          // diceResult: 6 をクライアントに届けるため enterDrawPhase 後も保持
-          return { ...enterDrawPhase(afterRecycle), diceResult: 6 };
+          // diceResult: 6 をクライアントに届けるため draw-cards フェーズ時のみ保持
+          const drawResult6 = enterDrawPhase(afterRecycle);
+          return drawResult6.phase === "draw-cards" ? { ...drawResult6, diceResult: 6 } : drawResult6;
         }
 
         // 通常ロール (2〜5)

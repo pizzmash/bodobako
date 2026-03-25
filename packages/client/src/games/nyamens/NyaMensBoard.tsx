@@ -234,9 +234,7 @@ export function NyaMensBoard() {
     prevDutyIndexRef.current = state.repairDutyIndex;
     if (prevPhase === null) return; // 初回レンダリングはスキップ
 
-    const rollJustHappened =
-      (prevPhase === "dice-roll" && state.phase !== "dice-roll") ||
-      (prevPhase === "dice-roll" && state.phase === "dice-roll" && prevDutyIndex !== state.repairDutyIndex);
+    const rollJustHappened = prevPhase === "dice-roll" && state.phase !== "dice-roll";
 
     if (rollJustHappened) {
       // 結果をキャプチャしてから出目に対応するアニメーションを再生
