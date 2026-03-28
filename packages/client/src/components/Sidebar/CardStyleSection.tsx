@@ -163,7 +163,7 @@ function PatternPickerModal({
         ref={backdropRef}
         className="fixed inset-0 flex items-center justify-center"
         style={{
-          zIndex: Z.modal,
+          zIndex: Z.sidebar + 50,
           backgroundColor: "rgba(15,23,42,0.45)",
           backdropFilter: "blur(6px)",
           WebkitBackdropFilter: "blur(6px)",
@@ -427,34 +427,19 @@ export function CardStyleSection({
               aria-expanded={isModalOpen}
               aria-haspopup="dialog"
             >
-              {isExtendedSelected ? (
-                // 拡張パターン選択中: そのパターンのプレビュー + ラベル
-                <>
-                  <PatternPreview pattern={selectedPattern} color={previewColor} />
-                  <div
-                    className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: previewColor }}
-                  >
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <span
-                    className="absolute inset-x-0 bottom-0 text-[0.62rem] font-semibold text-center pb-0.5 leading-4"
-                    style={{ color: previewColor }}
-                  >
-                    {PATTERN_LABELS[selectedPattern]}
-                  </span>
-                </>
-              ) : (
-                // 未選択: アイコン + テキスト
-                <>
-                  <MoreHorizontal size={14} className="text-slate-400" aria-hidden="true" />
-                  <span className="text-[0.62rem] font-semibold text-slate-400 leading-4">
-                    その他
-                  </span>
-                </>
-              )}
+              {/* 常に「その他」表示（拡張パターン選択中はアクティブなボーダーのみで示す） */}
+              <MoreHorizontal
+                size={14}
+                aria-hidden="true"
+                style={{ color: isExtendedSelected ? previewColor : undefined }}
+                className={isExtendedSelected ? undefined : "text-slate-400"}
+              />
+              <span
+                className="text-[0.62rem] font-semibold leading-4"
+                style={{ color: isExtendedSelected ? previewColor : "#94a3b8" }}
+              >
+                その他
+              </span>
             </button>
           </div>
         </div>
