@@ -1,6 +1,7 @@
 import type { BgPattern } from "@bodobako/shared";
-import { BG_SVG_PATTERN_META, isSvgBgPattern } from "@bodobako/shared";
+import { isSvgBgPattern } from "@bodobako/shared";
 import type { CSSProperties, ReactNode } from "react";
+import { bgPatternStyleForCard, svgPatternOverlayStyle } from "../../lib/patternStyle";
 import { PLAYER_COLORS, withAlpha } from "../../lib/color";
 import { Avatar } from "../ui/Avatar";
 
@@ -32,38 +33,7 @@ interface PlayerCardProps {
 }
 
 function bgPatternStyle(pattern: BgPattern | undefined, color: string): CSSProperties {
-  if (!pattern || pattern === "none") return {};
-  // SVGパターンはオーバーレイ div で描画するためここでは何もしない
-  if (isSvgBgPattern(pattern)) return {};
-  const c = withAlpha(color, 0.18);
-  switch (pattern) {
-    case "dots":
-      return {
-        backgroundImage: `radial-gradient(${c} 1.5px, transparent 1.5px)`,
-        backgroundSize: "12px 12px",
-      };
-    case "stripes":
-      return {
-        backgroundImage: `repeating-linear-gradient(45deg, ${c} 0, ${c} 1.5px, transparent 0, transparent 50%)`,
-        backgroundSize: "10px 10px",
-      };
-    case "grid":
-      return {
-        backgroundImage: `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`,
-        backgroundSize: "12px 12px",
-      };
-    case "crosshatch":
-      return {
-        backgroundImage: `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`,
-        backgroundSize: "10px 10px",
-      };
-    case "diamonds":
-      return {
-        backgroundImage: `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`,
-        backgroundSize: "14px 14px",
-        backgroundPosition: "0 0, 7px 0",
-      };
-  }
+  return bgPatternStyleForCard(pattern, color);
 }
 
 export function PlayerCard({
@@ -90,11 +60,11 @@ export function PlayerCard({
       : "0 1px 4px rgba(0,0,0,0.07)",
     ...bgPatternStyle(bgPattern, accentColor),
     ...(isCurrent
-      ? {
+      ? ({
           animation: "player-card-glow 2s ease-in-out infinite",
           "--card-glow-ring": withAlpha(accentColor, 0.5),
           "--card-glow-shadow": withAlpha(accentColor, 0.25),
-        }
+        } as CSSProperties)
       : {}),
   };
 
@@ -107,12 +77,7 @@ export function PlayerCard({
       {bgPattern && isSvgBgPattern(bgPattern) && (
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: `url('/patterns/${BG_SVG_PATTERN_META[bgPattern].file}')`,
-            backgroundSize: BG_SVG_PATTERN_META[bgPattern].size,
-            backgroundRepeat: "repeat",
-            opacity: 0.18,
-          }}
+          style={svgPatternOverlayStyle(bgPattern) ?? undefined}
           aria-hidden="true"
         />
       )}
@@ -121,8 +86,7 @@ export function PlayerCard({
         {/* アバター（クリック可能） */}
         <button
           type="button"
-          className="p-0 rounded-full border-0 bg-transparent cursor-pointer flex-shrink-0 hover:opacity-80 transition-opacity"
-          style={{ width: 32, height: 32 }}
+          className="p-0 w-8 h-8 rounded-full border-0 bg-transparent cursor-pointer flex-shrink-0 hover:opacity-80 transition-opacity"
           onClick={onAvatarClick}
           aria-label={`${playerName} の情報を表示`}
         >

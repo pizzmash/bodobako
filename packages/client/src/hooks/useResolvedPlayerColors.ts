@@ -1,5 +1,5 @@
 import type { Player } from "@bodobako/shared";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useParticipantProfiles } from "../components/AppHeader/hooks/useParticipantProfiles";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
@@ -15,15 +15,20 @@ export function useResolvedPlayerColors(players: Player[] | null): (pid: string,
   const { playerId } = useRoom();
   const [profilesByUid] = useParticipantProfiles(players);
 
+  // players は毎レンダリング新しい参照になりやすいため ref で保持し、
+  // useCallback の依存配列から外してメモ化コストを下げる
+  const playersRef = useRef(players);
+  playersRef.current = players;
+
   return useCallback(
     (pid: string, fallback: string): string => {
-      const player = (players ?? []).find((p) => p.id === pid);
+      const player = (playersRef.current ?? []).find((p) => p.id === pid);
       const isMe = pid === playerId;
       const cardStyle = isMe
         ? myCardStyle
         : (player?.userId ? (profilesByUid[player.userId]?.cardStyle ?? null) : null);
       return cardStyle?.accentColor ?? fallback;
     },
-    [players, playerId, myCardStyle, profilesByUid],
+    [playerId, myCardStyle, profilesByUid],
   );
 }

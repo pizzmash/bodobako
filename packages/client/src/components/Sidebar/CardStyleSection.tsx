@@ -1,9 +1,10 @@
 import type { BgPattern, PlayerCardStyle } from "@bodobako/shared";
-import { BG_PATTERNS, BG_SVG_PATTERN_META, PRESET_ACCENT_COLORS, getSvgPatternLabel, isSvgBgPattern } from "@bodobako/shared";
+import { BG_PATTERNS, PRESET_ACCENT_COLORS, getBgPatternLabel, isSvgBgPattern } from "@bodobako/shared";
 import { MoreHorizontal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { withAlpha } from "../../lib/color";
+import { buildCssPatternStyle, svgPatternOverlayStyle } from "../../lib/patternStyle";
 import { Z } from "../../styles/tokens";
 import { Avatar } from "../ui/Avatar";
 import { Spinner } from "../ui/Spinner";
@@ -29,55 +30,23 @@ function PatternPreview({
 
   // SVGパターン
   if (isSvgBgPattern(pattern)) {
-    const meta = BG_SVG_PATTERN_META[pattern];
+    const style = svgPatternOverlayStyle(pattern);
     return (
       <div
         className="absolute inset-0 rounded-xl pointer-events-none"
-        style={{
-          backgroundImage: `url('/patterns/${meta.file}')`,
-          backgroundSize: meta.size,
-          backgroundRepeat: "repeat",
-          opacity: 0.2,
-        }}
+        style={style ? { ...style, opacity: 0.25 } : undefined}
       />
     );
   }
 
-  const c = withAlpha(color, 0.25);
-  let backgroundImage: string;
-  let backgroundSize: string;
-  let backgroundPosition: string | undefined = undefined;
-
-  switch (pattern) {
-    case "dots":
-      backgroundImage = `radial-gradient(${c} 1.5px, transparent 1.5px)`;
-      backgroundSize = "10px 10px";
-      break;
-    case "stripes":
-      backgroundImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1.5px, transparent 0, transparent 50%)`;
-      backgroundSize = "8px 8px";
-      break;
-    case "grid":
-      backgroundImage = `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`;
-      backgroundSize = "10px 10px";
-      break;
-    case "crosshatch":
-      backgroundImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`;
-      backgroundSize = "8px 8px";
-      break;
-    case "diamonds":
-      backgroundImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`;
-      backgroundSize = "12px 12px";
-      backgroundPosition = "0 0, 6px 0";
-      break;
-    default:
-      return null;
-  }
+  // CSSパターン: プレビュー用に少し明るめの opacity=0.25
+  const style = buildCssPatternStyle(pattern, color, 0.25);
+  if (!style) return null;
 
   return (
     <div
       className="absolute inset-0 rounded-xl pointer-events-none"
-      style={{ backgroundImage, backgroundSize, backgroundPosition }}
+      style={style}
     />
   );
 }
@@ -127,23 +96,6 @@ function MiniPlayerCard({
       </div>
     </div>
   );
-}
-
-// ----------------------------------------------------------------
-// パターン日本語ラベル（CSSパターンのみ手動定義。SVGは getSvgPatternLabel() で動的取得）
-// ----------------------------------------------------------------
-const CSS_PATTERN_LABELS: Record<string, string> = {
-  none: "なし",
-  dots: "ドット",
-  stripes: "ストライプ",
-  grid: "グリッド",
-  crosshatch: "クロスハッチ",
-  diamonds: "ダイヤ",
-};
-
-function getBgPatternLabel(pattern: BgPattern): string {
-  if (isSvgBgPattern(pattern)) return getSvgPatternLabel(pattern);
-  return CSS_PATTERN_LABELS[pattern] ?? pattern;
 }
 
 // ----------------------------------------------------------------

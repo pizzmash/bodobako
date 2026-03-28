@@ -22,6 +22,8 @@ export const BG_CSS_PATTERNS = [
   "diamonds",
 ] as const;
 
+export type BgCssPattern = (typeof BG_CSS_PATTERNS)[number];
+
 // SVGパターンID一覧（新しいSVGを追加するときはここに追記）
 // IDは "svg-patternXXXX" 形式（XXXX は4桁ゼロ埋め）
 export const BG_SVG_PATTERN_IDS = [
@@ -85,9 +87,25 @@ export const BG_SVG_PATTERN_META: Record<BgSvgPatternId, { label?: string; file:
   "svg-pattern0638": { file: "svg-pattern0638.svg", size: "32px 32px" },
 };
 
+/** CSSパターンの表示ラベル */
+export const BG_CSS_PATTERN_LABELS: Record<BgCssPattern, string> = {
+  none: "なし",
+  dots: "ドット",
+  stripes: "ストライプ",
+  grid: "グリッド",
+  crosshatch: "クロスハッチ",
+  diamonds: "ダイヤ",
+};
+
 /** SVGパターンの表示ラベルを返す（label未設定の場合はIDの番号部分） */
 export function getSvgPatternLabel(id: BgSvgPatternId): string {
   return BG_SVG_PATTERN_META[id].label ?? id.replace("svg-pattern", "No.");
+}
+
+/** パターンIDから表示ラベルを返す汎用関数 */
+export function getBgPatternLabel(pattern: BgPattern): string {
+  if (isSvgBgPattern(pattern)) return getSvgPatternLabel(pattern);
+  return BG_CSS_PATTERN_LABELS[pattern];
 }
 
 export const BG_PATTERNS = [...BG_CSS_PATTERNS, ...BG_SVG_PATTERN_IDS] as const;

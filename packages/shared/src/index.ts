@@ -59,8 +59,8 @@ export type {
     Card, CompletedMenu, MenuTreeNode, SonicRestaurantMove, SonicRestaurantState
 } from "./games/sonic-restaurant/types.js";
 export type { GameDefinition, GameLogEntry, GameStatus } from "./types/game.js";
-export { BG_PATTERNS, BG_SVG_PATTERN_IDS, BG_SVG_PATTERN_META, getSvgPatternLabel, isSvgBgPattern, PRESET_ACCENT_COLORS } from "./types/profile.js";
-export type { BgPattern, BgSvgPatternId, PlayerCardStyle } from "./types/profile.js";
+export { BG_CSS_PATTERN_LABELS, BG_CSS_PATTERNS, BG_PATTERNS, BG_SVG_PATTERN_IDS, BG_SVG_PATTERN_META, getBgPatternLabel, getSvgPatternLabel, isSvgBgPattern, PRESET_ACCENT_COLORS } from "./types/profile.js";
+export type { BgCssPattern, BgPattern, BgSvgPatternId, PlayerCardStyle } from "./types/profile.js";
 export type {
     GameResult, WsAckError, WsAckSuccess, WsClientMessage, WsServerMessage
 } from "./types/protocol.js";
