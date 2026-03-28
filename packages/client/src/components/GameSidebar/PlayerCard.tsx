@@ -1,7 +1,7 @@
 import type { BgPattern } from "@bodobako/shared";
 import type { CSSProperties, ReactNode } from "react";
-import { Avatar } from "../ui/Avatar";
 import { PLAYER_COLORS, withAlpha } from "../../lib/color";
+import { Avatar } from "../ui/Avatar";
 
 export interface PlayerSlotProps {
   playerId: string;

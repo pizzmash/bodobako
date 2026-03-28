@@ -1,5 +1,5 @@
-import { BG_PATTERNS, PRESET_ACCENT_COLORS } from "@bodobako/shared";
 import type { BgPattern, PlayerCardStyle } from "@bodobako/shared";
+import { BG_PATTERNS, PRESET_ACCENT_COLORS } from "@bodobako/shared";
 import { useState } from "react";
 import { withAlpha } from "../../lib/color";
 import { Avatar } from "../ui/Avatar";

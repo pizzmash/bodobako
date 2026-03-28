@@ -9,6 +9,7 @@ interface BridgeTileProps {
   isHighlighted?: boolean;
   getName: (pid: string) => string;
   getPhotoURL: (pid: string) => string | undefined;
+  getMeepleColor?: (pid: string) => string;
 }
 
 // 木目マテリアル（偶数マス: ライトオーク、奇数マス: ダークウォルナット）
@@ -36,8 +37,10 @@ const WOOD_GRAIN = (light: boolean) =>
   ].join(", ");
 
 export const BridgeTile = forwardRef<HTMLDivElement, BridgeTileProps>(
-  function BridgeTile({ index, meeples, isHighlighted, getName, getPhotoURL }, ref) {
+  function BridgeTile({ index, meeples, isHighlighted, getName, getPhotoURL, getMeepleColor }, ref) {
     const isEven = index % 2 === 0;
+    const resolveColor = (m: { playerId: string; colorIndex: number }) =>
+      getMeepleColor?.(m.playerId) ?? CIAO_PLAYER_COLORS[m.colorIndex]?.meeple ?? "#888";
 
     return (
       <div ref={ref} className="flex flex-col items-center shrink-0" style={{ position: "relative", zIndex: 1 }}>
@@ -68,7 +71,7 @@ export const BridgeTile = forwardRef<HTMLDivElement, BridgeTileProps>(
             {meeples.map((m, i) => (
               <div key={m.playerId} className={i > 0 ? "-ml-1" : ""}>
                 <Meeple
-                  color={CIAO_PLAYER_COLORS[m.colorIndex]?.meeple ?? "#888"}
+                  color={resolveColor(m)}
                   size={24}
                 />
               </div>
@@ -82,7 +85,7 @@ export const BridgeTile = forwardRef<HTMLDivElement, BridgeTileProps>(
                 key={m.playerId}
                 name={getName(m.playerId)}
                 photoURL={getPhotoURL(m.playerId)}
-                color={CIAO_PLAYER_COLORS[m.colorIndex]?.meeple ?? "#888"}
+                color={resolveColor(m)}
               />
             ))}
           </div>

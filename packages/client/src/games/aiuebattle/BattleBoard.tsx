@@ -1,5 +1,6 @@
 import type { AiueBattleMove, AiueBattleState, GameResult, Player, RoomInfo } from "@bodobako/shared";
 import { GameResultCard } from "../../components/GameResultCard";
+import { useResolvedPlayerColors } from "../../hooks/useResolvedPlayerColors";
 import {
     BOARD_LAYOUT,
     BOARD_LAYOUT_HORIZONTAL,
@@ -56,9 +57,13 @@ export function BattleBoard({
   const isEliminated = state.eliminatedPlayers.includes(playerId);
   const isWide = useIsWideBoard();
 
+  const resolveColor = useResolvedPlayerColors(room.players);
+
   // Attack result banner variables
   const attackPlayerIndex = room.players.findIndex((p) => p.id === state.lastAttackPlayerId);
-  const playerColor = attackPlayerIndex >= 0 ? PLAYER_COLORS[attackPlayerIndex] : C.gray400;
+  const playerColor = state.lastAttackPlayerId
+    ? resolveColor(state.lastAttackPlayerId, attackPlayerIndex >= 0 ? PLAYER_COLORS[attackPlayerIndex] : C.gray400)
+    : C.gray400;
   const layout = isWide ? BOARD_LAYOUT_HORIZONTAL : BOARD_LAYOUT;
 
   return (

@@ -168,6 +168,19 @@ export function GameSidebarContent({
 
   if (!room) return null;
 
+  // ユーザー設定カラーをゲーム固有カラーにマージ（ユーザー設定優先）
+  const mergedColorMap = useMemo(() => {
+    const base: Record<string, string> = { ...(playerColorMap ?? {}) };
+    const ps = (room.status === "finished" && resultPlayers) ? resultPlayers : room.players;
+    for (const player of ps) {
+      const isMe = player.id === playerId;
+      const uid = player.userId;
+      const style = isMe ? myCardStyle : (uid ? (profilesByUid[uid]?.cardStyle ?? null) : null);
+      if (style?.accentColor) base[player.id] = style.accentColor;
+    }
+    return base;
+  }, [playerColorMap, room, resultPlayers, playerId, myCardStyle, profilesByUid]);
+
   const popoverRight = isMobile ? 8 : GAME_SIDEBAR_WIDTH + 8;
   const popoverTop = Math.max(APP_HEADER_HEIGHT + 8, popoverAnchorTop);
 
@@ -187,9 +200,9 @@ export function GameSidebarContent({
               currentTurnPlayerId === null ? null : player.id === currentTurnPlayerId;
             const uid = player.userId;
             const profile = uid ? profilesByUid[uid] : null;
-            // ゲーム固有カラー > ユーザー設定カラー > デフォルト（PLAYER_COLORS）の順で優先
+            // ユーザー設定カラー > ゲーム固有カラー > デフォルト（PLAYER_COLORS）の順で優先
             const playerCardStyle = isMe ? myCardStyle : (profile?.cardStyle ?? null);
-            const accentColorOverride = playerColorMap?.[player.id] ?? playerCardStyle?.accentColor;
+            const accentColorOverride = playerCardStyle?.accentColor ?? playerColorMap?.[player.id];
             const bgPattern = playerCardStyle?.bgPattern;
             // 自分はFirebase Authのphoto（常に最新）→ プロフィールAPI の順で使用
             const photoURL = isMe
@@ -231,7 +244,7 @@ export function GameSidebarContent({
         <LogPanel
           logs={logEntries}
           players={room.players}
-          playerColorMap={playerColorMap}
+          playerColorMap={mergedColorMap}
           renderLogItemExtra={renderLogItemExtra}
         />
       </div>

@@ -1,8 +1,8 @@
 import { Camera, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { API_BASE } from "../../lib/socket";
 import { MAX_APP_DISPLAY_NAME_LENGTH } from "../../lib/constants";
+import { API_BASE } from "../../lib/socket";
 import { Avatar } from "../ui/Avatar";
 import { Spinner } from "../ui/Spinner";
 import { CardStyleSection } from "./CardStyleSection";

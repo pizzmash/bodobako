@@ -1,12 +1,12 @@
 import type { PlayerCardStyle } from "@bodobako/shared";
-import { onIdTokenChanged, signInWithPopup, signOut as firebaseSignOut, type User } from "firebase/auth";
+import { signOut as firebaseSignOut, onIdTokenChanged, signInWithPopup, type User } from "firebase/auth";
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useState,
+    type ReactNode,
 } from "react";
 import { auth, googleProvider } from "../lib/firebase";
 import { API_BASE } from "../lib/socket";

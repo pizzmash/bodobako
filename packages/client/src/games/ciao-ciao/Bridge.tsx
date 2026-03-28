@@ -11,6 +11,8 @@ interface BridgeProps {
   highlightedTile?: number | null;
   getName: (pid: string) => string;
   getPhotoURL: (pid: string) => string | undefined;
+  /** プレイヤーIDをコマ色に解決する関数（ユーザー設定カラー優先） */
+  getMeepleColor?: (pid: string) => string;
   onAnimatingChange?: (animating: boolean) => void;
 }
 
@@ -25,7 +27,9 @@ interface InFlightMeeple {
   isFalling: boolean;
 }
 
-export function Bridge({ state, highlightedTile, getName, getPhotoURL, onAnimatingChange }: BridgeProps) {
+export function Bridge({ state, highlightedTile, getName, getPhotoURL, getMeepleColor, onAnimatingChange }: BridgeProps) {
+  const defaultMeepleColor = (pid: string) => CIAO_PLAYER_COLORS[state.playerIds.indexOf(pid)]?.meeple ?? "#888";
+  const resolveMeeple = (pid: string) => getMeepleColor?.(pid) ?? defaultMeepleColor(pid);
   const tileRefs = useRef<(HTMLDivElement | null)[]>(Array(11).fill(null));
   const containerRef = useRef<HTMLDivElement>(null);
   const prevStateRef = useRef<CiaoCiaoStateView | null>(null);
@@ -176,9 +180,10 @@ export function Bridge({ state, highlightedTile, getName, getPhotoURL, onAnimati
       .filter((s) => !arrivalHideSlots.has(s.slot) && !fallingHideSlots.has(s.slot))
       .map((s) => ({
         playerId: s.playerId,
-        color: CIAO_PLAYER_COLORS[state.playerIds.indexOf(s.playerId)]?.meeple ?? "#888",
+        color: resolveMeeple(s.playerId),
       }));
-  }, [state.goalSlots, state.playerIds, goalFallingPids, goalArrivingPids]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.goalSlots, state.playerIds, goalFallingPids, goalArrivingPids, getMeepleColor]);
 
   /** タイルの中央ピクセル位置 (コンテナのローカル座標系) を返す */
   function getTilePos(tileIndex: number): { x: number; y: number } | null {
@@ -255,7 +260,7 @@ export function Bridge({ state, highlightedTile, getName, getPhotoURL, onAnimati
             {(tileMeeples[0] ?? []).map((m, i) => (
               <div key={m.playerId} className={i > 0 ? "-ml-1" : ""}>
                 <Meeple
-                  color={CIAO_PLAYER_COLORS[m.colorIndex]?.meeple ?? "#888"}
+                  color={resolveMeeple(m.playerId)}
                   size={24}
                 />
               </div>
@@ -269,7 +274,7 @@ export function Bridge({ state, highlightedTile, getName, getPhotoURL, onAnimati
                 key={m.playerId}
                 name={getName(m.playerId)}
                 photoURL={getPhotoURL(m.playerId)}
-                color={CIAO_PLAYER_COLORS[m.colorIndex]?.meeple ?? "#888"}
+                color={resolveMeeple(m.playerId)}
               />
             ))}
           </div>
@@ -288,6 +293,7 @@ export function Bridge({ state, highlightedTile, getName, getPhotoURL, onAnimati
           isHighlighted={highlightedTile === tileIdx}
           getName={getName}
           getPhotoURL={getPhotoURL}
+          getMeepleColor={resolveMeeple}
         />
       ))}
 
@@ -304,7 +310,7 @@ export function Bridge({ state, highlightedTile, getName, getPhotoURL, onAnimati
       {inFlight.map((f) => {
         const pos = getTilePos(f.path[f.step]);
         if (!pos) return null;
-        const color = CIAO_PLAYER_COLORS[f.colorIdx]?.meeple ?? "#888";
+        const color = resolveMeeple(f.pid);
         const atEnd = f.step === f.path.length - 1;
         return (
           <div
