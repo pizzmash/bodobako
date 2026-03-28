@@ -189,7 +189,7 @@ export function DrawCardsView({ state, myId, playerNames, onDraw }: DrawCardsVie
     }, 2000);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawnCard]);
+  }, [drawnCard, state.drawPileCount]);
 
   const drawerName = playerNames[currentDrawer ?? ""] ?? currentDrawer ?? "";
 

@@ -28,6 +28,34 @@ function makeBase(overrides: Partial<NyaMensState> = {}): NyaMensState {
   };
 }
 
+describe("processNextEvent: eventTurnActive=true で okami 処理後もフラグが保持される", () => {
+  it("eventTurnActive=true で okami 処理後も eventTurnActive が保持される", () => {
+    const state: NyaMensState = {
+      phase: "draw-cards",
+      playerOrder: ["P1", "P2"],
+      handSize: 3,
+      roles: { P1: "nyamens", P2: "nyamens" },
+      hands: { P1: [1, 2, 3], P2: [4, 5, 6] },
+      drawPile: [],
+      burnedCards: [],
+      track: { up: [], down: [], recycleBox: null },
+      repairDutyIndex: 0,
+      diceResult: null,
+      okamiActive: false,
+      selectedCards: {},
+      revealedCards: null,
+      eventQueue: ["okami"],
+      readyPlayers: [],
+      votes: null,
+      eventTurnActive: true,
+    };
+    const next = processNextEvent(state);
+    expect(next.phase).toBe("card-selection");
+    expect(next.okamiActive).toBe(true);
+    expect(next.eventTurnActive).toBe(true);
+  });
+});
+
 describe("processNextEvent: okamiイベントが複数枚キューにある場合、1枚ずつ正しく処理される", () => {
   it("okamiが2枚連続でキューにある場合、1枚目でokamiActiveがtrueになり、2枚目は次ターンで処理される", () => {
     let state = makeBase({ eventQueue: ["okami", "okami"] });

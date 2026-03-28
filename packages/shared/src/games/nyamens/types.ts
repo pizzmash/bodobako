@@ -47,6 +47,7 @@ export interface NyaMensState {
   drawnCard?: NyaCard | null;
   /** draw-cards フェーズ: 最後にカードを引いたプレイヤー（ACK待ち判定用） */
   lastDrawer?: string;
+  eventTurnActive?: boolean;
   votes: Record<string, string | "none"> | null;
   result?: {
     winner: "nyamens" | "assassin";
@@ -85,6 +86,7 @@ export interface NyaMensPlayerView {
   drawnCard: NyaCard | null;
   /** draw-cards フェーズ: 最後にカードを引いたプレイヤー（ACK待ち判定用） */
   lastDrawer?: string;
+  eventTurnActive?: boolean;
   votes: Record<string, string | "none"> | null;
   result?: NyaMensState["result"];
   /** ゲーム終了後のみ全役職を公開 */

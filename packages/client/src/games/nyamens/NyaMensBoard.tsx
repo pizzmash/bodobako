@@ -234,7 +234,10 @@ export function NyaMensBoard() {
     prevDutyIndexRef.current = state.repairDutyIndex;
     if (prevPhase === null) return; // 初回レンダリングはスキップ
 
-    const rollJustHappened = prevPhase === "dice-roll" && state.phase !== "dice-roll";
+    // 1/6 で補充不要の場合は dice-roll→dice-roll（当番のみ変わる）でも発火させる
+    const rollJustHappened =
+      prevPhase === "dice-roll" &&
+      (state.phase !== "dice-roll" || prevDutyIndex !== state.repairDutyIndex);
 
     if (rollJustHappened) {
       // 結果をキャプチャしてから出目に対応するアニメーションを再生
@@ -531,7 +534,7 @@ export function NyaMensBoard() {
           }}
         >
           {state.okamiActive && state.phase === "dice-roll" && (
-            <PhaseBanner text={<><PawPrint size={14} className="inline mr-1" />オオカミ発動中 — 次のターンは全員最低1枚！</>} color="#D97706" />
+            <PhaseBanner text={<><PawPrint size={14} className="inline mr-1" />オオカミ発動中 — 次のターンは全員必ず1枚！</>} color="#D97706" />
           )}
 
           {/* サイコロ - 全員に表示。key が変わるたびに remount → アニメーション確実に再起動 */}
@@ -587,7 +590,7 @@ export function NyaMensBoard() {
             />
           )}
           {!diceAnimating && !diceShowingResult && state.okamiActive && (
-            <PhaseBanner text={<><PawPrint size={14} className="inline mr-1" />オオカミ発動！全員最低1枚カードを選んでください</>} color="#D97706" />
+            <PhaseBanner text={<><PawPrint size={14} className="inline mr-1" />オオカミ発動！全員必ず1枚カードを選んでください</>} color="#D97706" />
           )}
           <PlayerHandArea
             state={state}

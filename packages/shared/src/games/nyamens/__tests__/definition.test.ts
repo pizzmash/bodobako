@@ -153,7 +153,7 @@ describe("draw-cards: ACK 待ち状態", () => {
     expect(nyaMensDefinition.validateMove(state, { type: "draw-card" }, P2)).toBe(false);
   });
 
-  it("ACK を受けると processNextEvent が呼ばれ dice-roll に遷移する", () => {
+  it("ACK を受けると enterEventTurn が呼ばれ dice-roll に遷移し repairDutyIndex がインクリメントされる", () => {
     const state = makeDrawState({
       drawQueue: [],
       drawnCard: 10,
@@ -164,6 +164,7 @@ describe("draw-cards: ACK 待ち状態", () => {
     expect(next.phase).toBe("dice-roll");
     expect(next.drawnCard).toBeUndefined();
     expect(next.lastDrawer).toBeUndefined();
+    expect(next.repairDutyIndex).toBe(1); // ローテート済み
   });
 });
 
@@ -177,7 +178,7 @@ describe("draw-cards: 山札が空のときスキップ", () => {
     expect(next.drawQueue).toEqual([P2]);
   });
 
-  it("最後の 1 人が山札空でスキップされると processNextEvent を経て dice-roll に遷移する", () => {
+  it("最後の 1 人が山札空でスキップされると enterEventTurn を経て dice-roll に遷移する", () => {
     const state = makeDrawState({ drawPile: [], drawQueue: [P1] });
     const next = nyaMensDefinition.applyMove(state, { type: "draw-card" }, P1);
     expect(next.phase).toBe("dice-roll");
@@ -279,5 +280,37 @@ describe("dice-roll roll=6: リサイクルボックス空 → draw-cards フェ
     const next = nyaMensDefinition.applyMove(state, { type: "roll-dice" }, P1);
     expect(next.hands[P1]).toContain(15);
     expect(next.track.recycleBox).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// repair: eventTurnActive=true のとき全カード配置完了で次イベントへ
+// ---------------------------------------------------------------------------
+
+describe("repair: eventTurnActive=true のとき全カード配置完了で enterDrawPhase をスキップして次イベントへ遷移する", () => {
+  it("eventTurnActive=true で最後のカードを配置すると event-shirokuma に遷移する", () => {
+    const state: NyaMensState = {
+      phase: "repair",
+      playerOrder: [P1, P2],
+      handSize: 3,
+      roles: { [P1]: "nyamens", [P2]: "nyamens" },
+      hands: { [P1]: [1, 2], [P2]: [4, 5] },
+      drawPile: [10, 11, 12],
+      burnedCards: [],
+      track: { up: [1, 2, 3, 4], down: [20, 19, 18], recycleBox: null },
+      repairDutyIndex: 0,
+      diceResult: null,
+      okamiActive: false,
+      selectedCards: {},
+      revealedCards: [5],
+      eventQueue: ["shirokuma"],
+      readyPlayers: [],
+      votes: null,
+      eventTurnActive: true,
+    };
+    const next = nyaMensDefinition.applyMove(state, { type: "place-card", card: 5, destination: "up" }, P1);
+    // enterDrawPhase は呼ばれず、processNextEvent → event-shirokuma へ
+    expect(next.phase).toBe("event-shirokuma");
+    expect(next.eventTurnActive).toBe(true);
   });
 });
