@@ -117,7 +117,7 @@ export function PlayerCard({
         />
       )}
       {/* 名前行 */}
-      <div className="flex items-center gap-2">
+      <div className="relative flex items-center gap-2">
         {/* アバター（クリック可能） */}
         <button
           type="button"
@@ -162,7 +162,7 @@ export function PlayerCard({
       </div>
 
       {/* ゲーム固有コンテンツスロット */}
-      {children && <div className="mt-2">{children}</div>}
+      {children && <div className="relative mt-2">{children}</div>}
     </div>
   );
 }
