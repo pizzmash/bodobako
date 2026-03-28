@@ -10,54 +10,47 @@ import { Spinner } from "../ui/Spinner";
 function PatternPreview({
   pattern,
   color,
-  size = "thumb",
 }: {
   pattern: BgPattern;
   color: string;
-  size?: "thumb" | "card";
 }) {
+  if (pattern === "none") return null;
+
   const c = withAlpha(color, 0.25);
-  let bgImage = "none";
-  let bgSize = "12px 12px";
-  let bgPosition: string | undefined = undefined;
+  let backgroundImage: string;
+  let backgroundSize: string;
+  let backgroundPosition: string | undefined = undefined;
 
   switch (pattern) {
-    case "none":
-      bgImage = "none";
-      break;
     case "dots":
-      bgImage = `radial-gradient(${c} 1.5px, transparent 1.5px)`;
-      bgSize = "10px 10px";
+      backgroundImage = `radial-gradient(${c} 1.5px, transparent 1.5px)`;
+      backgroundSize = "10px 10px";
       break;
     case "stripes":
-      bgImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1.5px, transparent 0, transparent 50%)`;
-      bgSize = "8px 8px";
+      backgroundImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1.5px, transparent 0, transparent 50%)`;
+      backgroundSize = "8px 8px";
       break;
     case "grid":
-      bgImage = `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`;
-      bgSize = "10px 10px";
+      backgroundImage = `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`;
+      backgroundSize = "10px 10px";
       break;
     case "crosshatch":
-      bgImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`;
-      bgSize = "8px 8px";
+      backgroundImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`;
+      backgroundSize = "8px 8px";
       break;
     case "diamonds":
-      bgImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`;
-      bgSize = "12px 12px";
-      bgPosition = "0 0, 6px 0";
+      backgroundImage = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`;
+      backgroundSize = "12px 12px";
+      backgroundPosition = "0 0, 6px 0";
       break;
+    default:
+      return null;
   }
 
-  const isThumb = size === "thumb";
   return (
     <div
-      className={`rounded-lg ${isThumb ? "w-full h-full" : "absolute inset-0 rounded-xl"}`}
-      style={{
-        backgroundImage: bgImage,
-        backgroundSize: bgSize,
-        backgroundPosition: bgPosition,
-        background: pattern === "none" ? withAlpha(color, 0.04) : undefined,
-      }}
+      className="absolute inset-0 rounded-xl pointer-events-none"
+      style={{ backgroundImage, backgroundSize, backgroundPosition }}
     />
   );
 }
@@ -83,7 +76,7 @@ function MiniPlayerCard({
         boxShadow: `0 1px 4px rgba(0,0,0,0.07)`,
       }}
     >
-      <PatternPreview pattern={bgPattern} color={accentColor} size="card" />
+      <PatternPreview pattern={bgPattern} color={accentColor} />
       <div className="relative flex items-center gap-2">
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center text-[0.7rem] font-bold text-white shrink-0"
