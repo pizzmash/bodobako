@@ -109,7 +109,7 @@ export function PlayerCard({
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: `url('/patterns/${BG_SVG_PATTERN_META[bgPattern].file}')`,
-            backgroundSize: "52px 45px",
+            backgroundSize: BG_SVG_PATTERN_META[bgPattern].size,
             backgroundRepeat: "repeat",
             opacity: 0.18,
           }}

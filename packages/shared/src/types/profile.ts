@@ -29,9 +29,10 @@ export const BG_SVG_PATTERN_IDS = [
 
 export type BgSvgPatternId = (typeof BG_SVG_PATTERN_IDS)[number];
 
-// SVGパターンのメタデータ（ラベルとファイル名）
-export const BG_SVG_PATTERN_META: Record<BgSvgPatternId, { label: string; file: string }> = {
-  "svg-cat": { label: "ねこ", file: "svg-cat.svg" },
+// SVGパターンのメタデータ（ラベル・ファイル名・タイルサイズ）
+// size: CSS background-size に渡す文字列。"幅px 高さpx" で指定する
+export const BG_SVG_PATTERN_META: Record<BgSvgPatternId, { label: string; file: string; size: string }> = {
+  "svg-cat": { label: "ねこ", file: "svg-cat.svg", size: "52px 45px" },
 };
 
 export const BG_PATTERNS = [...BG_CSS_PATTERNS, ...BG_SVG_PATTERN_IDS] as const;
