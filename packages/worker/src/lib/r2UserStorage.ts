@@ -13,11 +13,14 @@ export function canInviteWithFriendRelations(
   return inviterFollowsInvited && invitedFollowsInviter;
 }
 
+import type { PlayerCardStyle } from "@bodobako/shared";
+
 export interface R2UserProfile {
   uid: string;
   displayName: string;
   friendCode: string;
   photoURL: string;
+  cardStyle?: PlayerCardStyle;
   createdAt: number;
   updatedAt: number;
 }
@@ -188,7 +191,7 @@ export async function updateProfilePhotoURL(
 export async function updateProfileFields(
   bucket: R2Bucket,
   uid: string,
-  fields: Partial<Pick<R2UserProfile, "displayName" | "photoURL">>,
+  fields: Partial<Pick<R2UserProfile, "displayName" | "photoURL" | "cardStyle">>,
 ): Promise<R2UserProfile | null> {
   const existing = await getProfile(bucket, uid);
   if (!existing) return null;

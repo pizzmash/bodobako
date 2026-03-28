@@ -1,9 +1,10 @@
-import { getGameDefinition } from "@bodobako/shared";
+import type { PlayerCardStyle } from "@bodobako/shared";
+import { BG_PATTERNS, PRESET_ACCENT_COLORS, getGameDefinition } from "@bodobako/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { RoomSession } from "./RoomSession.js";
-import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
 import * as r2UserStorage from "./lib/r2UserStorage.js";
+import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
 
 export { RoomSession };
 
@@ -249,6 +250,45 @@ app.put("/users/me", async (c) => {
   return c.json(profile);
 });
 
+// カードスタイル更新
+app.put("/users/me/card-style", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
+  }
+
+  const { accentColor, bgPattern } = body as Record<string, unknown>;
+
+  if (accentColor !== undefined) {
+    if (typeof accentColor !== "string" || !(PRESET_ACCENT_COLORS as readonly string[]).includes(accentColor)) {
+      return c.json({ error: "accentColor が不正な値です" }, 400);
+    }
+  }
+  if (bgPattern !== undefined) {
+    if (typeof bgPattern !== "string" || !(BG_PATTERNS as readonly string[]).includes(bgPattern)) {
+      return c.json({ error: "bgPattern が不正な値です" }, 400);
+    }
+  }
+
+  const cardStyle: PlayerCardStyle = {
+    ...(accentColor !== undefined ? { accentColor } : {}),
+    ...(bgPattern !== undefined ? { bgPattern: bgPattern as import("@bodobako/shared").BgPattern } : {}),
+  };
+
+  const profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, { cardStyle });
+  if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  return c.json({ cardStyle: profile.cardStyle });
+});
+
 // ---------------------------------------------------------------------------
 // フレンド API（Firebase 認証必須）
 // ---------------------------------------------------------------------------
@@ -260,7 +300,7 @@ app.get("/users/:uid/profile", async (c) => {
 
   const profile = await r2UserStorage.getProfile(c.env.USER_DATA, uid);
   if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
-  return c.json({ uid: profile.uid, displayName: profile.displayName, photoURL: profile.photoURL });
+  return c.json({ uid: profile.uid, displayName: profile.displayName, photoURL: profile.photoURL, cardStyle: profile.cardStyle });
 });
 
 // フレンドコードでユーザー検索

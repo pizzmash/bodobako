@@ -5,6 +5,7 @@ import { memo, useCallback, useMemo, useRef } from "react";
 import { GameResultCard } from "../../components/GameResultCard";
 import { useRoom } from "../../context/RoomContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { useResolvedPlayerColors } from "../../hooks/useResolvedPlayerColors";
 import { withAlpha } from "../../lib/color";
 import { MOBILE_TAB_BAR_HEIGHT } from "../../lib/constants";
 import { Z } from "../../styles/tokens";
@@ -358,6 +359,8 @@ export function NanaBoard() {
   const playersRef = useRef(room?.players ?? []);
   playersRef.current = room?.players ?? [];
 
+  const resolveColor = useResolvedPlayerColors(room?.players ?? null);
+
   const getName = useCallback(
     (pid: string) => playersRef.current.find((p) => p.id === pid)?.name ?? pid,
     [],
@@ -365,8 +368,9 @@ export function NanaBoard() {
 
   const getPlayerColor = useCallback((pid: string) => {
     const i = playersRef.current.findIndex((p) => p.id === pid);
-    return PLAYER_COLORS[(i >= 0 ? i : 0) % PLAYER_COLORS.length];
-  }, []);
+    const fallback = PLAYER_COLORS[(i >= 0 ? i : 0) % PLAYER_COLORS.length];
+    return resolveColor(pid, fallback);
+  }, [resolveColor]);
 
   // prevStateRef の更新（ゲームロジックで参照される場合に備える）
   if (state && state !== prevStateRef.current) {

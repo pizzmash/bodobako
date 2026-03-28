@@ -1,3 +1,4 @@
+import { Check, Copy, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { FRIEND_CODE_INPUT_MAX_LENGTH } from "../../lib/constants";
@@ -6,36 +7,33 @@ import type { Follower } from "./FriendsList";
 import { FriendsList } from "./FriendsList";
 import type { FriendsDataHandle } from "./hooks/useFriendsData";
 
-function TrashIcon() {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6M14 11v6M9 6V4h6v2" />
-    </svg>
-  );
-}
-
 interface SidebarFriendsTabProps {
   isActive: boolean;
   friendsData: FriendsDataHandle;
 }
 
 export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabProps) {
-  const { firebaseUser, idToken } = useAuth();
+  const { firebaseUser, idToken, friendCode } = useAuth();
   const [friendsSubTab, setFriendsSubTab] = useState<"mutual" | "outgoing" | "incoming">(
     "mutual",
   );
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!friendCode) return;
+    try {
+      await navigator.clipboard.writeText(friendCode);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = friendCode;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const {
     followingLoading,
@@ -78,6 +76,40 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
 
   return (
     <div className="px-5 py-3.5">
+      {/* フレンドコード */}
+      {friendCode && (
+        <>
+          <div className="text-[0.75rem] font-semibold text-indigo-500 uppercase tracking-[0.08em] mb-2">
+            フレンドコード
+          </div>
+          <div className="flex items-center gap-2 mb-3 bg-indigo-50/60 border border-indigo-200/40 rounded-xl px-3 py-2">
+            <span
+              className="flex-1 font-mono text-[1.05rem] font-bold text-indigo-600 tracking-[0.12em] select-all"
+              aria-label={`フレンドコード: ${friendCode}`}
+            >
+              {friendCode.slice(0, 4)}-{friendCode.slice(4)}
+            </span>
+            <button
+              className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md border-0 bg-transparent p-0 text-indigo-400 transition duration-150 hover:bg-indigo-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.92]"
+              onClick={() => void handleCopy()}
+              aria-label={copied ? "コピーしました" : "フレンドコードをコピー"}
+            >
+              {copied ? (
+                <Check size={16} color="#22C55E" aria-hidden="true" />
+              ) : (
+                <Copy size={16} aria-hidden="true" />
+              )}
+            </button>
+          </div>
+          {copied && (
+            <p className="text-[0.78rem] text-green-500 font-medium -mt-1.5 mb-3" role="status">
+              クリップボードにコピーしました
+            </p>
+          )}
+          <div className="h-px bg-indigo-100/30 -mx-5 mb-3" />
+        </>
+      )}
+
       {/* フレンド追加フォーム */}
       <div className="text-[0.75rem] font-semibold text-indigo-500 uppercase tracking-[0.08em] mb-2">
         フレンド申請
@@ -107,20 +139,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
           {isAdding ? (
             <Spinner size={13} colorClass="border-white/40 border-t-white" />
           ) : (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <Plus size={14} aria-hidden="true" />
           )}
           申請
         </button>
@@ -132,20 +151,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
       )}
       {addSuccess && (
         <p className="text-[0.8rem] text-green-500 font-medium mt-1.5 mb-0" role="status">
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            className="inline mr-1 align-middle"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+          <Check size={12} className="inline mr-1 align-middle" aria-hidden="true" />
           {addSuccess} に申請しました
         </p>
       )}
@@ -223,7 +229,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
                 {removingUid === f.uid ? (
                   <Spinner size={14} colorClass="border-slate-200 border-t-slate-400" />
                 ) : (
-                  <TrashIcon />
+                  <Trash2 size={15} aria-hidden="true" />
                 )}
               </button>
             )}
@@ -246,7 +252,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
                 {cancelingUid === f.uid ? (
                   <Spinner size={14} colorClass="border-slate-200 border-t-slate-400" />
                 ) : (
-                  <TrashIcon />
+                  <Trash2 size={15} aria-hidden="true" />
                 )}
               </button>
             )}
@@ -282,20 +288,7 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
                   {rejectingUid === f.uid ? (
                     <Spinner size={14} colorClass="border-slate-200 border-t-slate-400" />
                   ) : (
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
+                    <X size={15} aria-hidden="true" />
                   )}
                 </button>
               </div>

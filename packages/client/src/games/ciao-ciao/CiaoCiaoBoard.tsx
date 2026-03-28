@@ -6,6 +6,7 @@ import { GameResultCard } from "../../components/GameResultCard";
 import { useAuth } from "../../context/AuthContext";
 import { useRoom } from "../../context/RoomContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { useResolvedPlayerColors } from "../../hooks/useResolvedPlayerColors";
 import { Z } from "../../styles/tokens";
 import { Bridge } from "./Bridge";
 import { ChallengePanel } from "./ChallengePanel";
@@ -52,12 +53,22 @@ export function CiaoCiaoBoard() {
     [room?.players, playerId, firebaseUser?.photoURL, profilesByUid],
   );
 
+  const resolveColor = useResolvedPlayerColors(room?.players ?? null);
+
   const getColor = useCallback(
     (pid: string) => {
       const idx = state?.playerIds.indexOf(pid) ?? 0;
-      return CIAO_PLAYER_COLORS[idx]?.fill ?? "#888";
+      return resolveColor(pid, CIAO_PLAYER_COLORS[idx]?.fill ?? "#888");
     },
-    [state?.playerIds],
+    [resolveColor, state?.playerIds],
+  );
+
+  const getMeepleColor = useCallback(
+    (pid: string) => {
+      const idx = state?.playerIds.indexOf(pid) ?? 0;
+      return resolveColor(pid, CIAO_PLAYER_COLORS[idx]?.meeple ?? "#888");
+    },
+    [resolveColor, state?.playerIds],
   );
 
   // 手番プレイヤーのID
@@ -211,7 +222,7 @@ export function CiaoCiaoBoard() {
           style={{ perspective: "1000px" }}
         >
           <div style={{ transform: "rotateX(20deg) rotateY(-5deg)" }}>
-            <Bridge state={state} highlightedTile={highlightedTile} getName={getName} getPhotoURL={getPhotoURL} onAnimatingChange={setBridgeAnimating} />
+            <Bridge state={state} highlightedTile={highlightedTile} getName={getName} getPhotoURL={getPhotoURL} getMeepleColor={getMeepleColor} onAnimatingChange={setBridgeAnimating} />
           </div>
         </div>
 
