@@ -1,8 +1,8 @@
-import { useCallback } from "react";
 import type { Player } from "@bodobako/shared";
+import { useCallback } from "react";
+import { useParticipantProfiles } from "../components/AppHeader/hooks/useParticipantProfiles";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
-import { useParticipantProfiles } from "../components/AppHeader/hooks/useParticipantProfiles";
 
 /**
  * プレイヤーIDとフォールバックカラーを受け取り、
