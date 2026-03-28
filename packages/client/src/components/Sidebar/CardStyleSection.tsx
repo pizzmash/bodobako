@@ -2,6 +2,7 @@ import type { BgPattern, PlayerCardStyle } from "@bodobako/shared";
 import { BG_PATTERNS, BG_SVG_PATTERN_META, PRESET_ACCENT_COLORS, getSvgPatternLabel, isSvgBgPattern } from "@bodobako/shared";
 import { MoreHorizontal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { withAlpha } from "../../lib/color";
 import { Z } from "../../styles/tokens";
 import { Avatar } from "../ui/Avatar";
@@ -173,7 +174,7 @@ function PatternPickerModal({
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  return (
+  return createPortal(
     <>
       <style>{`
         @keyframes csp-backdrop-in  { from { opacity: 0; } to { opacity: 1; } }
@@ -202,7 +203,7 @@ function PatternPickerModal({
           style={{
             background: "rgba(255,255,255,0.98)",
             border: "1px solid rgba(99,102,241,0.18)",
-            width: "min(340px, calc(100vw - 32px))",
+            width: "min(440px, calc(100vw - 32px))",
             animation: open ? "csp-card-in 200ms cubic-bezier(0.34,1.56,0.64,1) forwards" : undefined,
           }}
         >
@@ -221,14 +222,14 @@ function PatternPickerModal({
 
           {/* パターングリッド */}
           <div className="p-4">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               {BG_PATTERNS.map((pattern) => {
                 const isSelected = selectedPattern === pattern;
                 return (
                   <button
                     key={pattern}
                     type="button"
-                    className="relative h-14 rounded-xl border-2 overflow-hidden transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    className="relative h-11 rounded-xl border-2 overflow-hidden transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                     style={{
                       borderColor: isSelected ? color : "rgb(226 232 240 / 0.7)",
                       backgroundColor: withAlpha(color, 0.04),
@@ -267,7 +268,8 @@ function PatternPickerModal({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
