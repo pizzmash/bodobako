@@ -2,6 +2,7 @@ import { BG_PATTERNS, PRESET_ACCENT_COLORS } from "@bodobako/shared";
 import type { BgPattern, PlayerCardStyle } from "@bodobako/shared";
 import { useState } from "react";
 import { withAlpha } from "../../lib/color";
+import { Avatar } from "../ui/Avatar";
 import { Spinner } from "../ui/Spinner";
 
 // ----------------------------------------------------------------
@@ -62,10 +63,12 @@ function MiniPlayerCard({
   name,
   accentColor,
   bgPattern,
+  photoURL,
 }: {
   name: string;
   accentColor: string;
   bgPattern: BgPattern;
+  photoURL?: string;
 }) {
   return (
     <div
@@ -78,12 +81,11 @@ function MiniPlayerCard({
     >
       <PatternPreview pattern={bgPattern} color={accentColor} />
       <div className="relative flex items-center gap-2">
-        <div
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[0.7rem] font-bold text-white shrink-0"
-          style={{ background: accentColor }}
-        >
-          {name.slice(0, 1).toUpperCase()}
-        </div>
+        <Avatar
+          photoURL={photoURL}
+          displayName={name}
+          size={28}
+        />
         <span
           className="text-[0.875rem] font-bold truncate flex-1 leading-tight"
           style={{ color: accentColor }}
@@ -120,12 +122,14 @@ interface CardStyleSectionProps {
   appDisplayName: string | null;
   currentCardStyle: PlayerCardStyle | null;
   onSave: (style: PlayerCardStyle) => Promise<void>;
+  photoURL?: string;
 }
 
 export function CardStyleSection({
   appDisplayName,
   currentCardStyle,
   onSave,
+  photoURL,
 }: CardStyleSectionProps) {
   const [selectedColor, setSelectedColor] = useState<string | null>(
     currentCardStyle?.accentColor ?? null,
@@ -175,6 +179,7 @@ export function CardStyleSection({
           name={previewName}
           accentColor={previewColor}
           bgPattern={selectedPattern}
+          photoURL={photoURL}
         />
       </div>
 

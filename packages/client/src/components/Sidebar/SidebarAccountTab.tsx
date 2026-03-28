@@ -274,6 +274,7 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
         appDisplayName={appDisplayName}
         currentCardStyle={cardStyle}
         onSave={updateCardStyle}
+        photoURL={profilePhotoURL ?? firebaseUser?.photoURL ?? undefined}
       />
 
       <div className="h-px bg-indigo-100/30 mx-5" />
