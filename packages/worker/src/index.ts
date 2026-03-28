@@ -236,9 +236,12 @@ app.put("/users/me", async (c) => {
   const existingProfile = await r2UserStorage.getProfile(c.env.USER_DATA, verified.uid);
   let profile;
   if (existingProfile) {
-    profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, {
-      displayName: displayName.trim(),
-    });
+    // displayName は常に更新。photoURL はまだ未設定（""）の場合のみ上書き（カスタムアバターを保護）
+    const fields: { displayName: string; photoURL?: string } = { displayName: displayName.trim() };
+    if (!existingProfile.photoURL && typeof photoURL === "string" && photoURL) {
+      fields.photoURL = photoURL;
+    }
+    profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, fields);
   } else {
     profile = await r2UserStorage.upsertProfile(
       c.env.USER_DATA,

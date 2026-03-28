@@ -33,7 +33,7 @@ export function GameSidebarContent({
   renderLogItemExtra,
 }: GameSidebarContentProps) {
   const { room, playerId, resultPlayers } = useRoom();
-  const { firebaseUser, idToken, cardStyle: myCardStyle } = useAuth();
+  const { firebaseUser, idToken, cardStyle: myCardStyle, profilePhotoURL } = useAuth();
   const isMobile = useIsMobile();
 
   const [activePopoverPlayerId, setActivePopoverPlayerId] = useState<string | null>(null);
@@ -265,7 +265,11 @@ export function GameSidebarContent({
         >
           <div className="flex items-center gap-2.5">
             <Avatar
-              photoURL={activeProfile?.photoURL}
+              photoURL={
+                activeUid === firebaseUser?.uid
+                  ? (profilePhotoURL ?? firebaseUser?.photoURL ?? activeProfile?.photoURL ?? undefined)
+                  : (activeProfile?.photoURL || undefined)
+              }
               displayName={activeProfile?.displayName ?? activePlayer.name}
               size={38}
             />

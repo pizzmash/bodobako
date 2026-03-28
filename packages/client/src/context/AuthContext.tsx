@@ -1,12 +1,12 @@
 import type { PlayerCardStyle } from "@bodobako/shared";
 import { signOut as firebaseSignOut, onIdTokenChanged, signInWithPopup, type User } from "firebase/auth";
 import {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useState,
-    type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
 } from "react";
 import { auth, googleProvider } from "../lib/firebase";
 import { API_BASE } from "../lib/socket";
@@ -79,12 +79,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const existing = await res.json() as UserProfile;
             applyProfile(existing);
           } else if (res.status === 404) {
-            // 未登録 → Google 表示名をデフォルトとして登録
+            // 未登録 → Google 表示名・photoURL をデフォルトとして登録
             const defaultName = user.displayName?.slice(0, 20) ?? "ゲスト";
             const putRes = await fetch(`${API_BASE}/users/me`, {
               method: "PUT",
               headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ displayName: defaultName }),
+              body: JSON.stringify({ displayName: defaultName, photoURL: user.photoURL ?? "" }),
             });
             if (putRes.ok) applyProfile(await putRes.json() as UserProfile);
           }
