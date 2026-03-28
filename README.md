@@ -25,7 +25,8 @@ bodobako/
 │   │       ├── types/
 │   │       │   ├── game.ts       # GameDefinition インターフェース
 │   │       │   ├── room.ts       # RoomInfo, Player 型
-│   │       │   └── protocol.ts   # WebSocket メッセージ型定義
+│   │       │   ├── protocol.ts   # WebSocket メッセージ型定義
+│   │       │   └── profile.ts    # PlayerCardStyle, BgPattern 型・ラベル関数
 │   │       └── games/
 │   │           ├── index.ts      # ゲームレジストリ
 │   │           └── <game-id>/    # 各ゲームのロジック
@@ -44,16 +45,21 @@ bodobako/
 │           ├── main.tsx              # エントリーポイント
 │           ├── lib/
 │           │   ├── socket.ts         # WebSocket クライアント（再接続付き）
-│           │   └── firebase.ts       # Firebase app / auth 初期化
+│           │   ├── firebase.ts       # Firebase app / auth 初期化
+│           │   └── patternStyle.ts   # 背景パターンスタイル共通関数
 │           ├── context/
-│           │   ├── AuthContext.tsx   # Firebase 認証状態・アプリ表示名管理
+│           │   ├── AuthContext.tsx   # Firebase 認証状態・cardStyle・表示名管理
 │           │   └── RoomContext.tsx   # WS 接続 & 状態管理 & navigate 統合
+│           ├── hooks/
+│           │   └── useResolvedPlayerColors.ts  # ユーザー設定カラー優先解決フック
 │           ├── components/
 |           │   ├── Lobby.tsx         # ロビー（ゲーム選択・ルーム作成/参加）
 |           │   ├── Room.tsx          # 待機画面（プレイヤー一覧・開始ボタン）
 |           │   ├── RoomPage.tsx      # /room/:code ページ（接続・遷移制御）
 │           │   ├── GameView.tsx      # ゲームコンポーネントの振り分け
-│           │   └── Sidebar.tsx       # 認証 UI・表示名編集・フレンドコード
+│           │   ├── Sidebar.tsx       # 認証 UI・表示名編集・フレンド管理
+│           │   └── Sidebar/
+│           │       └── CardStyleSection.tsx  # カラー・背景パターン選択 UI
 │           └── games/
 │               └── <game-id>/    # 各ゲームの UI コンポーネント
 │
