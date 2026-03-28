@@ -1,8 +1,8 @@
 import type { BgPattern } from "@bodobako/shared";
 import { isSvgBgPattern } from "@bodobako/shared";
 import type { CSSProperties, ReactNode } from "react";
-import { bgPatternStyleForCard, svgPatternOverlayStyle } from "../../lib/patternStyle";
 import { PLAYER_COLORS, withAlpha } from "../../lib/color";
+import { bgPatternStyleForCard, svgPatternOverlayStyle } from "../../lib/patternStyle";
 import { Avatar } from "../ui/Avatar";
 
 export interface PlayerSlotProps {
