@@ -34,7 +34,7 @@ function PatternPreview({
         className="absolute inset-0 rounded-xl pointer-events-none"
         style={{
           backgroundImage: `url('/patterns/${meta.file}')`,
-          backgroundSize: "20px auto",
+          backgroundSize: "22px 19px",
           backgroundRepeat: "repeat",
           opacity: 0.2,
         }}
