@@ -1,6 +1,6 @@
 import type { BgPattern, PlayerCardStyle } from "@bodobako/shared";
 import { BG_PATTERNS, PRESET_ACCENT_COLORS } from "@bodobako/shared";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { withAlpha } from "../../lib/color";
 import { Avatar } from "../ui/Avatar";
 import { Spinner } from "../ui/Spinner";
@@ -140,6 +140,13 @@ export function CardStyleSection({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // currentCardStyle は非同期ロード後に null → 実値 と変わるため、
+  // prop が変化したタイミングでローカル選択状態を同期する
+  useEffect(() => {
+    setSelectedColor(currentCardStyle?.accentColor ?? null);
+    setSelectedPattern(currentCardStyle?.bgPattern ?? "none");
+  }, [currentCardStyle]);
 
   const previewColor = selectedColor ?? "#6366f1";
   const previewName = appDisplayName ?? "あなた";
