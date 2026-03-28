@@ -62,5 +62,7 @@ export type { GameDefinition, GameLogEntry, GameStatus } from "./types/game.js";
 export type {
     GameResult, WsAckError, WsAckSuccess, WsClientMessage, WsServerMessage
 } from "./types/protocol.js";
+export { BG_PATTERNS, PRESET_ACCENT_COLORS } from "./types/profile.js";
+export type { BgPattern, PlayerCardStyle } from "./types/profile.js";
 export type { Player, RoomInfo } from "./types/room.js";
 

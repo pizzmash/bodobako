@@ -1,3 +1,4 @@
+import type { PlayerCardStyle } from "@bodobako/shared";
 import { onIdTokenChanged, signInWithPopup, signOut as firebaseSignOut, type User } from "firebase/auth";
 import {
   createContext,
@@ -14,6 +15,7 @@ interface UserProfile {
   displayName: string;
   friendCode: string;
   photoURL?: string;
+  cardStyle?: PlayerCardStyle;
 }
 
 interface AuthContextValue {
@@ -27,11 +29,14 @@ interface AuthContextValue {
   /** カスタムアバター画像URL（R2にアップロード済み） */
   profilePhotoURL: string | null;
   isProfileLoading: boolean;
+  /** プレイヤーカードスタイル */
+  cardStyle: PlayerCardStyle | null;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
   updateAvatar: (file: File) => Promise<void>;
   deleteAvatar: () => Promise<void>;
+  updateCardStyle: (style: PlayerCardStyle) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>(null!);
@@ -48,11 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [friendCode, setFriendCode] = useState<string | null>(null);
   const [profilePhotoURL, setProfilePhotoURL] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [cardStyle, setCardStyle] = useState<PlayerCardStyle | null>(null);
 
   function applyProfile(profile: UserProfile) {
     setAppDisplayName(profile.displayName);
     setFriendCode(profile.friendCode || null);
     setProfilePhotoURL(profile.photoURL ? `${profile.photoURL}?v=${Date.now()}` : null);
+    setCardStyle(profile.cardStyle ?? null);
   }
 
   // Firebase トークンの自動更新に対応するため onIdTokenChanged を使う
@@ -91,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAppDisplayName(null);
         setFriendCode(null);
         setProfilePhotoURL(null);
+        setCardStyle(null);
       }
       setIsAuthLoading(false);
     });
@@ -152,6 +160,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfilePhotoURL(null);
   }, [idToken]);
 
+  const updateCardStyle = useCallback(async (style: PlayerCardStyle) => {
+    if (!idToken) throw new Error("ログインが必要です");
+    const res = await fetch(`${API_BASE}/users/me/card-style`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(style),
+    });
+    if (!res.ok) {
+      const err = await res.json() as { error: string };
+      throw new Error(err.error ?? "カードスタイルの更新に失敗しました");
+    }
+    const data = await res.json() as { cardStyle: PlayerCardStyle };
+    setCardStyle(data.cardStyle);
+  }, [idToken]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -162,11 +185,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         friendCode,
         profilePhotoURL,
         isProfileLoading,
+        cardStyle,
         signInWithGoogle,
         signOut,
         updateDisplayName,
         updateAvatar,
         deleteAvatar,
+        updateCardStyle,
       }}
     >
       {children}

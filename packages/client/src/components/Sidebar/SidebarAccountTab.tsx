@@ -5,6 +5,7 @@ import { API_BASE } from "../../lib/socket";
 import { MAX_APP_DISPLAY_NAME_LENGTH } from "../../lib/constants";
 import { Avatar } from "../ui/Avatar";
 import { Spinner } from "../ui/Spinner";
+import { CardStyleSection } from "./CardStyleSection";
 
 async function cropAndResizeAvatar(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
@@ -31,7 +32,7 @@ interface SidebarAccountTabProps {
 }
 
 export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
-  const { firebaseUser, appDisplayName, friendCode, profilePhotoURL, updateDisplayName, updateAvatar, deleteAvatar, signOut } = useAuth();
+  const { firebaseUser, appDisplayName, friendCode, profilePhotoURL, updateDisplayName, updateAvatar, deleteAvatar, signOut, cardStyle, updateCardStyle } = useAuth();
   const [nameDraft, setNameDraft] = useState(appDisplayName ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -266,6 +267,14 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
           {isSaving ? "保存中..." : "保存する"}
         </button>
       </div>
+
+      <div className="h-px bg-indigo-100/30 mx-5" />
+
+      <CardStyleSection
+        appDisplayName={appDisplayName}
+        currentCardStyle={cardStyle}
+        onSave={updateCardStyle}
+      />
 
       <div className="h-px bg-indigo-100/30 mx-5" />
 

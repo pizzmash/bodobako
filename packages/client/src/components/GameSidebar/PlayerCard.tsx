@@ -1,3 +1,4 @@
+import type { BgPattern } from "@bodobako/shared";
 import type { CSSProperties, ReactNode } from "react";
 import { Avatar } from "../ui/Avatar";
 import { PLAYER_COLORS, withAlpha } from "../../lib/color";
@@ -14,6 +15,8 @@ interface PlayerCardProps {
   colorIndex: number;
   /** ゲーム固有の色（指定時は PLAYER_COLORS[colorIndex] より優先） */
   accentColor?: string;
+  /** プレイヤーカード背景パターン */
+  bgPattern?: BgPattern;
   isMe: boolean;
   isCurrentPlayer: boolean | null;
   /** アバター画像URL（ログイン済みプレイヤー） */
@@ -27,10 +30,44 @@ interface PlayerCardProps {
   children?: ReactNode;
 }
 
+function bgPatternStyle(pattern: BgPattern | undefined, color: string): CSSProperties {
+  if (!pattern || pattern === "none") return {};
+  const c = withAlpha(color, 0.18);
+  switch (pattern) {
+    case "dots":
+      return {
+        backgroundImage: `radial-gradient(${c} 1.5px, transparent 1.5px)`,
+        backgroundSize: "12px 12px",
+      };
+    case "stripes":
+      return {
+        backgroundImage: `repeating-linear-gradient(45deg, ${c} 0, ${c} 1.5px, transparent 0, transparent 50%)`,
+        backgroundSize: "10px 10px",
+      };
+    case "grid":
+      return {
+        backgroundImage: `linear-gradient(${c} 1px, transparent 1px), linear-gradient(90deg, ${c} 1px, transparent 1px)`,
+        backgroundSize: "12px 12px",
+      };
+    case "crosshatch":
+      return {
+        backgroundImage: `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`,
+        backgroundSize: "10px 10px",
+      };
+    case "diamonds":
+      return {
+        backgroundImage: `repeating-linear-gradient(45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1px, transparent 0, transparent 50%)`,
+        backgroundSize: "14px 14px",
+        backgroundPosition: "0 0, 7px 0",
+      };
+  }
+}
+
 export function PlayerCard({
   playerName,
   colorIndex,
   accentColor: accentColorOverride,
+  bgPattern,
   isMe,
   isCurrentPlayer,
   photoURL,
@@ -48,6 +85,7 @@ export function PlayerCard({
     boxShadow: isCurrent
       ? `0 0 0 1.5px ${withAlpha(accentColor, 0.5)}, 0 3px 10px ${withAlpha(accentColor, 0.25)}`
       : "0 1px 4px rgba(0,0,0,0.07)",
+    ...bgPatternStyle(bgPattern, accentColor),
     ...(isCurrent
       ? {
           animation: "player-card-glow 2s ease-in-out infinite",

@@ -33,7 +33,7 @@ export function GameSidebarContent({
   renderLogItemExtra,
 }: GameSidebarContentProps) {
   const { room, playerId, resultPlayers } = useRoom();
-  const { firebaseUser, idToken } = useAuth();
+  const { firebaseUser, idToken, cardStyle: myCardStyle } = useAuth();
   const isMobile = useIsMobile();
 
   const [activePopoverPlayerId, setActivePopoverPlayerId] = useState<string | null>(null);
@@ -187,7 +187,10 @@ export function GameSidebarContent({
               currentTurnPlayerId === null ? null : player.id === currentTurnPlayerId;
             const uid = player.userId;
             const profile = uid ? profilesByUid[uid] : null;
-            const accentColorOverride = playerColorMap?.[player.id];
+            // ゲーム固有カラー > ユーザー設定カラー > デフォルト（PLAYER_COLORS）の順で優先
+            const playerCardStyle = isMe ? myCardStyle : (profile?.cardStyle ?? null);
+            const accentColorOverride = playerColorMap?.[player.id] ?? playerCardStyle?.accentColor;
+            const bgPattern = playerCardStyle?.bgPattern;
             // 自分はFirebase Authのphoto（常に最新）→ プロフィールAPI の順で使用
             const photoURL = isMe
               ? (firebaseUser?.photoURL ?? profile?.photoURL ?? undefined)
@@ -202,6 +205,7 @@ export function GameSidebarContent({
                 playerName={player.name}
                 colorIndex={index}
                 accentColor={accentColorOverride}
+                bgPattern={bgPattern}
                 isMe={isMe}
                 isCurrentPlayer={isCurrentPlayer}
                 photoURL={photoURL}
@@ -224,7 +228,12 @@ export function GameSidebarContent({
 
       {/* ゲームログ */}
       <div className="flex-1 overflow-y-auto">
-        <LogPanel logs={logEntries} players={room.players} playerColorMap={playerColorMap} renderLogItemExtra={renderLogItemExtra} />
+        <LogPanel
+          logs={logEntries}
+          players={room.players}
+          playerColorMap={playerColorMap}
+          renderLogItemExtra={renderLogItemExtra}
+        />
       </div>
 
       {/* 参加者ポップオーバー */}
