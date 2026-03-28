@@ -81,7 +81,7 @@ export function PlayerCard({
 
   const cardStyle: CSSProperties = {
     borderLeft: `4px solid ${accentColor}`,
-    background: withAlpha(accentColor, 0.04),
+    backgroundColor: withAlpha(accentColor, 0.04),
     boxShadow: isCurrent
       ? `0 0 0 1.5px ${withAlpha(accentColor, 0.5)}, 0 3px 10px ${withAlpha(accentColor, 0.25)}`
       : "0 1px 4px rgba(0,0,0,0.07)",
