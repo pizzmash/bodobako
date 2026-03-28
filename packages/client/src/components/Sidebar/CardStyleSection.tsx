@@ -1,5 +1,5 @@
 import type { BgPattern, PlayerCardStyle } from "@bodobako/shared";
-import { BG_PATTERNS, PRESET_ACCENT_COLORS } from "@bodobako/shared";
+import { BG_PATTERNS, BG_SVG_PATTERN_META, PRESET_ACCENT_COLORS, isSvgBgPattern } from "@bodobako/shared";
 import { MoreHorizontal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { withAlpha } from "../../lib/color";
@@ -25,6 +25,22 @@ function PatternPreview({
   color: string;
 }) {
   if (pattern === "none") return null;
+
+  // SVGパターン
+  if (isSvgBgPattern(pattern)) {
+    const meta = BG_SVG_PATTERN_META[pattern];
+    return (
+      <div
+        className="absolute inset-0 rounded-xl pointer-events-none"
+        style={{
+          backgroundImage: `url('/patterns/${meta.file}')`,
+          backgroundSize: "20px auto",
+          backgroundRepeat: "repeat",
+          opacity: 0.2,
+        }}
+      />
+    );
+  }
 
   const c = withAlpha(color, 0.25);
   let backgroundImage: string;
@@ -84,7 +100,7 @@ function MiniPlayerCard({
       className="relative rounded-xl px-3 py-2 overflow-hidden"
       style={{
         borderLeft: `4px solid ${accentColor}`,
-        background: withAlpha(accentColor, 0.04),
+        backgroundColor: withAlpha(accentColor, 0.04),
         boxShadow: `0 1px 4px rgba(0,0,0,0.07)`,
       }}
     >
@@ -122,6 +138,7 @@ const PATTERN_LABELS: Record<BgPattern, string> = {
   grid: "グリッド",
   crosshatch: "クロスハッチ",
   diamonds: "ダイヤ",
+  "svg-cat": "ねこ",
 };
 
 // ----------------------------------------------------------------

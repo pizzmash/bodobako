@@ -1,4 +1,5 @@
 import type { BgPattern } from "@bodobako/shared";
+import { BG_SVG_PATTERN_META, isSvgBgPattern } from "@bodobako/shared";
 import type { CSSProperties, ReactNode } from "react";
 import { PLAYER_COLORS, withAlpha } from "../../lib/color";
 import { Avatar } from "../ui/Avatar";
@@ -32,6 +33,8 @@ interface PlayerCardProps {
 
 function bgPatternStyle(pattern: BgPattern | undefined, color: string): CSSProperties {
   if (!pattern || pattern === "none") return {};
+  // SVGパターンはオーバーレイ div で描画するためここでは何もしない
+  if (isSvgBgPattern(pattern)) return {};
   const c = withAlpha(color, 0.18);
   switch (pattern) {
     case "dots":
@@ -97,9 +100,22 @@ export function PlayerCard({
 
   return (
     <div
-      className={`rounded-xl mb-2 px-3 py-2.5 transition-[box-shadow,transform,opacity] duration-300 ease-in-out${isOnline === false ? " opacity-50" : ""}`}
+      className={`relative rounded-xl mb-2 px-3 py-2.5 overflow-hidden transition-[box-shadow,transform,opacity] duration-300 ease-in-out${isOnline === false ? " opacity-50" : ""}`}
       style={cardStyle}
     >
+      {/* SVGパターンオーバーレイ */}
+      {bgPattern && isSvgBgPattern(bgPattern) && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url('/patterns/${BG_SVG_PATTERN_META[bgPattern].file}')`,
+            backgroundSize: "48px auto",
+            backgroundRepeat: "repeat",
+            opacity: 0.18,
+          }}
+          aria-hidden="true"
+        />
+      )}
       {/* 名前行 */}
       <div className="flex items-center gap-2">
         {/* アバター（クリック可能） */}

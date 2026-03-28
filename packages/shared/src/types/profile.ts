@@ -13,7 +13,7 @@ export const PRESET_ACCENT_COLORS = [
   "#64748b", // slate
 ] as const;
 
-export const BG_PATTERNS = [
+export const BG_CSS_PATTERNS = [
   "none",
   "dots",
   "stripes",
@@ -22,7 +22,26 @@ export const BG_PATTERNS = [
   "diamonds",
 ] as const;
 
+// SVGパターンID一覧（新しいSVGを追加するときはここに追記）
+export const BG_SVG_PATTERN_IDS = [
+  "svg-cat",
+] as const;
+
+export type BgSvgPatternId = (typeof BG_SVG_PATTERN_IDS)[number];
+
+// SVGパターンのメタデータ（ラベルとファイル名）
+export const BG_SVG_PATTERN_META: Record<BgSvgPatternId, { label: string; file: string }> = {
+  "svg-cat": { label: "ねこ", file: "svg-cat.svg" },
+};
+
+export const BG_PATTERNS = [...BG_CSS_PATTERNS, ...BG_SVG_PATTERN_IDS] as const;
+
 export type BgPattern = (typeof BG_PATTERNS)[number];
+
+/** pattern が SVG ベースのパターンかどうかを判定する型ガード */
+export function isSvgBgPattern(pattern: BgPattern): pattern is BgSvgPatternId {
+  return (BG_SVG_PATTERN_IDS as readonly string[]).includes(pattern);
+}
 
 export interface PlayerCardStyle {
   accentColor?: string;
