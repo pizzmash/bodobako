@@ -1,5 +1,5 @@
 import type { BgPattern, PlayerCardStyle } from "@bodobako/shared";
-import { BG_PATTERNS, BG_SVG_PATTERN_META, PRESET_ACCENT_COLORS, isSvgBgPattern } from "@bodobako/shared";
+import { BG_PATTERNS, BG_SVG_PATTERN_META, PRESET_ACCENT_COLORS, getSvgPatternLabel, isSvgBgPattern } from "@bodobako/shared";
 import { MoreHorizontal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { withAlpha } from "../../lib/color";
@@ -129,17 +129,21 @@ function MiniPlayerCard({
 }
 
 // ----------------------------------------------------------------
-// パターン日本語ラベル
+// パターン日本語ラベル（CSSパターンのみ手動定義。SVGは getSvgPatternLabel() で動的取得）
 // ----------------------------------------------------------------
-const PATTERN_LABELS: Record<BgPattern, string> = {
+const CSS_PATTERN_LABELS: Record<string, string> = {
   none: "なし",
   dots: "ドット",
   stripes: "ストライプ",
   grid: "グリッド",
   crosshatch: "クロスハッチ",
   diamonds: "ダイヤ",
-  "svg-cat": "ねこ",
 };
+
+function getBgPatternLabel(pattern: BgPattern): string {
+  if (isSvgBgPattern(pattern)) return getSvgPatternLabel(pattern);
+  return CSS_PATTERN_LABELS[pattern] ?? pattern;
+}
 
 // ----------------------------------------------------------------
 // 全パターンモーダル
@@ -235,7 +239,7 @@ function PatternPickerModal({
                       onSelect(pattern);
                       onClose();
                     }}
-                    aria-label={PATTERN_LABELS[pattern]}
+                    aria-label={getBgPatternLabel(pattern)}
                     aria-pressed={isSelected}
                   >
                     <PatternPreview pattern={pattern} color={color} />
@@ -254,7 +258,7 @@ function PatternPickerModal({
                       className="absolute inset-x-0 bottom-0 text-[0.62rem] font-semibold text-center pb-0.5 leading-4"
                       style={{ color: isSelected ? color : "#94a3b8" }}
                     >
-                      {PATTERN_LABELS[pattern]}
+                      {getBgPatternLabel(pattern)}
                     </span>
                   </button>
                 );
@@ -414,7 +418,7 @@ export function CardStyleSection({
                     boxShadow: isSelected ? `0 0 0 1px ${previewColor}` : undefined,
                   }}
                   onClick={() => setSelectedPattern(pattern)}
-                  aria-label={PATTERN_LABELS[pattern]}
+                  aria-label={getBgPatternLabel(pattern)}
                   aria-pressed={isSelected}
                 >
                   <PatternPreview pattern={pattern} color={previewColor} />
@@ -422,7 +426,7 @@ export function CardStyleSection({
                     className="absolute inset-x-0 bottom-0 text-[0.62rem] font-semibold text-center pb-0.5 leading-4"
                     style={{ color: isSelected ? previewColor : "#94a3b8" }}
                   >
-                    {PATTERN_LABELS[pattern]}
+                    {getBgPatternLabel(pattern)}
                   </span>
                 </button>
               );
@@ -440,7 +444,7 @@ export function CardStyleSection({
                 boxShadow: isExtendedSelected ? `0 0 0 1px ${previewColor}` : undefined,
               }}
               onClick={() => setIsModalOpen(true)}
-              aria-label={`その他のパターン${isExtendedSelected ? `（${PATTERN_LABELS[selectedPattern]}選択中）` : ""}`}
+              aria-label={`その他のパターン${isExtendedSelected ? `（${getBgPatternLabel(selectedPattern)}選択中）` : ""}`}
               aria-expanded={isModalOpen}
               aria-haspopup="dialog"
             >
