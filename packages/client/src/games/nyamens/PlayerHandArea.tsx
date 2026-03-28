@@ -50,10 +50,7 @@ export function PlayerHandArea({ state, myId, playerNames, onSelectCards, onConf
 
   const confirmReady = isDuty
     ? okamiActive
-      ? playerOrder.every((pid: string) => {
-          if (pid === myId) return mySelectedCards.length >= 1;
-          return true;
-        }) && totalSelectedCount >= playerOrder.length
+      ? mySelectedCards.length === 1 && totalSelectedCount === playerOrder.length
       : totalSelectedCount === required
     : false;
 
@@ -82,7 +79,7 @@ export function PlayerHandArea({ state, myId, playerNames, onSelectCards, onConf
               fontSize: "0.75rem",
             }}
           >
-            <PawPrint size={12} className="inline mr-1" /> オオカミ！全員最低1枚
+            <PawPrint size={12} className="inline mr-1" /> オオカミ！全員必ず1枚
           </span>
         )}
         <span style={{ color: "#94a3b8", fontSize: "0.78rem", marginLeft: "auto" }}>

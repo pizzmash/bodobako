@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkVoteResult, enterDrawPhase, processNextEvent } from "../logic.js";
+import { checkVoteResult, enterDrawPhase, enterEventTurn, processNextEvent } from "../logic.js";
 import type { NyaMensState } from "../types.js";
 
 const P1 = "p1";
@@ -210,5 +210,70 @@ describe("checkVoteResult: アサシン不在でゲーム終了 → ニャーメ
     expect(next.phase).toBe("finished");
     expect(next.result?.winner).toBe("nyamens");
     expect(next.result?.reason).toBe("no-assassin");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// enterEventTurn
+// ---------------------------------------------------------------------------
+
+describe("enterEventTurn", () => {
+  const ET_P1 = "player1";
+  const ET_P2 = "player2";
+
+  function makeETBase(overrides: Partial<NyaMensState> = {}): NyaMensState {
+    return {
+      phase: "draw-cards",
+      playerOrder: [ET_P1, ET_P2],
+      handSize: 3,
+      roles: { [ET_P1]: "nyamens", [ET_P2]: "nyamens" },
+      hands: { [ET_P1]: [1, 2, 3], [ET_P2]: [4, 5, 6] },
+      drawPile: [7, 8, 9, 10],
+      burnedCards: [],
+      track: { up: [], down: [], recycleBox: null },
+      repairDutyIndex: 0,
+      diceResult: null,
+      okamiActive: false,
+      selectedCards: {},
+      revealedCards: null,
+      eventQueue: [],
+      readyPlayers: [],
+      votes: null,
+      ...overrides,
+    };
+  }
+
+  it("eventQueue が空なら repairDutyIndex++ して dice-roll に遷移する", () => {
+    const state = makeETBase({ repairDutyIndex: 0 });
+    const next = enterEventTurn(state);
+    expect(next.phase).toBe("dice-roll");
+    expect(next.repairDutyIndex).toBe(1);
+    expect(next.eventTurnActive).toBeFalsy();
+  });
+
+  it("eventQueue があれば repairDutyIndex++ して event-shirokuma に遷移し eventTurnActive=true になる", () => {
+    const state = makeETBase({ eventQueue: ["shirokuma"], repairDutyIndex: 0 });
+    const next = enterEventTurn(state);
+    expect(next.phase).toBe("event-shirokuma");
+    expect(next.repairDutyIndex).toBe(1);
+    expect(next.eventTurnActive).toBe(true);
+  });
+
+  it("手札・山札がゼロなら finished に遷移する", () => {
+    const state = makeETBase({
+      hands: { [ET_P1]: [], [ET_P2]: [] },
+      drawPile: [],
+    });
+    const next = enterEventTurn(state);
+    expect(next.phase).toBe("finished");
+    expect(next.result?.winner).toBe("nyamens");
+    expect(next.result?.reason).toBe("repair-complete");
+  });
+
+  it("okamiActive=true かつ eventQueue 空なら card-selection に遷移する", () => {
+    const state = makeETBase({ okamiActive: true });
+    const next = enterEventTurn(state);
+    expect(next.phase).toBe("card-selection");
+    expect(next.repairDutyIndex).toBe(1);
   });
 });

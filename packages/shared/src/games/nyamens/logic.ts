@@ -94,6 +94,11 @@ export function processNextEvent(state: NyaMensState): NyaMensState {
       };
     }
 
+    // イベントターン完了 → draw-cards フェーズで補充（イベントカードが見えるよう通常経路を通す）
+    if (state.eventTurnActive) {
+      return enterDrawPhase({ ...state, eventTurnActive: false });
+    }
+
     // すべてのイベントを処理 → 当番をローテート
     const nextDutyIndex = (state.repairDutyIndex + 1) % state.playerOrder.length;
     const base: NyaMensState = {
@@ -191,9 +196,49 @@ export function enterDrawPhase(state: NyaMensState): NyaMensState {
     (pid) => (state.hands[pid] ?? []).length < state.handSize
   );
   if (needsDraw.length === 0 || state.drawPile.length === 0) {
-    return processNextEvent(state);
+    return enterEventTurn(state);
   }
   return { ...state, phase: "draw-cards", drawQueue: needsDraw, drawnCard: null, lastDrawer: undefined };
+}
+
+/**
+ * draw-cards フェーズ完了後、または補充不要時に呼ばれる。
+ * 当番をローテートし、イベントキューがあればイベント処理ターンへ、
+ * なければ通常の dice-roll（または okamiActive なら card-selection）へ遷移する。
+ */
+export function enterEventTurn(state: NyaMensState): NyaMensState {
+  const nextDutyIndex = (state.repairDutyIndex + 1) % state.playerOrder.length;
+  const base: NyaMensState = {
+    ...state,
+    repairDutyIndex: nextDutyIndex,
+    eventTurnActive: false,
+    diceResult: null,
+    selectedCards: {},
+    revealedCards: null,
+    readyPlayers: [],
+    drawQueue: [],
+    drawnCard: undefined,
+    lastDrawer: undefined,
+  };
+
+  // repair-complete チェック: 手札ゼロ + 山札ゼロ → finished
+  const totalHandCards = Object.values(base.hands).reduce((s, h) => s + h.length, 0);
+  if (totalHandCards === 0 && base.drawPile.length === 0) {
+    return {
+      ...base,
+      phase: "finished",
+      result: { winner: "nyamens", reason: "repair-complete" },
+    };
+  }
+
+  // イベントなし → 通常ターン
+  if (base.eventQueue.length === 0) {
+    if (base.okamiActive) return { ...base, phase: "card-selection" };
+    return { ...base, phase: "dice-roll" };
+  }
+
+  // イベントあり → イベント処理ターン（eventTurnActive=true を付与して processNextEvent）
+  return processNextEvent({ ...base, eventTurnActive: true });
 }
 
 export function checkVoteResult(state: NyaMensState): NyaMensState {

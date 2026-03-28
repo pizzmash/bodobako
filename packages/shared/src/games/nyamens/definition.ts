@@ -5,6 +5,7 @@ import {
   canPlaceOnUp,
   checkVoteResult,
   enterDrawPhase,
+  enterEventTurn,
   getEventCardCount,
   getHandSize,
   getRolePool,
@@ -145,7 +146,7 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
           if (playerId !== state.playerOrder[state.repairDutyIndex]) return false;
           if (state.okamiActive) {
             return state.playerOrder.every(
-              (pid) => (state.selectedCards[pid]?.length ?? 0) >= 1
+              (pid) => (state.selectedCards[pid]?.length ?? 0) === 1
             );
           }
           const total = Object.values(state.selectedCards).reduce((s, c) => s + c.length, 0);
@@ -255,13 +256,12 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
               (pid) => pid === dutyPlayer1 || (afterBurn.hands[pid] ?? []).length < afterBurn.handSize
             );
             if (needsDraw.length === 0 || afterBurn.drawPile.length === 0) {
-              return processNextEvent(afterBurn);
+              return { ...enterEventTurn(afterBurn), diceResult: 1 };
             }
             return { ...afterBurn, phase: "draw-cards", drawQueue: needsDraw, drawnCard: null, lastDrawer: undefined, diceResult: 1 };
           }
-          // diceResult: 1 をクライアントに届けるため draw-cards フェーズ時のみ保持
-          const drawResult1 = enterDrawPhase(afterBurn);
-          return drawResult1.phase === "draw-cards" ? { ...drawResult1, diceResult: 1 } : drawResult1;
+          // diceResult: 1 をクライアントに届けるため常に保持
+          return { ...enterDrawPhase(afterBurn), diceResult: 1 };
         }
 
         if (roll === 6) {
@@ -285,13 +285,12 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
               (pid) => pid === dutyPlayer || (afterRecycle.hands[pid] ?? []).length < afterRecycle.handSize
             );
             if (needsDraw.length === 0 || afterRecycle.drawPile.length === 0) {
-              return processNextEvent(afterRecycle);
+              return { ...enterEventTurn(afterRecycle), diceResult: 6 };
             }
             return { ...afterRecycle, phase: "draw-cards", drawQueue: needsDraw, drawnCard: null, lastDrawer: undefined, diceResult: 6 };
           }
-          // diceResult: 6 をクライアントに届けるため draw-cards フェーズ時のみ保持
-          const drawResult6 = enterDrawPhase(afterRecycle);
-          return drawResult6.phase === "draw-cards" ? { ...drawResult6, diceResult: 6 } : drawResult6;
+          // diceResult: 6 をクライアントに届けるため常に保持
+          return { ...enterDrawPhase(afterRecycle), diceResult: 6 };
         }
 
         // 通常ロール (2〜5)
@@ -406,12 +405,12 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
           };
         }
 
-        // 修理完了（勝利ではない）→ 手動補充フェーズへ
-        return enterDrawPhase({
-          ...state,
-          track: newTrack,
-          revealedCards: null,
-        });
+        // 修理完了（勝利ではない）
+        const nextState = { ...state, track: newTrack, revealedCards: null };
+        // イベントターン中は手札補充せず次イベントへ、通常は補充フェーズへ
+        return state.eventTurnActive
+          ? processNextEvent(nextState)
+          : enterDrawPhase(nextState);
       }
 
       case "draw-cards": {
@@ -420,7 +419,7 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
 
         // ACK待ち状態（最後のカードを引いた後、オーバーレイ閉幕まで待機） → 次フェーズへ
         if (drawQueue.length === 0) {
-          return processNextEvent({ ...state, drawQueue: [], drawnCard: undefined, lastDrawer: undefined });
+          return enterEventTurn({ ...state, drawQueue: [], drawnCard: undefined, lastDrawer: undefined });
         }
 
         const drawer = drawQueue[0]!;
@@ -430,7 +429,7 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
         if (state.drawPile.length === 0) {
           const newDrawQueue = drawQueue.slice(1);
           if (newDrawQueue.length === 0) {
-            return processNextEvent({ ...state, drawQueue: [], drawnCard: undefined, lastDrawer: undefined });
+            return enterEventTurn({ ...state, drawQueue: [], drawnCard: undefined, lastDrawer: undefined });
           }
           // drawnCard・lastDrawer をクリアしないと前回引いたイベントカードが再表示されてしまう
           return { ...state, drawQueue: newDrawQueue, drawnCard: undefined, lastDrawer: undefined };
@@ -559,34 +558,14 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
       return entries;
     }
 
-    // サイコロ
-    if (prev.diceResult == null && next.diceResult != null) {
+    // サイコロ（1/6 は補充不要時に dice-roll→dice-roll 遷移でも diceResult が保持される）
+    if (prev.phase === "dice-roll" && next.diceResult != null) {
       const pid = prev.playerOrder[prev.repairDutyIndex]!;
       let tag: string | undefined;
       let tagColor: string | undefined;
       if (next.diceResult === 1) { tag = "焼却"; tagColor = "#dc2626"; }
       if (next.diceResult === 6) { tag = "リサイクル"; tagColor = "#16a34a"; }
       entries.push({ playerId: pid, message: `「${next.diceResult}」が出ました`, tag, tagColor });
-    }
-
-    // カード配置（track変化）
-    if (prev.phase === "repair" || next.phase === "repair" ||
-        prev.phase === "event-shirokuma" || prev.phase === "event-tuning") {
-      const pid = prev.playerOrder[prev.repairDutyIndex]!;
-      // up 増加
-      if (next.track.up.length > prev.track.up.length) {
-        const card = next.track.up[next.track.up.length - 1];
-        entries.push({ playerId: pid, message: `「${card}」を上り列に配置しました` });
-      }
-      // down 増加
-      if (next.track.down.length > prev.track.down.length) {
-        const card = next.track.down[next.track.down.length - 1];
-        entries.push({ playerId: pid, message: `「${card}」を下り列に配置しました` });
-      }
-      // recycleBox 変化（nullでない新しいカード）
-      if (next.track.recycleBox !== null && next.track.recycleBox !== prev.track.recycleBox) {
-        entries.push({ playerId: pid, message: `「${next.track.recycleBox}」をリサイクルボックスに配置しました` });
-      }
     }
 
     // 焼却（burnedCards 増加）
@@ -704,6 +683,7 @@ export const nyaMensDefinition: GameDefinition<NyaMensState, NyaMensMove> = {
       drawQueue: state.drawQueue ?? [],
       drawnCard,
       lastDrawer: state.lastDrawer,
+      eventTurnActive: state.eventTurnActive ?? false,
       votes: state.votes,
       result: state.result,
       revealedRoles,
