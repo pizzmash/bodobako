@@ -32,19 +32,17 @@ interface SidebarAccountTabProps {
 }
 
 export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
-  const { firebaseUser, appDisplayName, friendCode, profilePhotoURL, updateDisplayName, updateAvatar, deleteAvatar, signOut, cardStyle, updateCardStyle } = useAuth();
+  const { firebaseUser, appDisplayName, profilePhotoURL, updateDisplayName, updateAvatar, deleteAvatar, signOut, cardStyle, updateCardStyle } = useAuth();
   const [nameDraft, setNameDraft] = useState(appDisplayName ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasCustomAvatar = profilePhotoURL !== null && profilePhotoURL.startsWith(API_BASE);
 
@@ -61,13 +59,6 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
     }
   }, [isOpen, firebaseUser]);
 
-  useEffect(
-    () => () => {
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-    },
-    [],
-  );
-
   useEffect(() => {
     if (!showMenu) return;
     const handleClick = (e: MouseEvent) => {
@@ -78,23 +69,6 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showMenu]);
-
-  const handleCopy = async () => {
-    if (!friendCode) return;
-    try {
-      await navigator.clipboard.writeText(friendCode);
-    } catch {
-      const el = document.createElement("textarea");
-      el.value = friendCode;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
-    }
-    setCopied(true);
-    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-    copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleSave = async () => {
     const trimmed = nameDraft.trim();
@@ -276,65 +250,6 @@ export function SidebarAccountTab({ isOpen }: SidebarAccountTabProps) {
         onSave={updateCardStyle}
         photoURL={profilePhotoURL ?? firebaseUser?.photoURL ?? undefined}
       />
-
-      <div className="h-px bg-indigo-100/30 mx-5" />
-
-      {friendCode && (
-        <div className="px-5 py-3.5">
-          <div className="text-[0.75rem] font-semibold text-indigo-500 uppercase tracking-[0.08em] mb-2">
-            フレンドコード
-          </div>
-          <div className="flex items-center gap-2 mt-1.5 bg-indigo-50/60 border border-indigo-200/40 rounded-xl px-3 py-2">
-            <span
-              className="flex-1 font-mono text-[1.05rem] font-bold text-indigo-600 tracking-[0.12em] select-all"
-              aria-label={`フレンドコード: ${friendCode}`}
-            >
-              {friendCode.slice(0, 4)}-{friendCode.slice(4)}
-            </span>
-            <button
-              className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md border-0 bg-transparent p-0 text-indigo-400 transition duration-150 hover:bg-indigo-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.92]"
-              onClick={() => void handleCopy()}
-              aria-label={copied ? "コピーしました" : "フレンドコードをコピー"}
-            >
-              {copied ? (
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#22C55E"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : (
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-              )}
-            </button>
-          </div>
-          {copied && (
-            <p className="text-[0.78rem] text-green-500 font-medium mt-1.5 mb-0" role="status">
-              クリップボードにコピーしました
-            </p>
-          )}
-        </div>
-      )}
 
       <div className="h-px bg-indigo-100/30 mx-5" />
 

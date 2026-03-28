@@ -32,10 +32,27 @@ interface SidebarFriendsTabProps {
 }
 
 export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabProps) {
-  const { firebaseUser, idToken } = useAuth();
+  const { firebaseUser, idToken, friendCode } = useAuth();
   const [friendsSubTab, setFriendsSubTab] = useState<"mutual" | "outgoing" | "incoming">(
     "mutual",
   );
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!friendCode) return;
+    try {
+      await navigator.clipboard.writeText(friendCode);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = friendCode;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const {
     followingLoading,
@@ -78,6 +95,45 @@ export function SidebarFriendsTab({ isActive, friendsData }: SidebarFriendsTabPr
 
   return (
     <div className="px-5 py-3.5">
+      {/* フレンドコード */}
+      {friendCode && (
+        <>
+          <div className="text-[0.75rem] font-semibold text-indigo-500 uppercase tracking-[0.08em] mb-2">
+            フレンドコード
+          </div>
+          <div className="flex items-center gap-2 mb-3 bg-indigo-50/60 border border-indigo-200/40 rounded-xl px-3 py-2">
+            <span
+              className="flex-1 font-mono text-[1.05rem] font-bold text-indigo-600 tracking-[0.12em] select-all"
+              aria-label={`フレンドコード: ${friendCode}`}
+            >
+              {friendCode.slice(0, 4)}-{friendCode.slice(4)}
+            </span>
+            <button
+              className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md border-0 bg-transparent p-0 text-indigo-400 transition duration-150 hover:bg-indigo-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 active:scale-[0.92]"
+              onClick={() => void handleCopy()}
+              aria-label={copied ? "コピーしました" : "フレンドコードをコピー"}
+            >
+              {copied ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              )}
+            </button>
+          </div>
+          {copied && (
+            <p className="text-[0.78rem] text-green-500 font-medium -mt-1.5 mb-3" role="status">
+              クリップボードにコピーしました
+            </p>
+          )}
+          <div className="h-px bg-indigo-100/30 -mx-5 mb-3" />
+        </>
+      )}
+
       {/* フレンド追加フォーム */}
       <div className="text-[0.75rem] font-semibold text-indigo-500 uppercase tracking-[0.08em] mb-2">
         フレンド申請
