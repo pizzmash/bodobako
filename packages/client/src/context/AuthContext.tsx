@@ -59,14 +59,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profilePhotoURL, setProfilePhotoURL] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [cardStyle, setCardStyle] = useState<PlayerCardStyle | null>(null);
-  const [favoriteGames, setFavoriteGames] = useState<string[]>([]);
+  const [favoriteGames, setFavoriteGames] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("favoriteGames") ?? "[]") as string[];
+    } catch {
+      return [];
+    }
+  });
 
   function applyProfile(profile: UserProfile) {
     setAppDisplayName(profile.displayName);
     setFriendCode(profile.friendCode || null);
     setProfilePhotoURL(profile.photoURL ? `${profile.photoURL}?v=${Date.now()}` : null);
     setCardStyle(profile.cardStyle ?? null);
-    setFavoriteGames(profile.favoriteGames ?? []);
+    const favs = profile.favoriteGames ?? [];
+    setFavoriteGames(favs);
+    localStorage.setItem("favoriteGames", JSON.stringify(favs));
   }
 
   // Firebase トークンの自動更新に対応するため onIdTokenChanged を使う
@@ -107,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfilePhotoURL(null);
         setCardStyle(null);
         setFavoriteGames([]);
+        localStorage.removeItem("favoriteGames");
       }
       setIsAuthLoading(false);
     });
@@ -191,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       : [...prev, gameId];
     // オプティミスティック更新
     setFavoriteGames(next);
+    localStorage.setItem("favoriteGames", JSON.stringify(next));
     try {
       const res = await fetch(`${API_BASE}/users/me/favorites`, {
         method: "PUT",
@@ -200,10 +210,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!res.ok) {
         // ロールバック
         setFavoriteGames(prev);
+        localStorage.setItem("favoriteGames", JSON.stringify(prev));
       }
     } catch {
       // ロールバック
       setFavoriteGames(prev);
+      localStorage.setItem("favoriteGames", JSON.stringify(prev));
     }
   }, [idToken, favoriteGames]);
 
