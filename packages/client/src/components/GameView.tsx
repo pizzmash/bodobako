@@ -16,6 +16,7 @@ import { useRoom } from "../context/RoomContext";
 import { getBlokusTrigonPlayerColorMap, renderBlokusTrigonLogItemExtra } from "../games/blokus-trigon/sidebarExtras";
 import { getBlokusPlayerColorMap, renderBlokusLogItemExtra } from "../games/blokus/sidebarExtras";
 import { getCiaoCiaoPlayerColorMap } from "../games/ciao-ciao/sidebarExtras";
+import { renderHyperRobotLogItemExtra } from "../games/hyper-robot/sidebarExtras";
 import type { GameLogItem } from "../hooks/useGameLog";
 import { useGameLog } from "../hooks/useGameLog";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -49,6 +50,9 @@ const BlokusTrigonBoard = lazy(() =>
 );
 const CiaoCiaoBoard = lazy(() =>
   import("../games/ciao-ciao/CiaoCiaoBoard").then((m) => ({ default: m.CiaoCiaoBoard }))
+);
+const HyperRobotBoard = lazy(() =>
+  import("../games/hyper-robot/HyperRobotBoard").then((m) => ({ default: m.HyperRobotBoard }))
 );
 
 class GameErrorBoundary extends Component<
@@ -120,6 +124,9 @@ const BlokusTrigonPlayerSlot = lazy(() =>
 const CiaoCiaoPlayerSlot = lazy(() =>
   import("../games/ciao-ciao/CiaoCiaoPlayerSlot").then((m) => ({ default: m.CiaoCiaoPlayerSlot }))
 );
+const HyperRobotPlayerSlot = lazy(() =>
+  import("../games/hyper-robot/HyperRobotPlayerSlot").then((m) => ({ default: m.HyperRobotPlayerSlot }))
+);
 
 /** ゲーム固有のサイドバー拡張 */
 interface SidebarExtras {
@@ -139,6 +146,9 @@ const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
   "ciao-ciao": {
     getPlayerColorMap: (s) => getCiaoCiaoPlayerColorMap(s as never),
   },
+  "hyper-robot": {
+    renderLogItemExtra: renderHyperRobotLogItemExtra,
+  },
 };
 
 /** ゲームID → PlayerSlot コンポーネントのマップ */
@@ -151,6 +161,7 @@ const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
   nyamens: NyaMensPlayerSlot as ComponentType<PlayerSlotProps>,
   "blokus-trigon": BlokusTrigonPlayerSlot as ComponentType<PlayerSlotProps>,
   "ciao-ciao": CiaoCiaoPlayerSlot as ComponentType<PlayerSlotProps>,
+  "hyper-robot": HyperRobotPlayerSlot as ComponentType<PlayerSlotProps>,
 };
 
 export function GameView() {
@@ -221,6 +232,9 @@ export function GameView() {
       break;
     case "ciao-ciao":
       board = <CiaoCiaoBoard />;
+      break;
+    case "hyper-robot":
+      board = <HyperRobotBoard />;
       break;
     default:
       board = <div>未対応のゲーム: {room.gameId}</div>;

@@ -1,5 +1,7 @@
 import type { GameDefinition } from "../types/game.js";
 import { aiuebattleDefinition } from "./aiuebattle/index.js";
+import { hyperRobotDefinition } from "./hyper-robot/definition.js";
+import type { HyperRobotMove, HyperRobotState } from "./hyper-robot/types.js";
 import type { AiueBattleMove, AiueBattleState } from "./aiuebattle/types.js";
 import { blokusTrigonDefinition } from "./blokus-trigon/index.js";
 import type { BlokusTrigonMove, BlokusTrigonState } from "./blokus-trigon/types.js";
@@ -17,7 +19,7 @@ import { sonicRestaurantGame } from "./sonic-restaurant/index.js";
 import type { SonicRestaurantMove, SonicRestaurantState } from "./sonic-restaurant/types.js";
 
 /** 登録済みゲームIDのリテラル型 */
-export type GameId = "aiuebattle" | "ciao-ciao" | "citychase" | "sonic-restaurant" | "blokus" | "blokus-trigon" | "nana" | "nyamens";
+export type GameId = "aiuebattle" | "ciao-ciao" | "citychase" | "sonic-restaurant" | "blokus" | "blokus-trigon" | "nana" | "nyamens" | "hyper-robot";
 
 /** ゲームID → 具体的な GameDefinition 型のマッピング */
 export interface GameDefinitionMap {
@@ -29,6 +31,7 @@ export interface GameDefinitionMap {
   "nana": GameDefinition<NanaState, NanaMove>;
   "nyamens": GameDefinition<NyaMensState, NyaMensMove>;
   "blokus-trigon": GameDefinition<BlokusTrigonState, BlokusTrigonMove>;
+  "hyper-robot": GameDefinition<HyperRobotState, HyperRobotMove>;
 }
 
 const registry = new Map<string, GameDefinition>();
@@ -41,6 +44,7 @@ registry.set(blokusDefinition.id, blokusDefinition);
 registry.set(blokusTrigonDefinition.id, blokusTrigonDefinition);
 registry.set(nanaDefinition.id, nanaDefinition);
 registry.set(nyaMensDefinition.id, nyaMensDefinition);
+registry.set(hyperRobotDefinition.id, hyperRobotDefinition);
 
 /**
  * 既知のゲームID（リテラル型）に対してはゲーム固有の型付き定義を返す。
