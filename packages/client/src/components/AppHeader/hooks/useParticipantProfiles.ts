@@ -1,3 +1,4 @@
+import type { PlayerCardStyle } from "@bodobako/shared";
 import { useEffect, useState } from "react";
 import { API_BASE } from "../../../lib/socket";
 
@@ -5,6 +6,7 @@ export interface UserProfile {
   uid: string;
   displayName: string;
   photoURL: string;
+  cardStyle?: PlayerCardStyle;
 }
 
 /**

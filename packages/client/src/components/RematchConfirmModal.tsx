@@ -22,7 +22,7 @@ export function RematchConfirmModal({
   onConfirm,
   onClose,
 }: RematchConfirmModalProps) {
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, profilePhotoURL, cardStyle: myCardStyle } = useAuth();
   const [profilesByUid] = useParticipantProfiles(allPlayers);
   const canStart = rematchRequests.length >= minPlayers;
 
@@ -41,20 +41,24 @@ export function RematchConfirmModal({
             <p className="text-sm text-gray-400 text-center py-2">希望者を待っています...</p>
           ) : (
             rematchRequests.map((pid) => {
+              const isMe = pid === playerId;
               const player = allPlayers.find((p) => p.id === pid);
               const colorIndex = allPlayers.findIndex((p) => p.id === pid);
               const uid = player?.userId;
               const profile = uid ? profilesByUid[uid] : null;
-              const photoURL = pid === playerId
-                ? (firebaseUser?.photoURL ?? profile?.photoURL ?? undefined)
-                : (profile?.photoURL ?? undefined);
+              const playerCardStyle = isMe ? myCardStyle : (profile?.cardStyle ?? null);
+              const photoURL = isMe
+                ? (profilePhotoURL ?? firebaseUser?.photoURL ?? profile?.photoURL ?? undefined)
+                : (profile?.photoURL || undefined);
               return (
                 <PlayerCard
                   key={pid}
                   playerId={pid}
                   playerName={player?.name ?? "不明"}
                   colorIndex={colorIndex >= 0 ? colorIndex : 0}
-                  isMe={pid === playerId}
+                  accentColor={playerCardStyle?.accentColor}
+                  bgPattern={playerCardStyle?.bgPattern}
+                  isMe={isMe}
                   isCurrentPlayer={null}
                   photoURL={photoURL}
                   avatarDisplayName={profile?.displayName ?? player?.name ?? undefined}

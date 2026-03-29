@@ -2,21 +2,23 @@ import type { CiaoCiaoStateView } from "@bodobako/shared";
 import { Star } from "lucide-react";
 import type { PlayerSlotProps } from "../../components/GameSidebar/PlayerCard";
 import { useRoom } from "../../context/RoomContext";
+import { useResolvedPlayerColors } from "../../hooks/useResolvedPlayerColors";
 import { CC, CIAO_PLAYER_COLORS } from "./constants";
 import { Meeple } from "./Meeple";
 
 export function CiaoCiaoPlayerSlot({ playerId }: PlayerSlotProps) {
-  const { gameState } = useRoom();
+  const { gameState, room } = useRoom();
   const state = gameState?.gameId === "ciao-ciao"
     ? (gameState.state as CiaoCiaoStateView)
     : null;
+  const resolveColor = useResolvedPlayerColors(room?.players ?? null);
   if (!state) return null;
 
   const goals = state.goals[playerId] ?? 0;
   const stock = state.stocks[playerId] ?? 0;
   const bridgePos = state.bridgePositions[playerId];
   const colorIdx = state.playerIds.indexOf(playerId);
-  const color = CIAO_PLAYER_COLORS[colorIdx]?.meeple ?? "#888";
+  const color = resolveColor(playerId, CIAO_PLAYER_COLORS[colorIdx]?.meeple ?? "#888");
 
   // 着順ポイント合計（1着=1pt, 2着=2pt, 3着=3pt）
   const slotPt = state.goalSlots

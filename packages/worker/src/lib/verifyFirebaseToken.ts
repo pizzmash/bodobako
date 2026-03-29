@@ -7,6 +7,8 @@ export interface VerifiedFirebaseToken {
   uid: string;
   email?: string;
   name?: string;
+  /** Google アカウントのプロフィール画像URL（Firebase JWT の picture クレーム） */
+  picture?: string;
 }
 
 const jwks = createRemoteJWKSet(new URL(FIREBASE_JWKS_URL));
@@ -29,6 +31,7 @@ export async function verifyFirebaseToken(
       uid,
       email: typeof payload.email === "string" ? payload.email : undefined,
       name: typeof payload.name === "string" ? payload.name : undefined,
+      picture: typeof payload.picture === "string" ? payload.picture : undefined,
     };
   } catch {
     return null;

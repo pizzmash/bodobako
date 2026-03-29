@@ -1,9 +1,10 @@
-import { getGameDefinition } from "@bodobako/shared";
+import type { PlayerCardStyle } from "@bodobako/shared";
+import { BG_PATTERNS, PRESET_ACCENT_COLORS, getAllGames, getGameDefinition } from "@bodobako/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { RoomSession } from "./RoomSession.js";
-import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
 import * as r2UserStorage from "./lib/r2UserStorage.js";
+import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
 
 export { RoomSession };
 
@@ -173,7 +174,8 @@ app.put("/users/me/avatar", async (c) => {
   await r2UserStorage.putAvatar(bucket, verified.uid, data, blob.type);
 
   const origin = new URL(c.req.url).origin;
-  const avatarUrl = `${origin}/users/${verified.uid}/avatar`;
+  // ?v= タイムスタンプを付与してブラウザキャッシュをバスト（他プレイヤーにも最新画像が届く）
+  const avatarUrl = `${origin}/users/${verified.uid}/avatar?v=${Date.now()}`;
   await r2UserStorage.updateProfilePhotoURL(bucket, verified.uid, avatarUrl);
 
   return c.json({ photoURL: avatarUrl });
@@ -188,9 +190,12 @@ app.delete("/users/me/avatar", async (c) => {
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
   const bucket = c.env.USER_DATA;
+  // アバター削除後は Google プロフィール画像（JWT の picture クレーム）をフォールバックとして保存
+  // これにより他プレイヤーにもデフォルト（Google）画像が表示される
+  const fallbackPhotoURL = verified.picture ?? "";
   await Promise.all([
     bucket.delete(`users/${verified.uid}/avatar`),
-    r2UserStorage.updateProfileFields(bucket, verified.uid, { photoURL: "" }),
+    r2UserStorage.updateProfileFields(bucket, verified.uid, { photoURL: fallbackPhotoURL }),
   ]);
 
   return c.json({ ok: true });
@@ -235,9 +240,12 @@ app.put("/users/me", async (c) => {
   const existingProfile = await r2UserStorage.getProfile(c.env.USER_DATA, verified.uid);
   let profile;
   if (existingProfile) {
-    profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, {
-      displayName: displayName.trim(),
-    });
+    // displayName は常に更新。photoURL はまだ未設定（""）の場合のみ上書き（カスタムアバターを保護）
+    const fields: { displayName: string; photoURL?: string } = { displayName: displayName.trim() };
+    if (!existingProfile.photoURL && typeof photoURL === "string" && photoURL) {
+      fields.photoURL = photoURL;
+    }
+    profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, fields);
   } else {
     profile = await r2UserStorage.upsertProfile(
       c.env.USER_DATA,
@@ -247,6 +255,78 @@ app.put("/users/me", async (c) => {
     );
   }
   return c.json(profile);
+});
+
+// カードスタイル更新
+app.put("/users/me/card-style", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
+  }
+
+  const { accentColor, bgPattern } = body as Record<string, unknown>;
+
+  if (accentColor !== undefined) {
+    if (typeof accentColor !== "string" || !(PRESET_ACCENT_COLORS as readonly string[]).includes(accentColor)) {
+      return c.json({ error: "accentColor が不正な値です" }, 400);
+    }
+  }
+  if (bgPattern !== undefined) {
+    if (typeof bgPattern !== "string" || !(BG_PATTERNS as readonly string[]).includes(bgPattern)) {
+      return c.json({ error: "bgPattern が不正な値です" }, 400);
+    }
+  }
+
+  const cardStyle: PlayerCardStyle = {
+    ...(accentColor !== undefined ? { accentColor } : {}),
+    ...(bgPattern !== undefined ? { bgPattern: bgPattern as import("@bodobako/shared").BgPattern } : {}),
+  };
+
+  const profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, { cardStyle });
+  if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  return c.json({ cardStyle: profile.cardStyle });
+});
+
+// お気に入りゲーム更新
+app.put("/users/me/favorites", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
+  }
+
+  const { gameIds } = body as Record<string, unknown>;
+  if (!Array.isArray(gameIds) || !gameIds.every((id) => typeof id === "string")) {
+    return c.json({ error: "gameIds は文字列の配列で指定してください" }, 400);
+  }
+
+  const validIds = new Set(getAllGames().map((g) => g.id));
+  if (gameIds.some((id) => !validIds.has(id))) {
+    return c.json({ error: "無効なゲームIDが含まれています" }, 400);
+  }
+
+  const profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, {
+    favoriteGames: gameIds as string[],
+  });
+  if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  return c.json({ favoriteGames: profile.favoriteGames ?? [] });
 });
 
 // ---------------------------------------------------------------------------
@@ -260,7 +340,7 @@ app.get("/users/:uid/profile", async (c) => {
 
   const profile = await r2UserStorage.getProfile(c.env.USER_DATA, uid);
   if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
-  return c.json({ uid: profile.uid, displayName: profile.displayName, photoURL: profile.photoURL });
+  return c.json({ uid: profile.uid, displayName: profile.displayName, photoURL: profile.photoURL, cardStyle: profile.cardStyle });
 });
 
 // フレンドコードでユーザー検索

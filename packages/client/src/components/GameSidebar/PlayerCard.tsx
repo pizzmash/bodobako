@@ -1,6 +1,9 @@
+import type { BgPattern } from "@bodobako/shared";
+import { isSvgBgPattern } from "@bodobako/shared";
 import type { CSSProperties, ReactNode } from "react";
-import { Avatar } from "../ui/Avatar";
 import { PLAYER_COLORS, withAlpha } from "../../lib/color";
+import { bgPatternStyleForCard, svgPatternOverlayStyle } from "../../lib/patternStyle";
+import { Avatar } from "../ui/Avatar";
 
 export interface PlayerSlotProps {
   playerId: string;
@@ -14,6 +17,8 @@ interface PlayerCardProps {
   colorIndex: number;
   /** ゲーム固有の色（指定時は PLAYER_COLORS[colorIndex] より優先） */
   accentColor?: string;
+  /** プレイヤーカード背景パターン */
+  bgPattern?: BgPattern;
   isMe: boolean;
   isCurrentPlayer: boolean | null;
   /** アバター画像URL（ログイン済みプレイヤー） */
@@ -27,10 +32,15 @@ interface PlayerCardProps {
   children?: ReactNode;
 }
 
+function bgPatternStyle(pattern: BgPattern | undefined, color: string): CSSProperties {
+  return bgPatternStyleForCard(pattern, color);
+}
+
 export function PlayerCard({
   playerName,
   colorIndex,
   accentColor: accentColorOverride,
+  bgPattern,
   isMe,
   isCurrentPlayer,
   photoURL,
@@ -44,31 +54,39 @@ export function PlayerCard({
 
   const cardStyle: CSSProperties = {
     borderLeft: `4px solid ${accentColor}`,
-    background: withAlpha(accentColor, 0.04),
+    backgroundColor: withAlpha(accentColor, 0.04),
     boxShadow: isCurrent
       ? `0 0 0 1.5px ${withAlpha(accentColor, 0.5)}, 0 3px 10px ${withAlpha(accentColor, 0.25)}`
       : "0 1px 4px rgba(0,0,0,0.07)",
+    ...bgPatternStyle(bgPattern, accentColor),
     ...(isCurrent
-      ? {
+      ? ({
           animation: "player-card-glow 2s ease-in-out infinite",
           "--card-glow-ring": withAlpha(accentColor, 0.5),
           "--card-glow-shadow": withAlpha(accentColor, 0.25),
-        }
+        } as CSSProperties)
       : {}),
   };
 
   return (
     <div
-      className={`rounded-xl mb-2 px-3 py-2.5 transition-[box-shadow,transform,opacity] duration-300 ease-in-out${isOnline === false ? " opacity-50" : ""}`}
+      className={`relative rounded-xl mb-2 px-3 py-2.5 overflow-hidden transition-[box-shadow,transform,opacity] duration-300 ease-in-out${isOnline === false ? " opacity-50" : ""}`}
       style={cardStyle}
     >
+      {/* SVGパターンオーバーレイ */}
+      {bgPattern && isSvgBgPattern(bgPattern) && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={svgPatternOverlayStyle(bgPattern) ?? undefined}
+          aria-hidden="true"
+        />
+      )}
       {/* 名前行 */}
-      <div className="flex items-center gap-2">
+      <div className="relative flex items-center gap-2">
         {/* アバター（クリック可能） */}
         <button
           type="button"
-          className="p-0 rounded-full border-0 bg-transparent cursor-pointer flex-shrink-0 hover:opacity-80 transition-opacity"
-          style={{ width: 32, height: 32 }}
+          className="p-0 w-8 h-8 rounded-full border-0 bg-transparent cursor-pointer flex-shrink-0 hover:opacity-80 transition-opacity"
           onClick={onAvatarClick}
           aria-label={`${playerName} の情報を表示`}
         >
@@ -108,7 +126,7 @@ export function PlayerCard({
       </div>
 
       {/* ゲーム固有コンテンツスロット */}
-      {children && <div className="mt-2">{children}</div>}
+      {children && <div className="relative mt-2">{children}</div>}
     </div>
   );
 }
