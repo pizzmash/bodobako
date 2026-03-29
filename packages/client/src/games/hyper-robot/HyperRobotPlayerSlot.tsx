@@ -3,6 +3,7 @@ import type { PlayerSlotProps } from "../../components/GameSidebar/PlayerCard";
 import { useRoom } from "../../context/RoomContext";
 import { C, FONT, TARGET_COLORS } from "./constants";
 import { useTargetIconMap } from "./hooks/useTargetIconMap";
+import { TargetChip } from "./TargetChip";
 
 export function HyperRobotPlayerSlot({ playerId }: PlayerSlotProps) {
   const { gameState } = useRoom();
@@ -17,10 +18,7 @@ export function HyperRobotPlayerSlot({ playerId }: PlayerSlotProps) {
   const winChips = state.winChips;
   const wonIds = state.wonTargets?.[playerId] ?? [];
 
-  // 宣言情報
   const myBid = state.bids.find((b) => b.playerId === playerId);
-
-  // 現在の解決者か
   const isCurrentSolver =
     state.phase === "solving" &&
     state.bids[state.currentBidIndex]?.playerId === playerId;
@@ -30,22 +28,27 @@ export function HyperRobotPlayerSlot({ playerId }: PlayerSlotProps) {
       className="flex items-center gap-2 text-xs"
       style={{ fontFamily: FONT }}
     >
-      {/* チップ数 */}
-      <div className="flex flex-col gap-0.5">
+      {/* チップカウンター */}
+      <div className="flex flex-col gap-1">
         <div
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded font-bold"
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
           style={{
-            background: chips > 0 ? `${C.primary}22` : "transparent",
-            color: chips > 0 ? C.secondary : C.muted,
-            border: `1px solid ${chips > 0 ? C.cardBorder : "transparent"}`,
+            background: chips > 0 ? `${C.primary}22` : "rgba(255,255,255,0.04)",
+            border: `1px solid ${chips > 0 ? C.cardBorder : "rgba(255,255,255,0.08)"}`,
           }}
         >
-          <ChipIcon />
-          <span className="tabular-nums">{chips}</span>
+          <span
+            className="tabular-nums font-bold"
+            style={{ color: chips > 0 ? C.secondary : C.muted }}
+          >
+            {chips}
+          </span>
           <span style={{ color: C.muted, fontWeight: 400 }}>/ {winChips}</span>
         </div>
+
+        {/* 獲得チップグリッド */}
         {winChips > 0 && (
-          <div className="flex gap-1 flex-wrap" style={{ maxWidth: 96 }}>
+          <div className="flex gap-1 flex-wrap" style={{ maxWidth: 104 }}>
             {Array.from({ length: winChips }, (_, i) => {
               const wonTargetId = wonIds[i];
               const wonTarget = wonTargetId != null
@@ -54,9 +57,9 @@ export function HyperRobotPlayerSlot({ playerId }: PlayerSlotProps) {
               const Icon = wonTarget ? iconMap.get(wonTarget.id) : null;
               const color = wonTarget ? TARGET_COLORS[wonTarget.color] : undefined;
               return Icon && color ? (
-                <Icon key={i} size={16} color={color} strokeWidth={2} />
+                <TargetChip key={i} Icon={Icon} color={color} size={17} />
               ) : (
-                <DashedCircle key={i} size={16} />
+                <CoinSlot key={i} size={17} />
               );
             })}
           </div>
@@ -89,22 +92,22 @@ export function HyperRobotPlayerSlot({ playerId }: PlayerSlotProps) {
   );
 }
 
-function ChipIcon({ size = 12, filled = true }: { size?: number; filled?: boolean }) {
+/** 空のコインスロット（凹み） */
+function CoinSlot({ size = 17 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"
-      style={{ opacity: filled ? 1 : 0.25 }}>
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-      <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.5" />
-    </svg>
-  );
-}
-
-function DashedCircle({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"
-      style={{ opacity: 0.2 }}>
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"
-        strokeDasharray="4 3" />
-    </svg>
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: "rgba(0,0,0,0.42)",
+        boxShadow: [
+          "inset 0 2px 5px rgba(0,0,0,0.72)",
+          "inset 0 0 6px rgba(0,0,0,0.4)",
+        ].join(", "),
+        border: "1px solid rgba(255,255,255,0.06)",
+        flexShrink: 0,
+      }}
+    />
   );
 }

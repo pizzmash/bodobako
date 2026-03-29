@@ -44,9 +44,9 @@ describe("createInitialState", () => {
     expect(state.chips).toEqual({ p1: 0, p2: 0, p3: 0 });
   });
 
-  it("currentTarget が設定されている", () => {
+  it("currentTarget は null（start-game 後に設定される）", () => {
     const state = createState(["p1", "p2"]);
-    expect(state.currentTarget).not.toBeNull();
+    expect(state.currentTarget).toBeNull();
   });
 
   it("ロボットが 5 体全て配置されている", () => {

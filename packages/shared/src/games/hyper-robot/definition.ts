@@ -150,9 +150,9 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
       chips[pid] = 0;
     }
 
-    const remainingTargets = shuffledTargets.slice(1);
-    const currentTarget = shuffledTargets[0] ?? null;
-    const targetRobotLeftTarget = initTargetRobotLeftTarget(currentTarget, robots);
+    const remainingTargets = shuffledTargets;
+    const currentTarget = null;
+    const targetRobotLeftTarget = false;
 
     return {
       phase: "configuring",
@@ -270,12 +270,11 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
   applyMove(state: HyperRobotState, move: HyperRobotMove, playerId: string): HyperRobotState {
     switch (move.type) {
       case "start-game": {
-        return {
+        return advanceTarget({
           ...state,
-          phase: "bidding",
           winChips: move.winChips,
-          biddingOpen: true,
-        };
+          lastFailureRobots: null,
+        });
       }
       case "bid": {
         const existingIdx = state.bids.findIndex((b) => b.playerId === playerId);
@@ -532,39 +531,63 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
     }
 
     // ロボット移動
-    if (prevState.phase === "solving" && newState.phase === "solving") {
+    if (prevState.phase === "solving") {
       const prevBid = prevState.bids[prevState.currentBidIndex];
-      const newBid = newState.bids[newState.currentBidIndex];
-      if (newBid && prevState.moveCount < newState.moveCount) {
-        // find which robot moved
+      const sameSolver = prevState.currentBidIndex === newState.currentBidIndex;
+
+      // Case A: 通常移動（solving/revealing/finished への遷移）
+      //   robots はリセットされていないので直接比較できる
+      if (sameSolver && prevBid && prevState.moveCount < newState.moveCount &&
+          (newState.phase === "solving" || newState.phase === "revealing" || newState.phase === "finished")) {
         for (const color of ["red", "yellow", "green", "blue", "silver"] as RobotColor[]) {
           const prev = prevState.robots[color];
           const next = newState.robots[color];
           if (prev.row !== next.row || prev.col !== next.col) {
-            const dirMap: Record<string, string> = {
-              up: "上", down: "下", left: "左", right: "右",
-            };
-            // direction は state から取れないのでロボット位置差から推定
             let dir = "上";
             if (next.row > prev.row) dir = "下";
             else if (next.row < prev.row) dir = "上";
             else if (next.col > prev.col) dir = "右";
             else dir = "左";
-            entries.push({
-              playerId: newBid.playerId,
-              message: `${colorName(color)} を ${dir} へ移動`,
-              metadata: { robotColor: color },
-            });
+            entries.push({ playerId: prevBid.playerId, message: `${dir} へ移動`, metadata: { robotColor: color } });
             break;
           }
         }
       }
+
+      // Case B: nextSolver が発生した最後の移動
+      //   手数上限に達した移動により nextSolver が呼ばれ robots が snapshot にリセットされた。
+      //   lastFailureRobots に移動後の位置が保存されているので、そちらと比較する。
+      //   give-up は robots を動かさないので lastFailureRobots と prevState.robots が同じ → 差分なし。
+      //
+      //   nextSolver が呼ばれたことの判定:
+      //     - !sameSolver: 次の解決者に交代 (currentBidIndex が増えた)
+      //     - newState.phase === "bidding": 全員失敗。
+      //         1回目全員失敗は currentBidIndex を 0 にリセットするため !sameSolver が false になる場合がある。
+      //         リトライ全員失敗は advanceTarget 経由で currentBidIndex が保持されるため !sameSolver が false。
+      //         どちらも phase が "bidding" になるのでこちらで捕捉する。
+      const isLastAllowedMove = prevBid != null && prevState.moveCount + 1 >= prevBid.count;
+      if (isLastAllowedMove && (!sameSolver || newState.phase === "bidding") && newState.lastFailureRobots) {
+        for (const color of ["red", "yellow", "green", "blue", "silver"] as RobotColor[]) {
+          const prev = prevState.robots[color];
+          const next = newState.lastFailureRobots[color];
+          if (prev.row !== next.row || prev.col !== next.col) {
+            let dir = "上";
+            if (next.row > prev.row) dir = "下";
+            else if (next.row < prev.row) dir = "上";
+            else if (next.col > prev.col) dir = "右";
+            else dir = "左";
+            entries.push({ playerId: prevBid.playerId, message: `${dir} へ移動`, metadata: { robotColor: color } });
+            break;
+          }
+        }
+      }
+
       // 解決者変更（nextSolver）
-      if (prevBid && newBid && prevBid.playerId !== newBid.playerId && newState.bids.length > 0) {
-        entries.push({
-          playerId: newBid.playerId,
-          message: `次の解決者: ${newBid.count} 手`,
-        });
+      if (!sameSolver && newState.phase === "solving") {
+        const newBid = newState.bids[newState.currentBidIndex];
+        if (prevBid && newBid && prevBid.playerId !== newBid.playerId) {
+          entries.push({ playerId: newBid.playerId, message: `次の解決者: ${newBid.count} 手` });
+        }
       }
     }
 

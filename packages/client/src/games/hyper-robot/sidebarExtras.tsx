@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import type { RobotColor, TargetColor } from "@bodobako/shared";
 import type { GameLogItem } from "../../hooks/useGameLog";
-import { Bot } from "lucide-react";
 import { ROBOT_COLORS, TARGET_COLORS, TARGET_ICONS } from "./constants";
+import { RobotBadge } from "./RobotBadge";
+import { TargetChip } from "./TargetChip";
 
 export function renderHyperRobotLogItemExtra(item: GameLogItem): ReactNode {
   // チップ獲得ログ: metadata.targetColor + metadata.iconIndex
@@ -12,13 +13,19 @@ export function renderHyperRobotLogItemExtra(item: GameLogItem): ReactNode {
     const icons = TARGET_ICONS[targetColor] ?? [];
     const Icon = icons[iconIndex % Math.max(1, icons.length)];
     if (Icon) {
-      return <Icon size={12} color={TARGET_COLORS[targetColor]} strokeWidth={2} aria-hidden="true" />;
+      return (
+        <TargetChip
+          Icon={Icon}
+          color={TARGET_COLORS[targetColor]}
+          size={16}
+        />
+      );
     }
   }
   // ロボット移動ログ: metadata.robotColor
   const robotColor = item.metadata?.robotColor as RobotColor | undefined;
   if (robotColor && robotColor in ROBOT_COLORS) {
-    return <Bot size={12} color={ROBOT_COLORS[robotColor]} strokeWidth={2} aria-hidden="true" />;
+    return <RobotBadge color={ROBOT_COLORS[robotColor]} size={16} />;
   }
   return null;
 }

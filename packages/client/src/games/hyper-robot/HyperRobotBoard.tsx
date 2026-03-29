@@ -1,19 +1,21 @@
-import type { HyperRobotState, HyperRobotMove, Position, RobotColor } from "@bodobako/shared";
+import type { HyperRobotState, HyperRobotMove, Position, RobotColor, TargetMark } from "@bodobako/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "../../components/ui/Avatar";
-import { Bot } from "lucide-react";
+import { useParticipantProfiles } from "../../components/AppHeader/hooks/useParticipantProfiles";
+import { RobotBadge } from "./RobotBadge";
 import { GameResultCard } from "../../components/GameResultCard";
 import { getGameDefinition } from "@bodobako/shared";
 import { useAuth } from "../../context/AuthContext";
 import { useRoom } from "../../context/RoomContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { Z } from "../../styles/tokens";
-import { BIDDING_TIME_SEC, C, FONT, ROBOT_COLORS, ROBOT_LABELS, TARGET_COLORS } from "./constants";
+import { BIDDING_TIME_SEC, C, FONT, RAINBOW_COIN_BG, ROBOT_COLORS, ROBOT_LABELS, TARGET_COLORS } from "./constants";
 import { HyperRobotGrid } from "./HyperRobotGrid";
 import { BiddingPanel } from "./BiddingPanel";
 import { SolvingPanel } from "./SolvingPanel";
 import { ConfiguringPanel } from "./ConfiguringPanel";
 import { useTargetIconMap } from "./hooks/useTargetIconMap";
+import { TargetChip } from "./TargetChip";
 
 export function HyperRobotBoard() {
   const {
@@ -49,12 +51,27 @@ export function HyperRobotBoard() {
   const popupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const revealingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 新ターゲットアナウンス
+  const [newTargetModal, setNewTargetModal] = useState<TargetMark | null>(null);
+  const newTargetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // ターゲットアイコンマップ（フックはすべて条件リターンの前に宣言）
   const targetIconMap = useTargetIconMap(state?.allTargets ?? []);
+
+  const [profilesByUid] = useParticipantProfiles(room?.players ?? null);
 
   const getName = useCallback(
     (pid: string) => room?.players.find((p) => p.id === pid)?.name ?? pid.slice(0, 8),
     [room?.players],
+  );
+
+  const getPhotoURL = useCallback(
+    (pid: string) => {
+      if (pid === playerId) return firebaseUser?.photoURL ?? undefined;
+      const userId = room?.players.find((p) => p.id === pid)?.userId;
+      return userId ? (profilesByUid[userId]?.photoURL ?? undefined) : undefined;
+    },
+    [playerId, firebaseUser?.photoURL, room?.players, profilesByUid],
   );
 
   useEffect(() => {
@@ -133,7 +150,35 @@ export function HyperRobotBoard() {
         popupTimeoutRef.current = null;
       }, 1500);
     }
+
+    // 新ターゲット検出（currentTarget.id が変化したとき）
+    if (state.currentTarget && state.phase === "bidding" &&
+        (!prev.currentTarget || prev.currentTarget.id !== state.currentTarget.id)) {
+      const t = state.currentTarget;
+      if (newTargetTimeoutRef.current) clearTimeout(newTargetTimeoutRef.current);
+      // 失敗ポップアップと重ならないよう、同時に失敗が発生した場合は遅延させる
+      const modalDelay = isLastFailure ? 1650 : 0;
+      const startModal = () => {
+        setNewTargetModal(t);
+        newTargetTimeoutRef.current = setTimeout(() => {
+          setNewTargetModal(null);
+          newTargetTimeoutRef.current = null;
+        }, 2800);
+      };
+      if (modalDelay > 0) {
+        newTargetTimeoutRef.current = setTimeout(startModal, modalDelay);
+      } else {
+        startModal();
+      }
+    }
   }, [state, getName]);
+
+  // アンマウント時に newTarget タイマーをクリア
+  useEffect(() => {
+    return () => {
+      if (newTargetTimeoutRef.current) clearTimeout(newTargetTimeoutRef.current);
+    };
+  }, []);
 
   // solving フェーズ終了 or phase 切替で選択リセット
   useEffect(() => {
@@ -186,16 +231,14 @@ export function HyperRobotBoard() {
   );
 
   // タイマー0で自動締め切り
-  // 通常: 宣言あり & 誰も確定していない → end-bidding
-  // 再宣言ラウンド: 宣言なしでも → end-bidding（→ サーバー側で advanceTarget）
+  // 宣言あり or 再宣言ラウンド → end-bidding を送信
   useEffect(() => {
     if (timeLeft !== 0 || state?.phase !== "bidding") return;
     const hasBids = state.bids.length > 0;
-    const noConfirmed = (state.confirmedBidders?.length ?? 0) === 0;
-    if ((hasBids && noConfirmed) || (!hasBids && state.isRetry)) {
+    if (hasBids || state.isRetry) {
       sendMove({ type: "end-bidding" } as HyperRobotMove);
     }
-  }, [timeLeft, state?.phase, state?.bids.length, state?.confirmedBidders?.length, state?.isRetry, sendMove]);
+  }, [timeLeft, state?.phase, state?.bids.length, state?.isRetry, sendMove]);
 
   // revealing フェーズで5秒後に自動的に次のターゲットへ
   useEffect(() => {
@@ -284,7 +327,7 @@ export function HyperRobotBoard() {
           fontFamily: FONT,
         }}
       >
-        <Bot size={16} color={rColor} strokeWidth={2} aria-label="ロボット" />
+        <RobotBadge color={rColor} size={20} />
         <span style={{ color: C.muted, fontSize: 12 }}>を</span>
         {TargetIcon && <TargetIcon size={16} color={tColor} strokeWidth={2} aria-label="目標" />}
         <span style={{ color: C.muted, fontSize: 12 }}>へ</span>
@@ -333,11 +376,23 @@ export function HyperRobotBoard() {
 
   return (
     <div
+      ref={(el) => {
+        if (el) {
+          const top = el.getBoundingClientRect().top;
+          el.style.height = `calc(100dvh - ${top}px)`;
+        }
+      }}
       className="relative overflow-hidden"
       style={{
-        background: C.bg,
+        background: [
+          "radial-gradient(ellipse at 12% 18%, rgba(99,102,241,0.28) 0%, transparent 44%)",
+          "radial-gradient(ellipse at 88% 10%, rgba(139,92,246,0.22) 0%, transparent 40%)",
+          "radial-gradient(ellipse at 90% 76%, rgba(6,182,212,0.16) 0%, transparent 46%)",
+          "radial-gradient(ellipse at 14% 84%, rgba(236,72,153,0.14) 0%, transparent 42%)",
+          "radial-gradient(ellipse at 52% 52%, rgba(30,27,75,0.5) 0%, transparent 56%)",
+          "#030712",
+        ].join(", "),
         fontFamily: FONT,
-        height: "calc(100dvh - var(--header-height, 76px))",
       }}
     >
       <style>{`
@@ -345,18 +400,14 @@ export function HyperRobotBoard() {
           from { opacity: 0; transform: scale(0.7); }
           to   { opacity: 1; transform: scale(1); }
         }
+        @keyframes hr-target-popup {
+          0%   { opacity: 0; transform: scale(0.75) translateY(16px); }
+          18%  { opacity: 1; transform: scale(1.04) translateY(-2px); }
+          32%  { transform: scale(1); }
+          78%  { opacity: 1; }
+          100% { opacity: 0; transform: scale(0.92) translateY(-8px); }
+        }
       `}</style>
-
-      {/* 背景装飾 */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          background:
-            "radial-gradient(ellipse at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 50%), " +
-            "radial-gradient(ellipse at 80% 80%, rgba(129,140,248,0.06) 0%, transparent 50%)",
-        }}
-      />
 
       {isMobile ? (
         /* モバイルレイアウト: ボード上 + パネル下 */
@@ -466,7 +517,7 @@ export function HyperRobotBoard() {
             {solveResult.playerId && (
               <Avatar
                 displayName={getName(solveResult.playerId)}
-                photoURL={solveResult.playerId === playerId ? (firebaseUser?.photoURL ?? undefined) : undefined}
+                photoURL={getPhotoURL(solveResult.playerId)}
                 size={40}
               />
             )}
@@ -483,8 +534,7 @@ export function HyperRobotBoard() {
         const RevealIcon = targetIconMap.get(t.id) ?? null;
         const tColor = TARGET_COLORS[t.color];
         const winnerName = getName(state.revealingPlayer);
-        const isMe = state.revealingPlayer === playerId;
-        const winnerPhotoURL = isMe ? (firebaseUser?.photoURL ?? undefined) : undefined;
+        const winnerPhotoURL = getPhotoURL(state.revealingPlayer);
         return (
           <div
             className="fixed inset-0 flex items-center justify-center backdrop-blur-sm"
@@ -501,19 +551,71 @@ export function HyperRobotBoard() {
                 minWidth: 260,
               }}
             >
-              {RevealIcon && (
-                <div
-                  className="flex items-center justify-center rounded-full"
-                  style={{
-                    width: 80,
-                    height: 80,
-                    background: `${tColor}22`,
-                    border: `2px solid ${tColor}66`,
-                  }}
-                >
-                  <RevealIcon size={44} color={tColor} strokeWidth={1.5} />
-                </div>
-              )}
+              {RevealIcon && (() => {
+                const isRainbow = t.color === "rainbow";
+                return (
+                  <div
+                    style={{
+                      width: 96,
+                      height: 96,
+                      borderRadius: "50%",
+                      background: isRainbow
+                        ? RAINBOW_COIN_BG
+                        : `radial-gradient(circle at 36% 30%, ${tColor}ff, ${tColor}cc 40%, ${tColor}88 64%, ${tColor}44)`,
+                      boxShadow: isRainbow
+                        ? [
+                            "0 8px 28px rgba(0,0,0,0.7)",
+                            "inset 0 4px 10px rgba(255,255,255,0.42)",
+                            "inset 0 -4px 8px rgba(0,0,0,0.26)",
+                            "0 0 40px rgba(255,255,255,0.14)",
+                          ].join(", ")
+                        : [
+                            `0 6px 24px rgba(0,0,0,0.68)`,
+                            "0 2px 6px rgba(0,0,0,0.4)",
+                            "inset 0 3px 8px rgba(255,255,255,0.28)",
+                            "inset 0 -3px 7px rgba(0,0,0,0.48)",
+                            `0 0 32px ${tColor}55`,
+                          ].join(", "),
+                      border: isRainbow
+                        ? "3px solid rgba(255,255,255,0.6)"
+                        : `3px solid ${tColor}cc`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 12,
+                        borderRadius: "50%",
+                        border: isRainbow
+                          ? "1.5px solid rgba(255,255,255,0.32)"
+                          : "1.5px solid rgba(255,255,255,0.18)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    <RevealIcon size={40} color="rgba(0,0,0,0.65)" strokeWidth={2} />
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "11%",
+                        left: "15%",
+                        width: "36%",
+                        height: "24%",
+                        borderRadius: "50%",
+                        background: isRainbow
+                          ? "rgba(255,255,255,0.5)"
+                          : "rgba(255,255,255,0.38)",
+                        transform: "rotate(-22deg)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  </div>
+                );
+              })()}
               <div className="flex flex-col items-center gap-2">
                 <Avatar displayName={winnerName} photoURL={winnerPhotoURL} size={40} />
                 <span className="text-lg font-black" style={{ color: C.text }}>
@@ -530,6 +632,49 @@ export function HyperRobotBoard() {
               >
                 次のターゲットへ
               </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 新ターゲットアナウンスモーダル */}
+      {newTargetModal && (() => {
+        const t = newTargetModal;
+        const AnnounceIcon = targetIconMap.get(t.id) ?? null;
+        const tColor = TARGET_COLORS[t.color];
+        const rColor = t.color !== "rainbow" ? ROBOT_COLORS[t.color as RobotColor] : "#818CF8";
+        return (
+          <div
+            className="fixed inset-0 flex items-center justify-center pointer-events-none"
+            style={{ zIndex: Z.overlay - 2 }}
+          >
+            <div
+              className="flex flex-col items-center gap-5 px-12 py-8 rounded-3xl"
+              style={{
+                background: C.card,
+                border: `1px solid ${C.cardBorder}`,
+                fontFamily: FONT,
+                boxShadow: [
+                  "0 16px 64px rgba(0,0,0,0.75)",
+                  `0 0 48px rgba(99,102,241,0.22)`,
+                ].join(", "),
+                animation: `hr-target-popup ${2.8}s ease-in-out forwards`,
+                minWidth: 260,
+              }}
+            >
+              <span
+                className="text-xs font-bold tracking-widest uppercase"
+                style={{ color: C.muted, letterSpacing: "0.18em" }}
+              >
+                次のターゲット
+              </span>
+              <div className="flex items-center gap-4">
+                <RobotBadge color={rColor} size={44} />
+                <span style={{ color: C.muted, fontSize: 20, fontWeight: 300 }}>→</span>
+                {AnnounceIcon && (
+                  <TargetChip Icon={AnnounceIcon} color={tColor} size={80} />
+                )}
+              </div>
             </div>
           </div>
         );

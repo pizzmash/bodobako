@@ -4,8 +4,9 @@ import {
   Sun, Zap, Lightbulb, Bell,
   Leaf, Flower2, Sprout, TreePine,
   Snowflake, Anchor, Gem, Droplet,
-  Infinity as InfinityIcon, Bot,
+  Bot,
 } from "lucide-react";
+import { RainbowVortexIcon } from "./RainbowVortexIcon";
 import type { RobotColor, TargetColor } from "@bodobako/shared";
 
 /** デザイントークン */
@@ -66,7 +67,7 @@ export const TARGET_ICONS: Record<TargetColor, LucideIcon[]> = {
   green:   [Leaf, Flower2, Sprout, TreePine],
   blue:    [Snowflake, Anchor, Gem, Droplet],
   silver:  [],
-  rainbow: [InfinityIcon],
+  rainbow: [RainbowVortexIcon as unknown as LucideIcon],
 };
 
 /** ターゲット表示色 */
@@ -80,3 +81,7 @@ export const TARGET_COLORS: Record<TargetColor, string> = {
 };
 
 export const ROBOT_ICON: LucideIcon = Bot;
+
+/** レインボーコニックグラデーション（ホログラフィックチップ用） */
+export const RAINBOW_COIN_BG =
+  "conic-gradient(from 220deg at 36% 30%, #ef4444 0deg, #f97316 51deg, #eab308 102deg, #22c55e 153deg, #3b82f6 204deg, #8b5cf6 255deg, #ec4899 306deg, #ef4444 360deg)";
