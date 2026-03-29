@@ -21,6 +21,7 @@ export interface R2UserProfile {
   friendCode: string;
   photoURL: string;
   cardStyle?: PlayerCardStyle;
+  favoriteGames?: string[];
   createdAt: number;
   updatedAt: number;
 }
@@ -191,7 +192,7 @@ export async function updateProfilePhotoURL(
 export async function updateProfileFields(
   bucket: R2Bucket,
   uid: string,
-  fields: Partial<Pick<R2UserProfile, "displayName" | "photoURL" | "cardStyle">>,
+  fields: Partial<Pick<R2UserProfile, "displayName" | "photoURL" | "cardStyle" | "favoriteGames">>,
 ): Promise<R2UserProfile | null> {
   const existing = await getProfile(bucket, uid);
   if (!existing) return null;
