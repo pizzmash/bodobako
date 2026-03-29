@@ -107,14 +107,17 @@ export function HyperRobotGrid({
           height: boardPx,
           boxSizing: "content-box",
           position: "relative",
-          background: C.bgBoard,
-          border: `2px solid ${C.wall}`,
+          background: `radial-gradient(ellipse at 50% 50%, #1e2358 0%, #181c3e 28%, #131630 56%, #0e1022 100%)`,
+          border: `2px solid rgba(148,160,255,0.75)`,
           borderRadius: 4,
           flexShrink: 0,
           boxShadow: [
-            "0 0 40px rgba(99,102,241,0.18)",
-            "0 8px 40px rgba(0,0,0,0.65)",
-            "inset 0 1px 2px rgba(255,255,255,0.04)",
+            "0 0 8px 3px rgba(148,160,255,0.70)",
+            "0 0 22px 6px rgba(99,102,241,0.55)",
+            "0 0 70px rgba(99,102,241,0.32)",
+            "0 0 140px rgba(99,102,241,0.15)",
+            "0 14px 55px rgba(0,0,0,0.88)",
+            "inset 0 0 110px rgba(99,102,241,0.08)",
           ].join(", "),
           overflow: "visible",
         }}
@@ -143,8 +146,10 @@ export function HyperRobotGrid({
                   background: isCenter
                     ? "transparent"
                     : isCurrentTarget
-                    ? `rgba(251,191,36,0.11)`
-                    : isOdd ? C.bgCellAlt : C.bgCell,
+                    ? `radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.24) 0%, rgba(251,191,36,0.09) 55%, transparent 100%)`
+                    : isOdd
+                    ? "rgba(28,33,72,0.92)"
+                    : "rgba(20,24,56,0.92)",
                   boxSizing: "border-box",
                 }}
               >
@@ -158,9 +163,13 @@ export function HyperRobotGrid({
                       alignItems: "center",
                       justifyContent: "center",
                       animation: isCurrentTarget ? "hr-target-pulse 1.4s ease-in-out infinite" : undefined,
-                      opacity: isCurrentTarget ? 1 : 0.42,
+                      opacity: isCurrentTarget ? 1 : 0.72,
                       pointerEvents: "none",
                       zIndex: 1,
+                      filter: isCurrentTarget
+                        ? `drop-shadow(0 0 5px ${targetColor}) drop-shadow(0 0 12px ${targetColor}bb)`
+                        : `drop-shadow(0 0 4px ${targetColor}cc) drop-shadow(0 0 9px ${targetColor}88)`,
+                      strokeWidth: isCurrentTarget ? 2.2 : 1.8,
                     }}
                   >
                     <TargetIcon
@@ -176,12 +185,21 @@ export function HyperRobotGrid({
                   <div
                     style={{
                       position: "absolute",
-                      right: -Math.floor(wallThick / 2),
+                      right: -Math.floor(wallThick / 2) - 1,
                       top: -Math.floor(wallThick / 2),
-                      width: wallThick,
+                      width: wallThick + 2,
                       height: cellSize + wallThick,
-                      background: C.wall,
-                      boxShadow: `0 0 5px ${C.wallGlow}`,
+                      background: `linear-gradient(90deg,
+                        rgba(99,102,241,0) 0%,
+                        rgba(148,160,255,0.72) 28%,
+                        rgba(218,224,255,0.98) 50%,
+                        rgba(148,160,255,0.72) 72%,
+                        rgba(99,102,241,0) 100%)`,
+                      boxShadow: [
+                        `-4px 0 8px rgba(99,102,241,0.40)`,
+                        `4px 0 8px rgba(99,102,241,0.40)`,
+                        `0 0 14px rgba(129,140,248,0.55)`,
+                      ].join(", "),
                       zIndex: 4,
                     }}
                   />
@@ -192,31 +210,57 @@ export function HyperRobotGrid({
                   <div
                     style={{
                       position: "absolute",
-                      bottom: -Math.floor(wallThick / 2),
+                      bottom: -Math.floor(wallThick / 2) - 1,
                       left: -Math.floor(wallThick / 2),
                       width: cellSize + wallThick,
-                      height: wallThick,
-                      background: C.wall,
-                      boxShadow: `0 0 5px ${C.wallGlow}`,
+                      height: wallThick + 2,
+                      background: `linear-gradient(180deg,
+                        rgba(99,102,241,0) 0%,
+                        rgba(148,160,255,0.72) 28%,
+                        rgba(218,224,255,0.98) 50%,
+                        rgba(148,160,255,0.72) 72%,
+                        rgba(99,102,241,0) 100%)`,
+                      boxShadow: [
+                        `0 -4px 8px rgba(99,102,241,0.40)`,
+                        `0 4px 8px rgba(99,102,241,0.40)`,
+                        `0 0 14px rgba(129,140,248,0.55)`,
+                      ].join(", "),
                       zIndex: 4,
                     }}
                   />
                 )}
 
-                {/* グリッドライン */}
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRight: col < BOARD_SIZE - 1 ? `1px solid ${C.gridLine}` : undefined,
-                    borderBottom: row < BOARD_SIZE - 1 ? `1px solid ${C.gridLine}` : undefined,
-                    pointerEvents: "none",
-                  }}
-                />
+
               </div>
             );
           })
         )}
+
+        {/* エネルギーグリッドオーバーレイ */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: [
+              `linear-gradient(rgba(60,72,168,0.40) 1px, transparent 1px)`,
+              `linear-gradient(90deg, rgba(60,72,168,0.40) 1px, transparent 1px)`,
+            ].join(", "),
+            backgroundSize: `${cellSize}px ${cellSize}px`,
+            pointerEvents: "none",
+            zIndex: 2,
+          }}
+        />
+
+        {/* 中央コアグロー */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `radial-gradient(ellipse at 50% 50%, rgba(99,102,241,0.14) 0%, rgba(99,102,241,0.06) 38%, transparent 62%)`,
+            pointerEvents: "none",
+            zIndex: 3,
+          }}
+        />
 
         {/* 中央チップトレイ */}
         {(() => {
@@ -437,11 +481,22 @@ export function HyperRobotGrid({
                   "--robot-glow": `${robotColorHex}90`,
                 }}
               >
-                <Bot
-                  size={Math.max(7, Math.round(cellSize * 0.5))}
-                  color={robotColorHex}
-                  strokeWidth={isAtTarget ? 2.2 : 1.8}
-                />
+                <div
+                  style={{
+                    display: "flex",
+                    filter: isAtTarget
+                      ? `drop-shadow(0 0 6px ${robotColorHex}) drop-shadow(0 0 14px ${robotColorHex}bb)`
+                      : isSelected
+                      ? `drop-shadow(0 0 5px ${robotColorHex}dd) drop-shadow(0 0 10px ${robotColorHex}88)`
+                      : `drop-shadow(0 0 4px ${robotColorHex}99)`,
+                  }}
+                >
+                  <Bot
+                    size={Math.max(7, Math.round(cellSize * 0.5))}
+                    color={robotColorHex}
+                    strokeWidth={isAtTarget ? 2.2 : 1.8}
+                  />
+                </div>
                 {/* 選択リング */}
                 {isSelected && (
                   <div
