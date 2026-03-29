@@ -1,5 +1,6 @@
 import { getAllGames } from "@bodobako/shared";
-import { useMemo, useState } from "react";
+import { Star } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import { ROOM_CODE_LENGTH } from "../lib/constants";
@@ -12,7 +13,7 @@ const GAMES_PER_PAGE = 6;
 
 export function Lobby() {
   const { playerName, createRoom, joinRoom, errorMsg, clearError } = useRoom();
-  const { idToken } = useAuth();
+  const { idToken, firebaseUser, favoriteGames, toggleFavorite } = useAuth();
   const [roomCode, setRoomCode] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,12 +24,18 @@ export function Lobby() {
 
   const filteredGames = useMemo(
     () =>
-      games.filter((g) => {
-        if (!searchQuery.trim()) return true;
-        const q = searchQuery.toLowerCase();
-        return g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q);
-      }),
-    [searchQuery],
+      games
+        .filter((g) => {
+          if (!searchQuery.trim()) return true;
+          const q = searchQuery.toLowerCase();
+          return g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q);
+        })
+        .sort((a, b) => {
+          const aFav = favoriteGames.includes(a.id) ? 0 : 1;
+          const bFav = favoriteGames.includes(b.id) ? 0 : 1;
+          return aFav - bFav;
+        }),
+    [searchQuery, favoriteGames],
   );
 
   const totalPages = Math.max(1, Math.ceil(filteredGames.length / GAMES_PER_PAGE));
@@ -36,6 +43,11 @@ export function Lobby() {
     () => filteredGames.slice((currentPage - 1) * GAMES_PER_PAGE, currentPage * GAMES_PER_PAGE),
     [filteredGames, currentPage],
   );
+
+  // お気に入り変更時にページ1へリセット
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [favoriteGames]);
 
   const handleCreate = (gameId: string) => {
     createRoom(playerName, gameId);
@@ -164,6 +176,26 @@ export function Lobby() {
               className="relative flex w-[360px] max-w-full cursor-pointer flex-col gap-3.5 overflow-hidden rounded-[20px] border-2 border-indigo-200/20 bg-white/80 p-6 shadow-[0_8px_24px_rgba(99,102,241,0.12),0_0_0_1px_rgba(255,255,255,0.5)_inset] backdrop-blur-xl animate-fade-in-up transition duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-indigo-500/40 hover:bg-white/95 hover:shadow-[0_20px_40px_rgba(99,102,241,0.25),0_0_0_1px_rgba(129,140,248,0.3)] focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-indigo-500"
               style={{ animationDelay: `${i * 0.06}s` }}
             >
+              {/* お気に入りボタン（ログイン中のみ表示） */}
+              {firebaseUser && (
+                <button
+                  className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg transition duration-150 hover:bg-yellow-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-400"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void toggleFavorite(g.id);
+                  }}
+                  aria-label={`${g.name}をお気に入り${favoriteGames.includes(g.id) ? "から削除" : "に追加"}`}
+                  aria-pressed={favoriteGames.includes(g.id)}
+                >
+                  <Star
+                    size={18}
+                    fill={favoriteGames.includes(g.id) ? "#facc15" : "none"}
+                    stroke={favoriteGames.includes(g.id) ? "#eab308" : "#c7d2fe"}
+                    strokeWidth={2}
+                    className="transition duration-150"
+                  />
+                </button>
+              )}
               <div className="flex items-center gap-3.5">
                 <GameIdenticon gameId={g.id} />
                 <div className="flex flex-col gap-0.5">

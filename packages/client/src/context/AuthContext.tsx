@@ -16,6 +16,7 @@ interface UserProfile {
   friendCode: string;
   photoURL?: string;
   cardStyle?: PlayerCardStyle;
+  favoriteGames?: string[];
 }
 
 interface AuthContextValue {
@@ -31,6 +32,10 @@ interface AuthContextValue {
   isProfileLoading: boolean;
   /** プレイヤーカードスタイル */
   cardStyle: PlayerCardStyle | null;
+  /** お気に入りゲームIDリスト */
+  favoriteGames: string[];
+  /** ゲームのお気に入りをトグル（ログイン必須） */
+  toggleFavorite: (gameId: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
@@ -54,12 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profilePhotoURL, setProfilePhotoURL] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [cardStyle, setCardStyle] = useState<PlayerCardStyle | null>(null);
+  const [favoriteGames, setFavoriteGames] = useState<string[]>([]);
 
   function applyProfile(profile: UserProfile) {
     setAppDisplayName(profile.displayName);
     setFriendCode(profile.friendCode || null);
     setProfilePhotoURL(profile.photoURL ? `${profile.photoURL}?v=${Date.now()}` : null);
     setCardStyle(profile.cardStyle ?? null);
+    setFavoriteGames(profile.favoriteGames ?? []);
   }
 
   // Firebase トークンの自動更新に対応するため onIdTokenChanged を使う
@@ -99,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setFriendCode(null);
         setProfilePhotoURL(null);
         setCardStyle(null);
+        setFavoriteGames([]);
       }
       setIsAuthLoading(false);
     });
@@ -175,6 +183,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCardStyle(data.cardStyle);
   }, [idToken]);
 
+  const toggleFavorite = useCallback(async (gameId: string) => {
+    if (!idToken) return;
+    const prev = favoriteGames;
+    const next = prev.includes(gameId)
+      ? prev.filter((id) => id !== gameId)
+      : [...prev, gameId];
+    // オプティミスティック更新
+    setFavoriteGames(next);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/favorites`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ gameIds: next }),
+      });
+      if (!res.ok) {
+        // ロールバック
+        setFavoriteGames(prev);
+      }
+    } catch {
+      // ロールバック
+      setFavoriteGames(prev);
+    }
+  }, [idToken, favoriteGames]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -186,6 +218,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profilePhotoURL,
         isProfileLoading,
         cardStyle,
+        favoriteGames,
+        toggleFavorite,
         signInWithGoogle,
         signOut,
         updateDisplayName,

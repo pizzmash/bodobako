@@ -1,5 +1,5 @@
 import type { PlayerCardStyle } from "@bodobako/shared";
-import { BG_PATTERNS, PRESET_ACCENT_COLORS, getGameDefinition } from "@bodobako/shared";
+import { BG_PATTERNS, PRESET_ACCENT_COLORS, getAllGames, getGameDefinition } from "@bodobako/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { RoomSession } from "./RoomSession.js";
@@ -290,6 +290,39 @@ app.put("/users/me/card-style", async (c) => {
   const profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, { cardStyle });
   if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
   return c.json({ cardStyle: profile.cardStyle });
+});
+
+// お気に入りゲーム更新
+app.put("/users/me/favorites", async (c) => {
+  const authHeader = c.req.header("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return c.json({ error: "認証が必要です" }, 401);
+
+  const verified = await verifyFirebaseToken(token, c.env.FIREBASE_PROJECT_ID);
+  if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "リクエストボディが不正です" }, 400);
+  }
+
+  const { gameIds } = body as Record<string, unknown>;
+  if (!Array.isArray(gameIds) || !gameIds.every((id) => typeof id === "string")) {
+    return c.json({ error: "gameIds は文字列の配列で指定してください" }, 400);
+  }
+
+  const validIds = new Set(getAllGames().map((g) => g.id));
+  if (gameIds.some((id) => !validIds.has(id))) {
+    return c.json({ error: "無効なゲームIDが含まれています" }, 400);
+  }
+
+  const profile = await r2UserStorage.updateProfileFields(c.env.USER_DATA, verified.uid, {
+    favoriteGames: gameIds as string[],
+  });
+  if (!profile) return c.json({ error: "ユーザーが見つかりません" }, 404);
+  return c.json({ favoriteGames: profile.favoriteGames ?? [] });
 });
 
 // ---------------------------------------------------------------------------
