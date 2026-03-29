@@ -137,7 +137,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
   name: "ハイパーロボット",
   description: "壁にぶつかるまでスライド移動！最少手数でロボットをゴールへ導け！",
   minPlayers: 2,
-  maxPlayers: 5,
+  maxPlayers: null,
 
   createInitialState(playerIds: string[]): HyperRobotState {
     const { rightWalls, bottomWalls, targets } = generateRandomBoard();

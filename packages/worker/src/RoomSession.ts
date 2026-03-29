@@ -434,8 +434,8 @@ export class RoomSession implements DurableObject {
       this.sendAck(ws, msg.reqId, { error: "ゲームはすでに開始されています" }, false);
       return;
     }
-    const maxPlayers = getGameDefinition(this.room.gameId)?.maxPlayers ?? 2;
-    if (this.room.players.length >= maxPlayers) {
+    const maxPlayers = getGameDefinition(this.room.gameId)?.maxPlayers ?? null;
+    if (maxPlayers != null && this.room.players.length >= maxPlayers) {
       this.sendAck(ws, msg.reqId, { error: "ルームが満員です" }, false);
       return;
     }

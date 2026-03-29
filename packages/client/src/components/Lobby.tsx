@@ -203,7 +203,9 @@ export function Lobby() {
                     {g.name}
                   </div>
                   <div className="text-[0.85rem] text-indigo-400 font-semibold bg-indigo-50 px-2.5 py-0.5 rounded-full self-start">
-                    {g.minPlayers === g.maxPlayers
+                    {g.maxPlayers == null
+                      ? `${g.minPlayers}人〜`
+                      : g.minPlayers === g.maxPlayers
                       ? `${g.minPlayers}人`
                       : `${g.minPlayers}-${g.maxPlayers}人`}
                   </div>

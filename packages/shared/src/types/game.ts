@@ -18,7 +18,7 @@ export interface GameDefinition<TState = unknown, TMove = unknown> {
   name: string;
   description: string;
   minPlayers: number;
-  maxPlayers: number;
+  maxPlayers: number | null;
 
   createInitialState(playerIds: string[], hostId?: string): TState;
   /** rawデータをTMove型にパース。構造が不正な場合はnullを返す。 */
