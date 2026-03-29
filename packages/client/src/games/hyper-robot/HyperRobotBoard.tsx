@@ -185,17 +185,17 @@ export function HyperRobotBoard() {
     [sendMove],
   );
 
-  // タイマー0で自動締め切り（誰も確定していない場合のみ）
+  // タイマー0で自動締め切り
+  // 通常: 宣言あり & 誰も確定していない → end-bidding
+  // 再宣言ラウンド: 宣言なしでも → end-bidding（→ サーバー側で advanceTarget）
   useEffect(() => {
-    if (
-      timeLeft === 0 &&
-      state?.phase === "bidding" &&
-      state.bids.length > 0 &&
-      (state.confirmedBidders?.length ?? 0) === 0
-    ) {
+    if (timeLeft !== 0 || state?.phase !== "bidding") return;
+    const hasBids = state.bids.length > 0;
+    const noConfirmed = (state.confirmedBidders?.length ?? 0) === 0;
+    if ((hasBids && noConfirmed) || (!hasBids && state.isRetry)) {
       sendMove({ type: "end-bidding" } as HyperRobotMove);
     }
-  }, [timeLeft, state?.phase, state?.bids.length, state?.confirmedBidders?.length, sendMove]);
+  }, [timeLeft, state?.phase, state?.bids.length, state?.confirmedBidders?.length, state?.isRetry, sendMove]);
 
   // revealing フェーズで5秒後に自動的に次のターゲットへ
   useEffect(() => {
