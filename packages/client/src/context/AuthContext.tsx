@@ -161,7 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(err.error ?? "アバターの更新に失敗しました");
     }
     const data = await res.json() as { photoURL: string };
-    setProfilePhotoURL(`${data.photoURL}?v=${Date.now()}`);
+    // サーバーが ?v=timestamp 付きURLを返すのでそのまま使用（二重付与を防ぐ）
+    setProfilePhotoURL(data.photoURL);
   }, [idToken]);
 
   const deleteAvatar = useCallback(async () => {

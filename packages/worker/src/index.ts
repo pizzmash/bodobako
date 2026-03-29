@@ -174,7 +174,8 @@ app.put("/users/me/avatar", async (c) => {
   await r2UserStorage.putAvatar(bucket, verified.uid, data, blob.type);
 
   const origin = new URL(c.req.url).origin;
-  const avatarUrl = `${origin}/users/${verified.uid}/avatar`;
+  // ?v= タイムスタンプを付与してブラウザキャッシュをバスト（他プレイヤーにも最新画像が届く）
+  const avatarUrl = `${origin}/users/${verified.uid}/avatar?v=${Date.now()}`;
   await r2UserStorage.updateProfilePhotoURL(bucket, verified.uid, avatarUrl);
 
   return c.json({ photoURL: avatarUrl });
@@ -189,9 +190,12 @@ app.delete("/users/me/avatar", async (c) => {
   if (!verified) return c.json({ error: "認証トークンが無効です" }, 401);
 
   const bucket = c.env.USER_DATA;
+  // アバター削除後は Google プロフィール画像（JWT の picture クレーム）をフォールバックとして保存
+  // これにより他プレイヤーにもデフォルト（Google）画像が表示される
+  const fallbackPhotoURL = verified.picture ?? "";
   await Promise.all([
     bucket.delete(`users/${verified.uid}/avatar`),
-    r2UserStorage.updateProfileFields(bucket, verified.uid, { photoURL: "" }),
+    r2UserStorage.updateProfileFields(bucket, verified.uid, { photoURL: fallbackPhotoURL }),
   ]);
 
   return c.json({ ok: true });
