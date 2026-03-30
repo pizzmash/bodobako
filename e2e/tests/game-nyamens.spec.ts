@@ -84,6 +84,79 @@ async function rollDice(
   return { dutyPage, otherPage };
 }
 
+/**
+ * サイコロを振り card-selection フェーズに到達するまで繰り返す。
+ * dice=1 or 6 の場合: draw-cards → 当番ローテート → 次プレイヤーの dice-roll → 再ロール
+ * dice=2-5 の場合: 即 card-selection へ遷移
+ * @returns card-selection フェーズの当番ページ（「修理を確定する →」ボタンを持つ側）
+ */
+async function rollDiceUntilCardSelection(
+  pageA: Page,
+  pageB: Page
+): Promise<{ dutyPage: Page; otherPage: Page }> {
+  for (let i = 0; i < 6; i++) {
+    await rollDice(pageA, pageB);
+    await drawCardsIfNeeded(pageA, pageB);
+
+    // card-selection に到達したかを「必要:X枚」テキスト（両ページに表示）で確認（5秒以内）
+    const reached = await Promise.any([
+      pageA
+        .getByText(/必要:.*枚/)
+        .waitFor({ state: "visible", timeout: 5_000 })
+        .then(() => true),
+      pageB
+        .getByText(/必要:.*枚/)
+        .waitFor({ state: "visible", timeout: 5_000 })
+        .then(() => true),
+    ]).catch(() => false);
+
+    if (reached) {
+      // 「修理を確定する →」ボタンが表示されるのは当番プレイヤーのみ
+      // どちらのページに表示されるかで当番を判定する（描画を待つため最大3秒）
+      const confirmBtnA = pageA.getByRole("button", { name: "修理を確定する →" });
+      const confirmBtnB = pageB.getByRole("button", { name: "修理を確定する →" });
+      const dutyPage = await Promise.any([
+        confirmBtnA.waitFor({ state: "visible", timeout: 3_000 }).then(() => pageA),
+        confirmBtnB.waitFor({ state: "visible", timeout: 3_000 }).then(() => pageB),
+      ]).catch(() => null);
+      if (dutyPage) return { dutyPage, otherPage: dutyPage === pageA ? pageB : pageA };
+      // card-selection に到達したがボタンが見えない場合は想定外の状態
+      throw new Error("card-selection に到達したが「修理を確定する →」ボタンが見つかりませんでした");
+    }
+    // dice=1 or 6 により当番がローテートして dice-roll に戻った → 再ループ
+  }
+  throw new Error("6ラウンドのサイコロで card-selection に到達できませんでした");
+}
+
+/**
+ * dice=1 or 6 のとき発生する draw-cards フェーズを処理する。
+ * 「▲引く」テキスト（山札クリックのヒント）が表示されたらクリックして
+ * カードを引く。表示されなければ即座に返る。
+ */
+async function drawCardsIfNeeded(pageA: Page, pageB: Page): Promise<void> {
+  // draw-cards フェーズが発生していれば「▲引く」が最大 10 秒以内に表示される
+  // 表示されなければ draw-cards フェーズは発生していないので即返る
+  const drawAppeared = await Promise.any([
+    pageA.getByText("▲引く").waitFor({ state: "visible", timeout: 10_000 }).then(() => true),
+    pageB.getByText("▲引く").waitFor({ state: "visible", timeout: 10_000 }).then(() => true),
+  ]).catch(() => false);
+
+  if (!drawAppeared) return;
+
+  for (let i = 0; i < 15; i++) {
+    const [aHasDraw, bHasDraw] = await Promise.all([
+      pageA.getByText("▲引く").isVisible().catch(() => false),
+      pageB.getByText("▲引く").isVisible().catch(() => false),
+    ]);
+    if (!aHasDraw && !bHasDraw) break;
+
+    const drawPage = aHasDraw ? pageA : pageB;
+    await drawPage.getByText("▲引く").click();
+    // カードオーバーレイが 2 秒後に自動解除されるので余裕を持って待つ
+    await drawPage.waitForTimeout(3000);
+  }
+}
+
 test.describe("ニャーメンズゲーム", () => {
   test("2人でゲームを開始すると役職公開フェーズが表示される", async ({
     browser,
@@ -155,17 +228,14 @@ test.describe("ニャーメンズゲーム", () => {
       await startNyaMensGame(browser);
 
     await readyBothPlayers(pageA, pageB);
-    await rollDice(pageA, pageB);
+    // dice=1 or 6 の場合は draw-cards → 当番ローテート → 再ロールが必要なため
+    // card-selection に到達するまでサイコロを振り続ける
+    const { dutyPage } = await rollDiceUntilCardSelection(pageA, pageB);
 
-    // カード選択フェーズへ遷移: 「必要:」or「選択中:」テキストが表示される
-    // draw-cards フェーズ（サイコロ1or6時）を経由すると最大10秒かかるため余裕を持たせる
-    // Promise.any: 1つでも成功すれば通過、全て失敗（タイムアウト）した場合のみエラー
-    await Promise.any([
-      pageA.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
-      pageA.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
-      pageB.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
-      pageB.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
-    ]);
+    // カード選択フェーズへ遷移確認
+    await expect(
+      dutyPage.getByText(/必要:.*枚/).or(dutyPage.getByText(/選択中:/))
+    ).toBeVisible({ timeout: 5_000 });
 
     await contextA.close();
     await contextB.close();
@@ -178,16 +248,10 @@ test.describe("ニャーメンズゲーム", () => {
       await startNyaMensGame(browser);
 
     await readyBothPlayers(pageA, pageB);
-    const { dutyPage } = await rollDice(pageA, pageB);
+    // dice=1 or 6 の場合は draw-cards → 当番ローテート → 再ロールが必要なため
+    // card-selection に到達するまでサイコロを振り続ける
+    const { dutyPage } = await rollDiceUntilCardSelection(pageA, pageB);
 
-    // カード選択フェーズまで待機（draw-cards 経由で最大10秒かかる場合あり）
-    // Promise.any: 1つでも成功すれば通過
-    await Promise.any([
-      pageA.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
-      pageA.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
-      pageB.getByText(/必要:.*枚/).waitFor({ state: "visible", timeout: 40_000 }),
-      pageB.getByText(/選択中:/).waitFor({ state: "visible", timeout: 40_000 }),
-    ]);
     await expect(
       dutyPage.getByText(/必要:.*枚/).or(dutyPage.getByText(/選択中:/))
     ).toBeVisible({ timeout: 5_000 });
