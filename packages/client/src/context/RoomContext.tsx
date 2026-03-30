@@ -3,7 +3,7 @@ import type {
     BlokusState,
     BlokusTrigonState,
     CiaoCiaoStateView,
-    CitychasePlayerView, GameResult, NanaStateView,
+    CitychasePlayerView, GameResult, HyperRobotState, NanaStateView,
     NyaMensPlayerView,
     Player,
     RoomInfo, SonicRestaurantState, WsServerMessage
@@ -34,7 +34,8 @@ export type GameStateEntry =
   | { gameId: "blokus-trigon"; state: BlokusTrigonState }
   | { gameId: "ciao-ciao"; state: CiaoCiaoStateView }
   | { gameId: "nana"; state: NanaStateView }
-  | { gameId: "nyamens"; state: NyaMensPlayerView };
+  | { gameId: "nyamens"; state: NyaMensPlayerView }
+  | { gameId: "hyper-robot"; state: HyperRobotState };
 
 const STORAGE_KEYS = {
   sessionToken: "bodobako:sessionToken",

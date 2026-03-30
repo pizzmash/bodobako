@@ -58,6 +58,13 @@ export { CARD_COUNTS, MENUS } from "./games/sonic-restaurant/types.js";
 export type {
     Card, CompletedMenu, MenuTreeNode, SonicRestaurantMove, SonicRestaurantState
 } from "./games/sonic-restaurant/types.js";
+export { hyperRobotDefinition } from "./games/hyper-robot/definition.js";
+export { assembleBoard, generateRandomBoard, isCenter } from "./games/hyper-robot/board.js";
+export { simulateRobotMove, isTargetAchieved, sortBids, getWinChips, placeRobotsRandomly } from "./games/hyper-robot/logic.js";
+export type {
+    Bid, Direction, HyperRobotMove, HyperRobotPhase, HyperRobotState,
+    Position, RobotColor, TargetColor, TargetMark
+} from "./games/hyper-robot/types.js";
 export type { GameDefinition, GameLogEntry, GameStatus } from "./types/game.js";
 export { BG_CSS_PATTERNS, BG_CSS_PATTERN_LABELS, BG_PATTERNS, BG_SVG_PATTERN_IDS, BG_SVG_PATTERN_META, PRESET_ACCENT_COLORS, getBgPatternLabel, getSvgPatternLabel, isSvgBgPattern } from "./types/profile.js";
 export type { BgCssPattern, BgPattern, BgSvgPatternId, PlayerCardStyle } from "./types/profile.js";

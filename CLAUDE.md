@@ -145,6 +145,7 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 ## 実装済みゲーム
 
 <!-- GAMES:START -->
+
 - **あいうえバトル** - 2〜5人、お題に沿った言葉を書き、相手の文字を当てて攻撃するワードバトル
 - **チャオチャオ** - 2〜4人、サイコロを振ってウソをつけ！橋を渡るブラフすごろく
 - **シティチェイス** - 2〜4人、犯人と警察に分かれて、5×5のビル群を舞台に追跡劇を繰り広げる非対称対戦ゲーム
@@ -153,6 +154,7 @@ React Router 導入後は **URL の `:code` が source of truth**。`localStorag
 - **ブロックストライゴン** - 2〜4人、三角形のピースを角で繋げて配置する六角形盤面の陣取りゲーム
 - **ナナ** - 2〜5人、7をねらえ！3枚ペアの神経衰弱ゲーム
 - **ニャーメンズ** - 2〜5人、アサシンが潜む協力修理ゲーム。全30枚のカードを順番に並べ修理を完成させよ！
+- **ハイパーロボット** - 2人以上、壁にぶつかるまでスライド移動！最少手数でロボットをゴールへ導け！
 <!-- GAMES:END -->
 
 ## 新しいゲームの追加手順
@@ -225,12 +227,13 @@ npx wrangler deploy --config packages/worker/wrangler.toml
 
 `playwright.config.ts` が `npm run dev` を自動起動してからテストを実行する。テストファイルは `e2e/tests/` に配置。
 
-| ファイル               | 内容                                            |
-| ---------------------- | ----------------------------------------------- |
-| `lobby.spec.ts`        | 名前入力モーダル・ゲーム一覧・localStorage 復元 |
-| `room-flow.spec.ts`    | ルーム作成・コード参加・退出・直接アクセス      |
-| `game-othello.spec.ts` | 2タブで対戦開始・手を打つ                       |
-| `reconnect.spec.ts`    | リロード後の sessionToken 再接続                |
+| ファイル                   | 内容                                                     |
+| -------------------------- | -------------------------------------------------------- |
+| `lobby.spec.ts`            | 名前入力モーダル・ゲーム一覧・localStorage 復元          |
+| `room-flow.spec.ts`        | ルーム作成・コード参加・退出・直接アクセス               |
+| `game-othello.spec.ts`     | 2タブで対戦開始・手を打つ                                |
+| `game-hyper-robot.spec.ts` | configuring/bidding/solving フェーズ遷移・宣言UI・解決UI |
+| `reconnect.spec.ts`        | リロード後の sessionToken 再接続                         |
 
 ## エージェント利用ガイドライン
 

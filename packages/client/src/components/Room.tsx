@@ -99,7 +99,7 @@ export function Room() {
           {/* プレイヤーリスト */}
           <div className="w-full flex flex-col items-center gap-2 my-2">
             <div className="text-[0.85rem] font-semibold text-gray-600">
-              プレイヤー ({room.players.length}/{maxPlayers})
+              プレイヤー ({room.players.length}{maxPlayers != null ? `/${maxPlayers}` : ""})
             </div>
             <div className="flex flex-wrap gap-2 justify-center">
               {room.players.map((p) => (

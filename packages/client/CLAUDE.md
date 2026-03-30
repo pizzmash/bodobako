@@ -118,6 +118,7 @@ CSS クラス名・keyframe 名に使うプレフィックスを衝突しない2
 | Nana            | `nana-`        |
 | SonicRestaurant | `sr-`          |
 | NyaMens         | `nya-`         |
+| HyperRobot      | `hr-`          |
 
 `constants.ts` に以下を定義する：
 
