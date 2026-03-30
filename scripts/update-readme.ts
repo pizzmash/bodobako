@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "fs";
-import { resolve, dirname } from "path";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { getAllGames } from "../packages/shared/src/games/index.js";
 
@@ -8,7 +8,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const START = "<!-- GAMES:START -->";
 const END = "<!-- GAMES:END -->";
 
-function formatPlayers(min: number, max: number): string {
+function formatPlayers(min: number, max: number | null): string {
+  if (max === null) return `${min}人以上`;
   if (min === max) return `${min}人`;
   return `${min}〜${max}人`;
 }

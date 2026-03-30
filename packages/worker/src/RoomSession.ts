@@ -8,7 +8,7 @@ import type {
 import { getGameDefinition } from "@bodobako/shared";
 import { verifyFirebaseToken } from "./lib/verifyFirebaseToken.js";
 
-const DISCONNECT_GRACE_MS = 30_000;
+const DEFAULT_DISCONNECT_GRACE_MS = 30_000;
 
 // --- メッセージバリデーション ---
 
@@ -68,6 +68,8 @@ interface RoomState {
 
 interface RoomSessionEnv {
   FIREBASE_PROJECT_ID?: string;
+  /** dev/test 環境でのみ設定。WS切断後のルーム削除タイマー(ms)を短縮できる */
+  DISCONNECT_GRACE_MS?: string;
 }
 
 export class RoomSession implements DurableObject {
@@ -364,8 +366,11 @@ export class RoomSession implements DurableObject {
 
     if (!playerId) return;
 
-    // 切断タイマーをセット（30秒後にalarm発火）
-    const fireAt = Date.now() + DISCONNECT_GRACE_MS;
+    // 切断タイマーをセット（デフォルト30秒後にalarm発火、env.DISCONNECT_GRACE_MSで上書き可）
+    const graceMs = this.env.DISCONNECT_GRACE_MS
+      ? parseInt(this.env.DISCONNECT_GRACE_MS, 10)
+      : DEFAULT_DISCONNECT_GRACE_MS;
+    const fireAt = Date.now() + graceMs;
     this.room.pendingRemovals[playerId] = fireAt;
     await this.saveRoom();
     await this.state.storage.setAlarm(fireAt);
