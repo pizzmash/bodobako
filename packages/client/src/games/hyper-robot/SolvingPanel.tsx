@@ -3,7 +3,6 @@ import { C, FONT } from "./constants";
 
 interface SolvingPanelProps {
   state: HyperRobotState;
-  playerId: string;
   onGiveUp: () => void;
   getName: (pid: string) => string;
   isMyTurn: boolean;
@@ -13,7 +12,6 @@ interface SolvingPanelProps {
 
 export function SolvingPanel({
   state,
-  playerId: _playerId,
   onGiveUp,
   getName,
   isMyTurn,

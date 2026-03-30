@@ -1,16 +1,18 @@
-import type { HyperRobotState } from "@bodobako/shared";
+import type { HyperRobotState, TargetMark } from "@bodobako/shared";
 import type { PlayerSlotProps } from "../../components/GameSidebar/PlayerCard";
 import { useRoom } from "../../context/RoomContext";
 import { C, FONT, TARGET_COLORS } from "./constants";
 import { useTargetIconMap } from "./hooks/useTargetIconMap";
 import { TargetChip } from "./TargetChip";
 
+const EMPTY_TARGETS: TargetMark[] = [];
+
 export function HyperRobotPlayerSlot({ playerId }: PlayerSlotProps) {
   const { gameState } = useRoom();
   const state: HyperRobotState | null =
     gameState?.gameId === "hyper-robot" ? gameState.state : null;
 
-  const iconMap = useTargetIconMap(state?.allTargets ?? []);
+  const iconMap = useTargetIconMap(state?.allTargets ?? EMPTY_TARGETS);
 
   if (!state) return null;
 

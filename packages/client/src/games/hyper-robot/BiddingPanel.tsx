@@ -1,7 +1,7 @@
 import type { HyperRobotState } from "@bodobako/shared";
-import { useCallback, useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { C, FONT } from "./constants";
+import { useCallback, useState } from "react";
+import { BIDDING_TIME_SEC, C, FONT, MAX_BID_COUNT } from "./constants";
 
 interface BiddingPanelProps {
   state: HyperRobotState;
@@ -35,7 +35,7 @@ export function BiddingPanel({
     if (bidInput >= 1) onBid(bidInput);
   }, [bidInput, onBid]);
 
-  const timerPct = (timeLeft / 60) * 100;
+  const timerPct = (timeLeft / BIDDING_TIME_SEC) * 100;
   const timerColor = timeLeft > 20 ? C.success : timeLeft > 10 ? C.warning : C.accent;
 
   // ソート済みbid一覧（手数昇順、同手数は orderId 昇順）
@@ -44,6 +44,11 @@ export function BiddingPanel({
   );
 
   const showTimer = !(state.bids.length === 0 && !isRetry);
+  const isConfirmed = state.confirmedBidders?.includes(playerId) ?? false;
+  const canConfirm = !!myBid;
+  const isUpdateDisabled = myBid
+    ? (bidInput >= myBid.count || isConfirmed)
+    : false;
 
   return (
     <div
@@ -127,6 +132,7 @@ export function BiddingPanel({
               −
             </button>
             <span
+              data-testid="bid-input-display"
               className="w-10 text-center text-xl font-black tabular-nums"
               style={{ color: C.text }}
             >
@@ -135,18 +141,12 @@ export function BiddingPanel({
             <button
               className="w-8 h-8 rounded-lg font-bold text-lg flex items-center justify-center cursor-pointer transition-colors duration-150"
               style={{ background: C.primaryLight, color: C.secondary, border: `1px solid ${C.cardBorder}` }}
-              onClick={() => setBidInput((v) => Math.min(50, v + 1))}
+              onClick={() => setBidInput((v) => Math.min(MAX_BID_COUNT, v + 1))}
               aria-label="増やす"
             >
               ＋
             </button>
-            {(() => {
-              const isConfirmed = state.confirmedBidders?.includes(playerId) ?? false;
-              const isUpdateDisabled = myBid
-                ? (bidInput >= myBid.count || isConfirmed)
-                : false;
-              return (
-                <button
+            <button
                   className="flex-1 h-8 rounded-lg text-sm font-bold transition-all duration-150 active:scale-95"
                   style={{
                     background: isUpdateDisabled ? C.primaryLight : C.primary,
@@ -160,18 +160,12 @@ export function BiddingPanel({
                 >
                   {myBid ? "更新" : "宣言する"}
                 </button>
-              );
-            })()}
           </div>
         </div>
       )}
 
       {/* 確定ボタン */}
-      {(() => {
-        const isConfirmed = state.confirmedBidders?.includes(playerId) ?? false;
-        const canConfirm = !!myBid;
-        return (
-          <button
+      <button
             className="w-full py-2 rounded-xl text-sm font-bold transition-all duration-150 active:scale-95"
             style={{
               background: isConfirmed ? C.primaryLight : C.primary,
@@ -185,12 +179,10 @@ export function BiddingPanel({
           >
             {isConfirmed ? "取り消す" : "宣言を確定する"}
           </button>
-        );
-      })()}
 
       {/* 宣言一覧 */}
       {sortedBids.length > 0 && (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1" data-testid="bid-list">
           <span className="text-xs font-semibold" style={{ color: C.muted }}>
             宣言一覧 (最少: {minBid}手)
           </span>

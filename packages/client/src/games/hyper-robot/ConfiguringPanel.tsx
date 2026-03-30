@@ -1,11 +1,10 @@
 import type { HyperRobotState } from "@bodobako/shared";
 import { getWinChips } from "@bodobako/shared";
 import { useState } from "react";
-import { C, FONT } from "./constants";
+import { C, FONT, MAX_WIN_CHIPS } from "./constants";
 
 interface ConfiguringPanelProps {
   state: HyperRobotState;
-  playerId: string;
   isHost: boolean;
   onStartGame: (winChips: number) => void;
   getName: (pid: string) => string;
@@ -72,7 +71,7 @@ export function ConfiguringPanel({ state, isHost, onStartGame, getName }: Config
           <button
             className="w-9 h-9 rounded-lg font-bold text-lg flex items-center justify-center cursor-pointer"
             style={{ background: C.primaryLight, color: C.secondary, border: `1px solid ${C.cardBorder}` }}
-            onClick={() => setWinChips((v) => Math.min(17, v + 1))}
+            onClick={() => setWinChips((v) => Math.min(MAX_WIN_CHIPS, v + 1))}
           >
             ＋
           </button>

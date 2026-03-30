@@ -1,21 +1,23 @@
-import type { HyperRobotState, HyperRobotMove, Position, RobotColor, TargetMark } from "@bodobako/shared";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Avatar } from "../../components/ui/Avatar";
-import { useParticipantProfiles } from "../../components/AppHeader/hooks/useParticipantProfiles";
-import { RobotBadge } from "./RobotBadge";
-import { GameResultCard } from "../../components/GameResultCard";
+import type { HyperRobotMove, HyperRobotState, Position, RobotColor, TargetMark } from "@bodobako/shared";
 import { getGameDefinition } from "@bodobako/shared";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useParticipantProfiles } from "../../components/AppHeader/hooks/useParticipantProfiles";
+import { GameResultCard } from "../../components/GameResultCard";
+import { Avatar } from "../../components/ui/Avatar";
 import { useAuth } from "../../context/AuthContext";
 import { useRoom } from "../../context/RoomContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { Z } from "../../styles/tokens";
-import { BIDDING_TIME_SEC, C, FONT, RAINBOW_COIN_BG, ROBOT_COLORS, ROBOT_LABELS, TARGET_COLORS } from "./constants";
-import { HyperRobotGrid } from "./HyperRobotGrid";
 import { BiddingPanel } from "./BiddingPanel";
-import { SolvingPanel } from "./SolvingPanel";
 import { ConfiguringPanel } from "./ConfiguringPanel";
+import { BIDDING_TIME_SEC, C, FONT, RAINBOW_COIN_BG, ROBOT_COLORS, TARGET_COLORS } from "./constants";
 import { useTargetIconMap } from "./hooks/useTargetIconMap";
+import { HyperRobotGrid } from "./HyperRobotGrid";
+import { RobotBadge } from "./RobotBadge";
+import { SolvingPanel } from "./SolvingPanel";
 import { TargetChip } from "./TargetChip";
+
+const EMPTY_TARGETS: TargetMark[] = [];
 
 export function HyperRobotBoard() {
   const {
@@ -56,7 +58,7 @@ export function HyperRobotBoard() {
   const newTargetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ターゲットアイコンマップ（フックはすべて条件リターンの前に宣言）
-  const targetIconMap = useTargetIconMap(state?.allTargets ?? []);
+  const targetIconMap = useTargetIconMap(state?.allTargets ?? EMPTY_TARGETS);
 
   const [profilesByUid] = useParticipantProfiles(room?.players ?? null);
 
@@ -171,12 +173,13 @@ export function HyperRobotBoard() {
         startModal();
       }
     }
-  }, [state, getName]);
+  }, [state]);
 
   // アンマウント時に newTarget タイマーをクリア
   useEffect(() => {
     return () => {
       if (newTargetTimeoutRef.current) clearTimeout(newTargetTimeoutRef.current);
+      if (popupTimeoutRef.current) clearTimeout(popupTimeoutRef.current);
     };
   }, []);
 
@@ -269,9 +272,6 @@ export function HyperRobotBoard() {
       ? state.bids[state.currentBidIndex].playerId
       : null;
   const isMyTurn = currentSolver === playerId;
-  const allowedMoves = state.phase === "solving" && isMyTurn
-    ? state.bids[state.currentBidIndex]?.count ?? 0
-    : 0;
 
   // ゲーム結果オーバーレイ
   let resultOverlay = null;
@@ -313,35 +313,30 @@ export function HyperRobotBoard() {
     : 0;
 
   // 目標ヘッダー
-  const targetHeader = state.currentTarget && (() => {
-    const t = state.currentTarget!;
-    const TargetIcon = targetIconMap.get(t.id) ?? null;
-    const tColor = TARGET_COLORS[t.color];
-    const rColor = t.color !== "rainbow" ? ROBOT_COLORS[t.color as RobotColor] : "#818CF8";
-    return (
-      <div
-        className="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold"
-        style={{
-          background: C.card,
-          border: `1px solid ${C.cardBorder}`,
-          fontFamily: FONT,
-        }}
-      >
-        <RobotBadge color={rColor} size={20} />
-        <span style={{ color: C.muted, fontSize: 12 }}>を</span>
-        {TargetIcon && <TargetIcon size={16} color={tColor} strokeWidth={2} aria-label="目標" />}
-        <span style={{ color: C.muted, fontSize: 12 }}>へ</span>
-        {state.phase === "solving" && (
-          <span className="ml-2 text-xs font-normal" style={{ color: C.muted }}>
-            {movesUsed}/{movesAllowed} 手
-          </span>
-        )}
-      </div>
-    );
-  })();
-
-  // allowedMoves は上で定義済みなので不使用警告を抑制
-  void allowedMoves;
+  const t = state.currentTarget;
+  const TargetIcon = t ? (targetIconMap.get(t.id) ?? null) : null;
+  const tColor = t ? TARGET_COLORS[t.color] : null;
+  const rColor = t ? (t.color !== "rainbow" ? ROBOT_COLORS[t.color as RobotColor] : "#818CF8") : null;
+  const targetHeader = t ? (
+    <div
+      className="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold"
+      style={{
+        background: C.card,
+        border: `1px solid ${C.cardBorder}`,
+        fontFamily: FONT,
+      }}
+    >
+      <RobotBadge color={rColor!} size={20} />
+      <span style={{ color: C.muted, fontSize: 12 }}>を</span>
+      {TargetIcon && <TargetIcon size={16} color={tColor!} strokeWidth={2} aria-label="目標" />}
+      <span style={{ color: C.muted, fontSize: 12 }}>へ</span>
+      {state.phase === "solving" && (
+        <span className="ml-2 text-xs font-normal" style={{ color: C.muted }}>
+          {movesUsed}/{movesAllowed} 手
+        </span>
+      )}
+    </div>
+  ) : null;
 
   const boardSection = (
     <div className="flex flex-col items-center justify-center w-full h-full gap-2 py-2">
@@ -361,6 +356,7 @@ export function HyperRobotBoard() {
           onMoveRobot={state.phase === "solving" && isMyTurn ? handleMoveRobot : undefined}
           displayRobots={popupRobots ?? undefined}
           isMobile={isMobile}
+          targetIconMap={targetIconMap}
         />
       </div>
 
@@ -372,6 +368,41 @@ export function HyperRobotBoard() {
         残り目標: {state.remainingTargets.length} / {state.allTargets.length}
       </div>
     </div>
+  );
+
+  const panelSection = (
+    <>
+      {state.phase === "configuring" && (
+        <ConfiguringPanel
+          state={state}
+          isHost={playerId === room?.hostId}
+          onStartGame={handleStartGame}
+          getName={getName}
+        />
+      )}
+      {state.phase === "bidding" && (
+        <BiddingPanel
+          state={state}
+          playerId={playerId}
+          timeLeft={timeLeft}
+          getName={getName}
+          onBid={handleBid}
+          onConfirmBid={handleConfirmBid}
+          onUnconfirmBid={handleUnconfirmBid}
+          isRetry={state.isRetry}
+        />
+      )}
+      {state.phase === "solving" && (
+        <SolvingPanel
+          state={state}
+          onGiveUp={handleGiveUp}
+          getName={getName}
+          isMyTurn={isMyTurn}
+          movesUsed={movesUsed}
+          movesAllowed={movesAllowed}
+        />
+      )}
+    </>
   );
 
   return (
@@ -417,38 +448,7 @@ export function HyperRobotBoard() {
             className="shrink-0 px-3 pb-3"
             style={{ maxHeight: "44vh", overflowY: "auto" }}
           >
-            {state.phase === "configuring" && (
-              <ConfiguringPanel
-                state={state}
-                playerId={playerId}
-                isHost={playerId === state.playerIds[0]}
-                onStartGame={handleStartGame}
-                getName={getName}
-              />
-            )}
-            {state.phase === "bidding" && (
-              <BiddingPanel
-                state={state}
-                playerId={playerId}
-                timeLeft={timeLeft}
-                getName={getName}
-                onBid={handleBid}
-                onConfirmBid={handleConfirmBid}
-                onUnconfirmBid={handleUnconfirmBid}
-                isRetry={state.isRetry}
-              />
-            )}
-            {state.phase === "solving" && (
-              <SolvingPanel
-                state={state}
-                playerId={playerId}
-                onGiveUp={handleGiveUp}
-                getName={getName}
-                isMyTurn={isMyTurn}
-                movesUsed={movesUsed}
-                movesAllowed={movesAllowed}
-              />
-            )}
+            {panelSection}
           </div>
         </div>
       ) : (
@@ -459,38 +459,7 @@ export function HyperRobotBoard() {
             className="shrink-0 flex flex-col gap-3 overflow-y-auto py-2"
             style={{ width: 280 }}
           >
-            {state.phase === "configuring" && (
-              <ConfiguringPanel
-                state={state}
-                playerId={playerId}
-                isHost={playerId === state.playerIds[0]}
-                onStartGame={handleStartGame}
-                getName={getName}
-              />
-            )}
-            {state.phase === "bidding" && (
-              <BiddingPanel
-                state={state}
-                playerId={playerId}
-                timeLeft={timeLeft}
-                getName={getName}
-                onBid={handleBid}
-                onConfirmBid={handleConfirmBid}
-                onUnconfirmBid={handleUnconfirmBid}
-                isRetry={state.isRetry}
-              />
-            )}
-            {state.phase === "solving" && (
-              <SolvingPanel
-                state={state}
-                playerId={playerId}
-                onGiveUp={handleGiveUp}
-                getName={getName}
-                isMyTurn={isMyTurn}
-                movesUsed={movesUsed}
-                movesAllowed={movesAllowed}
-              />
-            )}
+            {panelSection}
           </div>
         </div>
       )}
@@ -533,8 +502,8 @@ export function HyperRobotBoard() {
         const t = state.revealingTarget;
         const RevealIcon = targetIconMap.get(t.id) ?? null;
         const tColor = TARGET_COLORS[t.color];
-        const winnerName = getName(state.revealingPlayer);
-        const winnerPhotoURL = getPhotoURL(state.revealingPlayer);
+        const winnerName = getName(state.revealingPlayer ?? "");
+        const winnerPhotoURL = getPhotoURL(state.revealingPlayer ?? "");
         return (
           <div
             className="fixed inset-0 flex items-center justify-center backdrop-blur-sm"

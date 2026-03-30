@@ -1,9 +1,9 @@
 import type { Direction, HyperRobotState, Position, RobotColor, TargetMark } from "@bodobako/shared";
 import { simulateRobotMove } from "@bodobako/shared";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Bot, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BOARD_SIZE, C, RAINBOW_COIN_BG, ROBOT_COLORS, TARGET_COLORS } from "./constants";
-import { useTargetIconMap } from "./hooks/useTargetIconMap";
 
 interface HyperRobotGridProps {
   state: HyperRobotState;
@@ -12,6 +12,7 @@ interface HyperRobotGridProps {
   onMoveRobot?: (direction: Direction) => void;
   displayRobots?: Record<RobotColor, Position>;
   isMobile: boolean;
+  targetIconMap: Map<number, LucideIcon>;
 }
 
 const ROBOT_ORDER: RobotColor[] = ["red", "yellow", "green", "blue", "silver"];
@@ -23,7 +24,9 @@ export function HyperRobotGrid({
   onMoveRobot,
   displayRobots,
   isMobile,
+  targetIconMap,
 }: HyperRobotGridProps) {
+  const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const containerRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState(isMobile ? 18 : 28);
 
@@ -59,7 +62,7 @@ export function HyperRobotGrid({
   }, [state.allTargets]);
 
   // ターゲットIDごとのアイコンマップ
-  const targetIconMap = useTargetIconMap(state.allTargets);
+  // (targetIconMap は props 経由で受け取る)
 
   // 有効な移動方向
   const validDirs = useMemo(() => {
@@ -162,7 +165,7 @@ export function HyperRobotGrid({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      animation: isCurrentTarget ? "hr-target-pulse 1.4s ease-in-out infinite" : undefined,
+                      animation: (isCurrentTarget && !prefersReducedMotion) ? "hr-target-pulse 1.4s ease-in-out infinite" : undefined,
                       opacity: isCurrentTarget ? 1 : 0.72,
                       pointerEvents: "none",
                       zIndex: 1,
@@ -350,7 +353,7 @@ export function HyperRobotGrid({
                       alignItems: "center",
                       justifyContent: "center",
                       position: "relative",
-                      animation: "hr-coin-pulse 1.6s ease-in-out infinite",
+                      animation: !prefersReducedMotion ? "hr-coin-pulse 1.6s ease-in-out infinite" : undefined,
                     }}
                   >
                     {/* 内側エンボスリング */}

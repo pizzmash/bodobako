@@ -1,13 +1,25 @@
+import type { RobotColor, TargetColor } from "@bodobako/shared";
 import type { LucideIcon } from "lucide-react";
 import {
-  Star, Heart, Flame, Crown,
-  Sun, Zap, Lightbulb, Bell,
-  Leaf, Flower2, Sprout, TreePine,
-  Snowflake, Anchor, Gem, Droplet,
-  Bot,
+    Anchor,
+    Bell,
+    Bot,
+    Crown,
+    Droplet,
+    Flame,
+    Flower2,
+    Gem,
+    Heart,
+    Leaf,
+    Lightbulb,
+    Snowflake,
+    Sprout,
+    Star,
+    Sun,
+    TreePine,
+    Zap,
 } from "lucide-react";
 import { RainbowVortexIcon } from "./RainbowVortexIcon";
-import type { RobotColor, TargetColor } from "@bodobako/shared";
 
 /** デザイントークン */
 export const C = {
@@ -85,3 +97,6 @@ export const ROBOT_ICON: LucideIcon = Bot;
 /** レインボーコニックグラデーション（ホログラフィックチップ用） */
 export const RAINBOW_COIN_BG =
   "conic-gradient(from 220deg at 36% 30%, #ef4444 0deg, #f97316 51deg, #eab308 102deg, #22c55e 153deg, #3b82f6 204deg, #8b5cf6 255deg, #ec4899 306deg, #ef4444 360deg)";
+
+export const MAX_WIN_CHIPS = 17;
+export const MAX_BID_COUNT = 50;
