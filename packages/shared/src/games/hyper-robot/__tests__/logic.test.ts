@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PIECES, rotatePiece } from "../board.js";
-import { isTargetAchieved, simulateRobotMove, sortBids } from "../logic.js";
+import { isTargetAchieved, placeRobotsRandomly, simulateRobotMove, sortBids } from "../logic.js";
 import type { Bid, Position, RobotColor, TargetMark } from "../types.js";
 
 function makeRobots(positions: Partial<Record<RobotColor, Position>>): Record<RobotColor, Position> {
@@ -169,7 +169,7 @@ describe("sortBids", () => {
     expect(sorted[0]!.playerId).toBe("b"); // chips少ない方が先
   });
 
-  it("count も chips も同一の場合 orderId 昇順", () => {
+  it("count 同一で chips が異なる場合 chips 少ない順", () => {
     const bids: Bid[] = [
       { playerId: "c", count: 3, orderId: 5 }, // chips=2
       { playerId: "d", count: 3, orderId: 2 }, // chips=0
@@ -226,5 +226,46 @@ describe("rotatePiece", () => {
     // centerWalls: ["left", "top"] → ["top", "right"]
     expect(r1.centerWalls).toContain("top");
     expect(r1.centerWalls).toContain("right");
+  });
+});
+
+describe("placeRobotsRandomly", () => {
+  const sampleTargets: TargetMark[] = [
+    { id: 1, position: { row: 5, col: 5 }, color: "red" },
+    { id: 2, position: { row: 3, col: 3 }, color: "blue" },
+    { id: 3, position: { row: 10, col: 10 }, color: "green" },
+  ];
+  const robotColors: RobotColor[] = ["red", "yellow", "green", "blue", "silver"];
+
+  it("ロボットはターゲット位置に配置されない", () => {
+    // ランダム性が低い確率でも守られるよう複数回実行
+    const targetKeys = new Set(sampleTargets.map((t) => `${t.position.row},${t.position.col}`));
+    for (let i = 0; i < 5; i++) {
+      const robots = placeRobotsRandomly(sampleTargets);
+      for (const color of robotColors) {
+        const key = `${robots[color].row},${robots[color].col}`;
+        expect(targetKeys.has(key)).toBe(false);
+      }
+    }
+  });
+
+  it("ロボットはセンター（row 7-8, col 7-8）に配置されない", () => {
+    for (let i = 0; i < 5; i++) {
+      const robots = placeRobotsRandomly(sampleTargets);
+      for (const color of robotColors) {
+        const pos = robots[color];
+        const inCenter = pos.row >= 7 && pos.row <= 8 && pos.col >= 7 && pos.col <= 8;
+        expect(inCenter).toBe(false);
+      }
+    }
+  });
+
+  it("ロボット同士の位置が重複しない", () => {
+    for (let i = 0; i < 5; i++) {
+      const robots = placeRobotsRandomly(sampleTargets);
+      const positions = robotColors.map((c) => `${robots[c].row},${robots[c].col}`);
+      const unique = new Set(positions);
+      expect(unique.size).toBe(robotColors.length);
+    }
   });
 });
