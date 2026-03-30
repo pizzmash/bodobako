@@ -174,9 +174,9 @@ function setWall(
 ): void {
   if (boardRow < 0 || boardRow > 15 || boardCol < 0 || boardCol > 15) return;
   if (side === "right") {
-    if (boardCol <= 15) rightWalls[boardRow]![boardCol] = true;
+    rightWalls[boardRow]![boardCol] = true;
   } else if (side === "bottom") {
-    if (boardRow <= 15) bottomWalls[boardRow]![boardCol] = true;
+    bottomWalls[boardRow]![boardCol] = true;
   } else if (side === "left") {
     // left wall = right wall of (row, col-1)
     if (boardCol > 0) rightWalls[boardRow]![boardCol - 1] = true;

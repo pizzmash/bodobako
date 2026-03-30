@@ -1,5 +1,5 @@
-import type { Bid, Position, RobotColor, TargetMark } from "./types.js";
-import type { Direction } from "./types.js";
+import { isCenter } from "./board.js";
+import type { Bid, Direction, Position, RobotColor, TargetMark } from "./types.js";
 
 export function simulateRobotMove(
   robots: Record<RobotColor, Position>,
@@ -17,10 +17,6 @@ export function simulateRobotMove(
       .filter(([c]) => c !== color)
       .map(([, p]) => `${p.row},${p.col}`),
   );
-
-  function isCenter(r: number, c: number): boolean {
-    return r >= 7 && r <= 8 && c >= 7 && c <= 8;
-  }
 
   while (true) {
     let nextRow = row;
@@ -58,7 +54,7 @@ export function simulateRobotMove(
     if (robotPositions.has(`${nextRow},${nextCol}`)) break;
 
     // 次のマスがセンター2×2
-    if (isCenter(nextRow, nextCol)) break;
+    if (isCenter({ row: nextRow, col: nextCol })) break;
 
     row = nextRow;
     col = nextCol;
@@ -106,8 +102,6 @@ const ROBOT_COLORS: RobotColor[] = ["red", "yellow", "green", "blue", "silver"];
 
 export function placeRobotsRandomly(
   targets: TargetMark[],
-  rightWalls: boolean[][],
-  bottomWalls: boolean[][],
 ): Record<RobotColor, Position> {
   const forbidden = new Set<string>(targets.map((t) => `${t.position.row},${t.position.col}`));
   const placed = new Set<string>();
@@ -132,10 +126,6 @@ export function placeRobotsRandomly(
     placed.add(key);
     result[color] = pos;
   }
-
-  // rightWalls and bottomWalls are not used for placement (only position constraints matter)
-  void rightWalls;
-  void bottomWalls;
 
   return result as Record<RobotColor, Position>;
 }

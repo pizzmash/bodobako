@@ -30,6 +30,7 @@ export interface HyperRobotState {
   currentTarget: TargetMark | null;
   chips: Record<string, number>;
   winChips: number;
+  hostPlayerId: string;
   playerIds: string[];
   bids: Bid[];
   biddingOpen: boolean;
@@ -43,7 +44,7 @@ export interface HyperRobotState {
   confirmedBidders: string[];
   wonTargets: Record<string, number[]>;
   revealingTarget: TargetMark | null; // revealing フェーズで開示するターゲット
-  revealingPlayer: string;            // revealing フェーズで獲得したプレイヤーID
+  revealingPlayer: string | null;     // revealing フェーズで獲得したプレイヤーID
   lastFailureRobots: Record<RobotColor, Position> | null; // 失敗時の最終ロボット位置（ポップアップ表示用）
 }
 

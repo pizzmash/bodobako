@@ -1,19 +1,20 @@
 import type { GameDefinition, GameLogEntry } from "../../types/game.js";
 import { generateRandomBoard } from "./board.js";
 import {
-  getWinChips,
-  isTargetAchieved,
-  placeRobotsRandomly,
-  simulateRobotMove,
-  sortBids,
+    getWinChips,
+    isTargetAchieved,
+    placeRobotsRandomly,
+    simulateRobotMove,
+    sortBids,
 } from "./logic.js";
 import type {
-  Bid,
-  Direction,
-  HyperRobotMove,
-  HyperRobotState,
-  RobotColor,
-  TargetMark,
+    Bid,
+    Direction,
+    HyperRobotMove,
+    HyperRobotState,
+    Position,
+    RobotColor,
+    TargetMark,
 } from "./types.js";
 
 const ROBOT_COLORS: RobotColor[] = ["red", "yellow", "green", "blue", "silver"];
@@ -29,7 +30,7 @@ function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
-function copyRobots(robots: Record<RobotColor, { row: number; col: number }>): Record<RobotColor, { row: number; col: number }> {
+function copyRobots(robots: Record<RobotColor, Position>): Record<RobotColor, Position> {
   return {
     red: { ...robots.red },
     yellow: { ...robots.yellow },
@@ -63,6 +64,21 @@ function initTargetRobotLeftTarget(
   }
 }
 
+function startSolving(state: HyperRobotState): HyperRobotState {
+  const robotsSnapshot = copyRobots(state.robots);
+  const targetRobotLeftTarget = initTargetRobotLeftTarget(state.currentTarget, state.robots);
+  return {
+    ...state,
+    biddingOpen: false,
+    phase: "solving",
+    currentBidIndex: 0,
+    moveCount: 0,
+    robotsSnapshot,
+    targetRobotLeftTarget,
+    confirmedBidders: [],
+  };
+}
+
 function advanceTarget(state: HyperRobotState): HyperRobotState {
   let remaining = [...state.remainingTargets];
   if (remaining.length === 0) {
@@ -83,7 +99,7 @@ function advanceTarget(state: HyperRobotState): HyperRobotState {
     isRetry: false,
     confirmedBidders: [],
     revealingTarget: null,
-    revealingPlayer: "",
+    revealingPlayer: null,
     // lastFailureRobots は呼び出し元で制御（retry失敗時は保持、それ以外は null を渡す）
   };
 }
@@ -127,9 +143,16 @@ function nextSolver(state: HyperRobotState): HyperRobotState {
     timerVersion: state.timerVersion + 1,
     confirmedBidders: [],
     revealingTarget: null,
-    revealingPlayer: "",
+    revealingPlayer: null,
     lastFailureRobots,
   };
+}
+
+function getDirectionStr(prev: Position, next: Position): string {
+  if (next.row > prev.row) return "下";
+  if (next.row < prev.row) return "上";
+  if (next.col > prev.col) return "右";
+  return "左";
 }
 
 export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMove> = {
@@ -139,10 +162,10 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
   minPlayers: 2,
   maxPlayers: null,
 
-  createInitialState(playerIds: string[]): HyperRobotState {
+  createInitialState(playerIds: string[], hostId?: string): HyperRobotState {
     const { rightWalls, bottomWalls, targets } = generateRandomBoard();
     const shuffledTargets = shuffleArray(targets);
-    const robots = placeRobotsRandomly(shuffledTargets, rightWalls, bottomWalls);
+    const robots = placeRobotsRandomly(shuffledTargets);
     const winChips = getWinChips(playerIds.length);
 
     const chips: Record<string, number> = {};
@@ -153,6 +176,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
     const remainingTargets = shuffledTargets;
     const currentTarget = null;
     const targetRobotLeftTarget = false;
+    const hostPlayerId = hostId ?? playerIds[0] ?? "";
 
     return {
       phase: "configuring",
@@ -164,6 +188,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
       currentTarget,
       chips,
       winChips,
+      hostPlayerId,
       playerIds,
       bids: [],
       biddingOpen: false,
@@ -177,7 +202,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
       confirmedBidders: [],
       wonTargets: {},
       revealingTarget: null,
-      revealingPlayer: "",
+      revealingPlayer: null,
       lastFailureRobots: null,
     };
   },
@@ -226,8 +251,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
     switch (move.type) {
       case "start-game": {
         if (state.phase !== "configuring") return false;
-        // ホスト（playerIds[0]）のみ実行可
-        if (playerId !== state.playerIds[0]) return false;
+        if (playerId !== state.hostPlayerId) return false;
         if (move.winChips < 1 || move.winChips > 17) return false;
         return true;
       }
@@ -242,10 +266,10 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
         return true;
       }
       case "end-bidding": {
-        return state.phase === "bidding" && state.biddingOpen && state.playerIds.includes(playerId);
+        return state.phase === "bidding" && state.biddingOpen;
       }
       case "skip-target": {
-        return state.phase === "bidding" && !state.biddingOpen && state.bids.length === 0;
+        return state.phase === "bidding" && state.biddingOpen && state.bids.length === 0 && playerId === state.hostPlayerId;
       }
       case "confirm-bid": {
         return state.phase === "bidding" && !state.confirmedBidders.includes(playerId);
@@ -311,18 +335,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
           return advanceTarget({ ...state, lastFailureRobots: null });
         }
         // 解決フェーズへ
-        const robotsSnapshot = copyRobots(state.robots);
-        const targetRobotLeftTarget = initTargetRobotLeftTarget(state.currentTarget, state.robots);
-        return {
-          ...state,
-          biddingOpen: false,
-          phase: "solving",
-          currentBidIndex: 0,
-          moveCount: 0,
-          robotsSnapshot,
-          targetRobotLeftTarget,
-          confirmedBidders: [],
-        };
+        return startSolving(state);
       }
 
       case "skip-target": {
@@ -419,18 +432,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
         const newConfirmed = [...state.confirmedBidders, playerId];
         const allConfirmed = state.bids.length > 0 && state.playerIds.every(id => newConfirmed.includes(id));
         if (allConfirmed) {
-          const robotsSnapshot = copyRobots(state.robots);
-          const targetRobotLeftTarget = initTargetRobotLeftTarget(state.currentTarget, state.robots);
-          return {
-            ...state,
-            biddingOpen: false,
-            phase: "solving",
-            currentBidIndex: 0,
-            moveCount: 0,
-            robotsSnapshot,
-            targetRobotLeftTarget,
-            confirmedBidders: [],
-          };
+          return startSolving(state);
         }
         return { ...state, confirmedBidders: newConfirmed };
       }
@@ -443,7 +445,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
         return advanceTarget({
           ...state,
           revealingTarget: null,
-          revealingPlayer: "",
+          revealingPlayer: null,
           lastFailureRobots: null,
         });
       }
@@ -492,8 +494,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
     }
     groups.push(currentGroup);
 
-    // 複数グループが存在し、かつどれかに2人以上いたら引き分け判定...
-    // 仕様: 全グループが1人なら配列、複数いたら null
+    // いずれかのグループに2人以上いたら null を返す（引き分け）
     const hasMultipleInGroup = groups.some((g) => g.length > 1);
     if (hasMultipleInGroup) return null;
 
@@ -543,11 +544,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
           const prev = prevState.robots[color];
           const next = newState.robots[color];
           if (prev.row !== next.row || prev.col !== next.col) {
-            let dir = "上";
-            if (next.row > prev.row) dir = "下";
-            else if (next.row < prev.row) dir = "上";
-            else if (next.col > prev.col) dir = "右";
-            else dir = "左";
+            const dir = getDirectionStr(prev, next);
             entries.push({ playerId: prevBid.playerId, message: `${dir} へ移動`, metadata: { robotColor: color } });
             break;
           }
@@ -571,11 +568,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
           const prev = prevState.robots[color];
           const next = newState.lastFailureRobots[color];
           if (prev.row !== next.row || prev.col !== next.col) {
-            let dir = "上";
-            if (next.row > prev.row) dir = "下";
-            else if (next.row < prev.row) dir = "上";
-            else if (next.col > prev.col) dir = "右";
-            else dir = "左";
+            const dir = getDirectionStr(prev, next);
             entries.push({ playerId: prevBid.playerId, message: `${dir} へ移動`, metadata: { robotColor: color } });
             break;
           }
@@ -651,6 +644,7 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
       prevState.currentTarget?.id !== newState.currentTarget?.id &&
       prevState.phase === "bidding" &&
       newState.phase === "bidding" &&
+      prevState.biddingOpen === true &&
       prevState.bids.length === 0
     ) {
       entries.push({
@@ -662,14 +656,3 @@ export const hyperRobotDefinition: GameDefinition<HyperRobotState, HyperRobotMov
     return entries;
   },
 };
-
-function colorName(color: RobotColor): string {
-  const names: Record<RobotColor, string> = {
-    red: "赤",
-    yellow: "黄",
-    green: "緑",
-    blue: "青",
-    silver: "銀",
-  };
-  return names[color];
-}
