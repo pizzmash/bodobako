@@ -107,7 +107,7 @@ export function HyperRobotBoard() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [state?.timerVersion, state?.phase, state?.bids.length, state?.isRetry]);
+  }, [state?.timerVersion, state?.phase, state?.isRetry]);
 
   // 結果ポップアップの検出
   useEffect(() => {
