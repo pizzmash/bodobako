@@ -71,7 +71,7 @@ export function Room() {
   const gameDef = getGameDefinition(room.gameId);
   const gameName = gameDef?.name ?? room.gameId;
   const minPlayers = gameDef?.minPlayers ?? 2;
-  const maxPlayers = gameDef?.maxPlayers ?? 2;
+  const maxPlayers = gameDef?.maxPlayers ?? null;
   const isHost = playerId === room.hostId;
   const canStart = isHost && room.players.length >= minPlayers;
 
