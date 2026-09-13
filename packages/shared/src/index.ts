@@ -73,3 +73,5 @@ export type {
 } from "./types/protocol.js";
 export type { Player, RoomInfo } from "./types/room.js";
 
+
+export * from "./games/coyote/index.js";

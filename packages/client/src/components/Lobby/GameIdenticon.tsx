@@ -1,3 +1,4 @@
+import { CoyoteEmblem } from "../../games/coyote/CoyoteEmblem";
 import type { CSSProperties } from "react";
 
 function hashCode(str: string): number {
@@ -9,6 +10,7 @@ function hashCode(str: string): number {
 }
 
 export function GameIdenticon({ gameId }: { gameId: string }) {
+  if (gameId === "coyote") return <div className="h-16 w-16 shrink-0 rounded-xl bg-[#101827] p-2 text-[#e8b86b] shadow-lg"><CoyoteEmblem className="h-full w-full" /></div>;
   const h = hashCode(gameId);
   const hue = h % 360;
   const color = `hsl(${hue}, 65%, 55%)`;

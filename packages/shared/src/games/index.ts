@@ -1,3 +1,5 @@
+import { coyoteDefinition } from "./coyote/index.js";
+import type { CoyoteState, CoyoteMove } from "./coyote/types.js";
 import type { GameDefinition } from "../types/game.js";
 import { aiuebattleDefinition } from "./aiuebattle/index.js";
 import { hyperRobotDefinition } from "./hyper-robot/definition.js";
@@ -19,10 +21,11 @@ import { sonicRestaurantGame } from "./sonic-restaurant/index.js";
 import type { SonicRestaurantMove, SonicRestaurantState } from "./sonic-restaurant/types.js";
 
 /** 登録済みゲームIDのリテラル型 */
-export type GameId = "aiuebattle" | "ciao-ciao" | "citychase" | "sonic-restaurant" | "blokus" | "blokus-trigon" | "nana" | "nyamens" | "hyper-robot";
+export type GameId = "coyote" | "aiuebattle" | "ciao-ciao" | "citychase" | "sonic-restaurant" | "blokus" | "blokus-trigon" | "nana" | "nyamens" | "hyper-robot";
 
 /** ゲームID → 具体的な GameDefinition 型のマッピング */
 export interface GameDefinitionMap {
+  coyote: GameDefinition<CoyoteState, CoyoteMove>;
   "aiuebattle": GameDefinition<AiueBattleState, AiueBattleMove>;
   "ciao-ciao": GameDefinition<CiaoCiaoState, CiaoCiaoMove>;
   "citychase": GameDefinition<CitychaseState, CitychaseMove>;
@@ -35,6 +38,7 @@ export interface GameDefinitionMap {
 }
 
 const registry = new Map<string, GameDefinition>();
+registry.set(coyoteDefinition.id, coyoteDefinition);
 
 registry.set(aiuebattleDefinition.id, aiuebattleDefinition);
 registry.set(ciaoCiaoDefinition.id, ciaoCiaoDefinition);

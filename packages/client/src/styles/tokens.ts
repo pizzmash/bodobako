@@ -21,6 +21,9 @@ export const Z = {
   roomError: 2000,
   scanlines: 9999,
 
+  cyLandscape: -1, // コヨーテ背景装飾
+  cyStickyStatus: 1, // コヨーテのスクロール領域内の現在の宣言
+
   // モバイルタブバー用
   gameMobileTab: 25,
 

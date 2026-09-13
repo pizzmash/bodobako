@@ -665,3 +665,48 @@ describe("game:start（再戦）", () => {
     charlieWs.close();
   });
 });
+
+describe('coyote network privacy', () => {
+  it('masks self cards on start/update/reconnect and publishes one shared result', async () => {
+    type View = import('@bodobako/shared').CoyotePlayerView;
+    const { code, sessionToken, playerId: aliceId } = await createRoom('Alice', 'coyote');
+    const alice = await connectWs(code, sessionToken);
+    const bobToken = crypto.randomUUID();
+    const bob = await connectWs(code, bobToken);
+    try {
+      bob.ws.send(JSON.stringify({ type: 'room:join', reqId: 'coyote-join', roomCode: code, playerName: 'Bob', sessionToken: bobToken }));
+      const ack = await bob.queue.nextOfType('ack') as { data: { playerId: string } };
+      const bobId = ack.data.playerId;
+      alice.ws.send(JSON.stringify({ type: 'game:start' }));
+      const a = (await alice.queue.nextOfType('game:started') as { state: View }).state;
+      const b = (await bob.queue.nextOfType('game:started') as { state: View }).state;
+      expect(a.hands[aliceId]).toEqual({ hidden: true });
+      expect(b.hands[bobId]).toEqual({ hidden: true });
+      expect(a.hands[bobId]).not.toHaveProperty('hidden');
+      expect(b.hands[aliceId]).not.toHaveProperty('hidden');
+      expect(a).not.toHaveProperty('deck');
+      expect(b).not.toHaveProperty('discard');
+      const bidder = a.playerIds[a.currentPlayerIndex] === aliceId ? alice : bob;
+      const challenger = bidder === alice ? bob : alice;
+      bidder.ws.send(JSON.stringify({ type: 'game:move', move: { type: 'bid', value: 999, expectedRevision: 0 } }));
+      const updatedA = (await alice.queue.nextOfType('game:stateUpdated') as { state: View }).state;
+      await bob.queue.nextOfType('game:stateUpdated');
+      expect(updatedA.hands[aliceId]).toEqual({ hidden: true });
+      // A fresh socket reconnects to the persisted state using the same identity.
+      const reconnect = await connectWs(code, crypto.randomUUID());
+      reconnect.ws.send(JSON.stringify({ type: 'session:reconnect', reqId: 'coyote-reconnect', sessionToken }));
+      const restored = await reconnect.queue.nextOfType('ack') as { data: { gameState: View } };
+      expect(restored.data.gameState.hands[aliceId]).toEqual({ hidden: true });
+      expect(restored.data.gameState.revision).toBe(1);
+      reconnect.ws.close();
+      challenger.ws.send(JSON.stringify({ type: 'game:move', move: { type: 'challenge', expectedRevision: 1 } }));
+      const revealedA = (await alice.queue.nextOfType('game:stateUpdated') as { state: View }).state;
+      const revealedB = (await bob.queue.nextOfType('game:stateUpdated') as { state: View }).state;
+      expect(revealedA.roundResult).toEqual(revealedB.roundResult);
+      expect(revealedA.roundResult?.success).toBe(true);
+      expect(revealedA.hands[aliceId]).not.toHaveProperty('hidden');
+      challenger.ws.send(JSON.stringify({ type: 'game:move', move: { type: 'challenge', expectedRevision: 1 } }));
+      expect((await challenger.queue.nextOfType('error') as { type: string }).type).toBe('error');
+    } finally { alice.ws.close(); bob.ws.close(); }
+  });
+});
