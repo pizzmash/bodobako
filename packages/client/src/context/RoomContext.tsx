@@ -1,3 +1,4 @@
+import type { CoyotePlayerView } from "@bodobako/shared";
 import type {
     AiueBattleState,
     BlokusState,
@@ -27,6 +28,7 @@ import { useAuth } from "./AuthContext";
  * 各ゲームボードでは `gameState.gameId` で分岐することで `as` キャストが不要になる。
  */
 export type GameStateEntry =
+  | { gameId: "coyote"; state: CoyotePlayerView }
   | { gameId: "aiuebattle"; state: AiueBattleState }
   | { gameId: "citychase"; state: CitychasePlayerView }
   | { gameId: "sonic-restaurant"; state: SonicRestaurantState }

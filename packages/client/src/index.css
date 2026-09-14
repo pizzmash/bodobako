@@ -703,3 +703,194 @@
     color: #ffffff;
   }
 }
+
+/* Coyote — moonlit desert table. All styles are scoped to cy-. */
+@layer components {
+  .cy-board { position:relative; isolation:isolate; display:flex; flex-direction:column; height:calc(100dvh - var(--cy-header-height, 76px)); min-height:0; overflow:hidden; color:#f8f3e8; background:radial-gradient(ellipse at 50% 15%,#26374c 0%,#101827 70%); font-size:14px; }
+  .cy-board button,.cy-dialog button { transition:background .18s,transform .18s,box-shadow .18s; }
+  .cy-board button:focus-visible,.cy-board input:focus-visible,.cy-dialog :focus-visible { outline:3px solid #e8b86b; outline-offset:4px; }
+  .cy-board button:disabled { opacity:.42; cursor:not-allowed; }
+  .cy-board button:not(:disabled):active { transform:translateY(1px); }
+  .cy-landscape { position:absolute; inset:0; overflow:hidden; pointer-events:none; background-image:radial-gradient(circle,#e8b86b50 1px,transparent 1px); background-size:91px 127px; }
+  .cy-landscape svg { position:absolute; bottom:0; width:100%; height:40%; opacity:.65; }
+  .cy-moon { position:absolute; width:260px; height:260px; border:1px solid #e8b86b12; border-radius:50%; left:50%; top:15%; transform:translateX(-50%); box-shadow:0 0 0 35px #e8b86b04,0 0 0 75px #e8b86b03; }
+  .cy-eyebrow { font-size:11px; letter-spacing:.2em; color:#c2c5ce; }
+  .cy-gold { color:#e8b86b; }
+  .cy-tools { display:flex; gap:8px; }
+  .cy-tools button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; min-width:44px; padding:8px 12px; border:1px solid #e8b86b35; border-radius:9px; background:#10182770; }
+  .cy-tools button:hover { background:#e8b86b15; }
+  .cy-game-content { min-height:0; overflow-y:auto; flex:1; width:100%; max-width:1120px; margin:0 auto; padding:16px 32px 24px; }
+  .cy-table-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 16px; margin-bottom:16px; }
+  .cy-round-bar { display:flex; align-items:center; flex-wrap:wrap; gap:16px; font-size:12px; color:#c3c7d0; }
+  .cy-round-bar span { display:flex; align-items:center; gap:7px; }
+  .cy-round-bar b { color:#e8b86b; }
+  .cy-opponents { display:grid; grid-template-columns:repeat(var(--cy-columns),minmax(0,112px)); justify-content:center; align-items:start; gap:20px; }
+  .cy-seat { width:112px; min-width:0; padding:4px; border-radius:16px; }
+  .cy-seat-active { background:#e8b86b10; box-shadow:0 0 0 1px #e8b86b80,0 0 24px #e8b86b10; }
+  .cy-seat-top { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+  .cy-avatar { flex-shrink:0; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; }
+  .cy-seat-name { display:block; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .cy-seat-life { display:flex; align-items:center; justify-content:center; gap:5px; margin-top:8px; color:#e8b86b; font-size:12px; }
+  .cy-seat-life b { margin-left:auto; color:#f8f3e8; font-size:11px; }
+  .cy-seat-out { width:94px; opacity:.6; }
+  .cy-empty-seat { display:grid; place-items:center; height:65px; border:1px dashed #aaa5; border-radius:12px; }
+  .cy-card { width:100%; aspect-ratio:2/3; border-radius:12px; position:relative; overflow:hidden; box-shadow:0 5px 15px #0003; }
+  .cy-card-face { color:#263041; background:linear-gradient(120deg,#fff4df,#e8d7b6); border:1px solid #eedfbe; }
+  .cy-card-inner { position:absolute; inset:6px; border:1px solid currentColor; border-color:#a47d3f55; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+  .cy-card-corner { position:absolute; left:12px; top:8px; font-size:11px; font-weight:800; }
+  .cy-card-number { font-family:Georgia,serif; font-size:48px; font-weight:700; line-height:1.15; font-variant-numeric:tabular-nums; }
+  .cy-card-word { font-family:inherit; font-size:18px; letter-spacing:-.06em; }
+  .cy-card-art { width:34px; height:37px; opacity:.4; margin-bottom:4px; }
+  .cy-card-name { font-size:9px; font-weight:700; margin-top:4px; }
+  .cy-card-special { background:linear-gradient(140deg,#f6df9e,#dbb86c); }
+  .cy-card-negative { color:#873b34; background:linear-gradient(140deg,#f3e4d9,#dfbdad); }
+  .cy-card-back { background:repeating-linear-gradient(45deg,#29384b 0px,#29384b 3px,#243247 3px,#243247 6px); border:1px solid #d6b477; color:#e8b86b; }
+  .cy-card-back-label { font-family:Georgia,serif; font-size:10px; letter-spacing:.2em; margin-top:5px; }
+  .cy-card-zeroed .cy-card-number { text-decoration:line-through; opacity:.45; }
+  .cy-zero-stamp { position:absolute; bottom:28%; right:5%; padding:0 4px; transform:rotate(-12deg); color:#a93226; border:2px solid #a93226; background:#f4e7ce; font-size:22px; font-weight:900; }
+  .cy-bid-center { text-align:center; margin:26px 0 10px; }
+  .cy-current-bid { font-family:Georgia,serif; font-variant-numeric:tabular-nums; font-size:clamp(48px,7vw,90px); line-height:1.15; color:#f1cb86; text-shadow:0 4px 35px #e8b86b20; overflow-wrap:anywhere; animation:cy-bid-in .18s ease-out; }
+  .cy-bid-center p { color:#bac0cd; font-size:12px; letter-spacing:.08em; margin-top:4px; }
+  .cy-bid-trail { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; min-height:20px; font-size:11px; color:#c2c5ce; }
+  .cy-bid-trail span { display:flex; align-items:center; gap:5px; max-width:100%; overflow-wrap:anywhere; }
+  .cy-bid-trail b { color:#e8b86b; }
+  .cy-footer { flex-shrink:0; width:100%; display:flex; justify-content:center; align-items:center; gap:40px; padding:22px 32px; border-top:1px solid #e8b86b35; background:#101827ed; }
+  .cy-my-hand { display:flex; align-items:center; gap:18px; flex-shrink:0; }
+  .cy-my-hand > .cy-card { width:80px; flex-shrink:0; transform:rotate(-5deg); }
+  .cy-my-hand .cy-card-number { font-size:34px; }
+  .cy-my-life { display:flex; align-items:center; gap:7px; color:#e8b86b; margin-top:10px; font-size:13px; }
+  .cy-actions { width:440px; max-width:100%; }
+  .cy-action-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; }
+  .cy-number-control { display:flex; align-items:center; border:1px solid #e8b86b60; border-radius:9px; background:#1d2a3c; }
+  .cy-number-control input { width:100%; min-width:0; font-size:24px; color:#f4e7ce; text-align:center; background:transparent; border:0; font-variant-numeric:tabular-nums; }
+  .cy-icon-button { min-height:44px; min-width:44px; display:grid; place-items:center; border-radius:8px; }
+  .cy-increment { flex:1; min-height:44px; background:#e8b86b12; border-radius:7px; color:#e8b86b; font-size:13px; }
+  .cy-bid-button { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:48px; border-radius:9px; background:#e8b86b; color:#182131; font-weight:800; padding:10px; overflow-wrap:anywhere; }
+  .cy-bid-button:hover:not(:disabled) { background:#f2cd91; box-shadow:0 3px 18px #e8b86b25; }
+  .cy-challenge-group { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; min-width:0; }
+  .cy-challenge-group > p { overflow-wrap:anywhere; max-width:100%; text-align:center; }
+  .cy-challenge-button { width:100%; min-height:92px; border:1px solid #e9896855; border-radius:12px; background:linear-gradient(150deg,#b13d2d,#8e2822); color:#fff; font-size:24px; font-weight:900; box-shadow:inset 0 0 0 4px #71221944,0 4px 16px #0003; }
+  .cy-challenge-button span { display:block; font-family:Georgia,serif; font-size:10px; letter-spacing:.3em; opacity:.8; }
+  .cy-challenge-button:hover:not(:disabled) { background:#bb4031; box-shadow:0 0 24px #a9322633; }
+  .cy-waiting { min-height:130px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px; color:#e8b86b; width:400px; }
+  .cy-waiting p { color:#c2c5ce; font-size:13px; }
+  .cy-help-text { color:#c4c9d3; font-size:13px; line-height:1.8; }
+  .cy-offline { display:flex; align-items:center; gap:8px; padding:12px; background:#702c24; border-radius:8px; margin-bottom:12px; }
+  .cy-shuffle-notice { text-align:center; color:#e8b86b; font-size:12px; margin-bottom:14px; }
+  .cy-dialog { background:transparent; color:#f8f3e8; padding:16px; width:min(560px,100%); max-height:90dvh; border:0; }
+  .cy-dialog::backdrop { background:#080e1bcc; backdrop-filter:blur(5px); }
+  .cy-dialog-content { padding:24px; background:#1c293c; border:1px solid #e8b86b55; border-radius:18px; }
+  .cy-discard-table { width:100%; border-collapse:collapse; font-size:14px; }
+  .cy-discard-table th,.cy-discard-table td { padding:10px 8px; border-bottom:1px solid #e8b86b20; text-align:right; }
+  .cy-discard-table th:first-child { text-align:left; }
+  .cy-discard-table thead { color:#c4c9d3; font-size:12px; }
+  .cy-used-count { color:#e8b86b; font-weight:800; }
+  .cy-unused-count { color:#b1b7c4; }
+  .cy-rules-steps { list-style:decimal; padding-left:20px; }
+  .cy-rules-steps li { padding-left:5px; margin-bottom:20px; color:#e8b86b; }
+  .cy-rules-steps p { color:#c4c9d3; font-size:14px; line-height:1.9; margin-top:5px; }
+  .cy-rules-details summary { cursor:pointer; min-height:44px; padding-top:12px; border-top:1px solid #e8b86b30; }
+  .cy-round-result { max-width:700px; padding:24px; margin:0 auto; border:1px solid #e8b86b40; border-radius:20px; background:#142033ed; }
+  .cy-text-button { min-height:44px; font-size:12px; text-decoration:underline; color:#c4c9d3; }
+  .cy-result-heading { font-size:30px; font-weight:900; margin:10px 0; }
+  .cy-success { color:#8dd8bd; }
+  .cy-failure { color:#ffb2a3; }
+  .cy-reveal-cards { display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin:24px 0; }
+  .cy-reveal-card { width:82px; }
+  .cy-reveal-card > .cy-seat-name { margin-bottom:6px; text-align:center; }
+  .cy-reveal-card .cy-card { animation:cy-reveal .5s ease-out both; }
+  .cy-reveal-card .cy-card-number { font-size:34px; }
+  .cy-reveal-card .cy-card-word { font-size:15px; }
+  .cy-extra-card { border-bottom:2px solid #e8b86b; padding-bottom:8px; }
+  .cy-equation { font-size:14px; font-variant-numeric:tabular-nums; color:#c4c9d3; line-height:1.9; text-align:center; overflow-wrap:anywhere; }
+  .cy-comparison { display:flex; align-items:center; justify-content:center; gap:24px; margin:18px 0; }
+  .cy-comparison > div { display:flex; flex-direction:column; align-items:center; min-width:0; }
+  .cy-comparison span { color:#c4c9d3; font-size:12px; }
+  .cy-comparison strong { font-size:clamp(20px,4vw,44px); font-family:Georgia,serif; overflow-wrap:anywhere; max-width:100%; color:#e8b86b; }
+  .cy-comparison > b { font-size:24px; }
+  .cy-damage { display:flex; justify-content:center; flex-wrap:wrap; gap:12px; padding:14px; color:#ffb2a3; background:#ffb2a308; border:1px solid #ffb2a325; border-radius:9px; }
+  .cy-winner { display:flex; justify-content:center; align-items:center; gap:10px; color:#e8b86b; margin-top:24px; font-size:21px; font-weight:800; }
+  .cy-final-result { max-width:440px; margin:0 auto 24px; }
+  .cy-ranking { padding:16px; border:1px solid #e8b86b30; border-radius:12px; }
+  .cy-ranking li { display:flex; align-items:center; gap:12px; padding:6px; }
+  .cy-ranking span { color:#e8b86b; font-family:Georgia,serif; font-size:20px; }
+  .cy-skip-motion * { animation:none !important; }
+}
+@keyframes cy-bid-in { from { opacity:.3; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+@keyframes cy-reveal { from { opacity:0; transform:perspective(600px) rotateY(80deg); } to { opacity:1; transform:perspective(600px) rotateY(0deg); } }
+@media (max-width:639px) {
+  .cy-board { height:100%; min-height:0; overflow:hidden; }
+  .cy-tools button { padding:6px 8px; font-size:12px; }
+  .cy-game-content { min-height:0; overflow-y:auto; padding:12px; }
+  .cy-table-toolbar { gap:6px 8px; margin-bottom:10px; }
+  .cy-round-bar { gap:10px; font-size:11px; }
+  .cy-tools { margin-left:auto; }
+  .cy-opponents { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 8px; max-width:380px; margin:0 auto; }
+  .cy-seat { width:100%; max-width:108px; justify-self:center; }
+  .cy-card-number { font-size:38px; }
+  .cy-card-word { font-size:17px; }
+  .cy-bid-center { margin-top:16px; }
+  .cy-current-bid { font-size:54px; }
+  .cy-footer { flex-shrink:0; padding:12px; padding-bottom:max(12px,env(safe-area-inset-bottom)); flex-direction:column; gap:10px; }
+  .cy-my-hand { width:100%; gap:12px; }
+  .cy-my-hand > .cy-card { width:36px; height:50px; border-radius:5px; transform:rotate(-7deg); }
+  .cy-my-hand .cy-card-inner { inset:3px; }
+  .cy-my-hand .cy-card svg { width:23px; }
+  .cy-my-hand .cy-card-back-label { display:none; }
+  .cy-my-hand > div:last-child { display:grid; grid-template-columns:1fr auto; width:100%; align-items:center; gap:0 8px; }
+  .cy-my-hand .cy-help-text { grid-row:2; font-size:11px; }
+  .cy-my-life { grid-row:1 / span 2; grid-column:2; margin:0; }
+  .cy-actions { width:100%; }
+  .cy-action-grid { gap:12px; }
+  .cy-actions > div:first-child { margin-bottom:6px; }
+  .cy-number-control input { font-size:22px; }
+  .cy-challenge-button { font-size:21px; }
+  .cy-waiting { width:100%; min-height:60px; gap:3px; }
+  .cy-waiting > svg { display:none; }
+  .cy-dialog { padding:10px; }
+  .cy-dialog-content { padding:18px; }
+  .cy-round-result { padding:16px; }
+  .cy-reveal-cards { gap:10px; }
+  .cy-reveal-card { width:70px; }
+  .cy-reveal-card .cy-card-number { font-size:30px; }
+  .cy-reveal-card .cy-card-word { font-size:13px; }
+  .cy-result-heading { font-size:25px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cy-board *,.cy-dialog * { animation:none !important; transition:none !important; }
+}
+@media (min-width:640px) and (max-width:1100px) {
+  .cy-footer { flex-direction:column; gap:16px; }
+  .cy-game-content { padding-left:16px; padding-right:16px; }
+}
+
+@layer components {
+  .cy-current-status { position:sticky; top:-16px; display:flex; align-items:center; justify-content:space-between; gap:10px; background:#182438; border-bottom:1px solid #e8b86b40; padding:10px 14px; margin-bottom:16px; font-size:12px; }
+  .cy-current-status span { min-width:0; overflow-wrap:anywhere; }
+  .cy-current-status b { margin-left:10px; font-size:22px; color:#e8b86b; }
+  .cy-current-status span:last-child { color:#e8b86b; }
+  .cy-final-result > [role="status"] { padding:24px 16px; }
+  .cy-final-result > [role="status"] button { min-width:0; padding-left:16px; padding-right:16px; }
+  .cy-equation p { animation:cy-bid-in .35s ease-out both; }
+  .cy-equation p:nth-child(1) { animation-delay:.35s; }
+  .cy-equation p:nth-child(2) { animation-delay:.55s; }
+  .cy-equation p:nth-child(3) { animation-delay:.75s; }
+  .cy-equation p:nth-child(4) { animation-delay:.95s; }
+}
+@media (max-width:639px) {
+  .cy-current-status { position:sticky; top:-12px; display:flex; align-items:center; justify-content:space-between; gap:10px; background:#182438; border-bottom:1px solid #e8b86b40; padding:10px; margin-bottom:12px; font-size:12px; }
+  .cy-current-status span { min-width:0; overflow-wrap:anywhere; }
+  .cy-current-status b { margin-left:10px; font-size:22px; color:#e8b86b; }
+  .cy-current-status span:last-child { color:#e8b86b; }
+  .cy-bid-center { display:none; }
+}
+
+@media (min-width:640px) {
+  .cy-crowded .cy-opponents { display:flex; flex-wrap:wrap; gap:12px; }
+  .cy-crowded .cy-seat { width:90px; }
+  .cy-crowded .cy-card-number { font-size:36px; }
+  .cy-crowded .cy-card-word { font-size:15px; }
+  .cy-crowded .cy-card-art { width:28px; height:30px; }
+  .cy-crowded .cy-bid-center { margin-top:14px; }
+  .cy-crowded .cy-current-bid { font-size:56px; }
+}

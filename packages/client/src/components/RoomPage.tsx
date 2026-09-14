@@ -55,14 +55,14 @@ export function RoomPage() {
 
   useEffect(() => {
     if (blocker.state !== "blocked") return;
-    const confirmed = window.confirm("ルームを退出しますか？");
+    const confirmed = window.confirm(room?.gameId === "coyote" && room.status === "playing" ? "退出すると、観戦中でも対戦全体が終了します。退出しますか？" : "ルームを退出しますか？");
     if (confirmed) {
       proceedLeave();
       blocker.proceed();
     } else {
       blocker.reset();
     }
-  }, [blocker, proceedLeave]);
+  }, [blocker, proceedLeave, room?.gameId, room?.status]);
 
   // playerName 未設定 → NameEntryModal をオーバーレイ
   if (!playerName) {

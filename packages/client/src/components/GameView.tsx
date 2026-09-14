@@ -27,6 +27,9 @@ import type { PlayerSlotProps } from "./GameSidebar/PlayerCard";
 import { GameSidebarContent } from "./GameSidebarContent";
 import { MobileTabBar } from "./MobileTabBar";
 
+const CoyoteBoard = lazy(() => import("../games/coyote/CoyoteBoard").then(m => ({ default: m.CoyoteBoard })));
+const CoyotePlayerSlot = lazy(() => import("../games/coyote/CoyotePlayerSlot").then(m => ({ default: m.CoyotePlayerSlot })));
+
 const AiueBattleBoard = lazy(() =>
   import("../games/aiuebattle/AiueBattleBoard").then((m) => ({ default: m.AiueBattleBoard }))
 );
@@ -153,6 +156,7 @@ const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
 
 /** ゲームID → PlayerSlot コンポーネントのマップ */
 const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
+  coyote: CoyotePlayerSlot,
   nana: NanaPlayerSlot as ComponentType<PlayerSlotProps>,
   blokus: BlokusPlayerSlot as ComponentType<PlayerSlotProps>,
   "sonic-restaurant": SonicRestaurantPlayerSlot as ComponentType<PlayerSlotProps>,
@@ -209,6 +213,9 @@ export function GameView() {
 
   let board: ReactElement;
   switch (room.gameId) {
+    case "coyote":
+      board = <CoyoteBoard />;
+      break;
     case "aiuebattle":
       board = <AiueBattleBoard />;
       break;
