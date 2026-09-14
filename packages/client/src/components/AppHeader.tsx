@@ -65,7 +65,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
       <div className="relative mx-auto max-w-full">
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3.5">
           {/* Brand */}
-          <div className="flex select-none items-center gap-2.5" role="heading" aria-level={1}>
+          <div className="flex shrink-0 select-none items-center gap-2.5 whitespace-nowrap" role="heading" aria-level={1}>
             <GameIcon />
             <span className="text-[1.4rem] font-bold tracking-[0.01em] text-indigo-gradient">
               ボド箱
@@ -73,7 +73,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
           {/* Room context pills - モバイルでは非表示 */}
           {room && (
             <div className="hidden sm:flex items-center gap-2.5 animate-slide-down">
@@ -115,7 +115,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           {playerName && !editing && (
             <button
               className={clsx(
-                "flex min-h-[32px] items-center gap-2 whitespace-nowrap rounded-full border-none bg-indigo-50/80 px-3.5 py-1.5 text-[0.85rem] font-medium text-indigo-700 shadow-[0_2px_8px_rgba(99,102,241,0.08)] backdrop-blur-sm transition-[background,transform,box-shadow] duration-200",
+                "flex min-h-[32px] min-w-0 items-center gap-2 whitespace-nowrap rounded-full border-none bg-indigo-50/80 px-3.5 py-1.5 text-[0.85rem] font-medium text-indigo-700 shadow-[0_2px_8px_rgba(99,102,241,0.08)] backdrop-blur-sm transition-[background,transform,box-shadow] duration-200",
                 canEdit
                   ? "cursor-pointer hover:-translate-y-px hover:bg-indigo-300/15 hover:shadow-[0_2px_8px_rgba(99,102,241,0.15)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                   : "cursor-default",
@@ -129,7 +129,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
                 className="w-2 h-2 rounded-full bg-green-400 shrink-0 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]"
                 aria-hidden="true"
               />
-              {displayName}
+              <span className="truncate">{displayName}</span>
               {canEdit && (
                 <span className="text-[0.75rem] text-violet-400 ml-1" aria-hidden="true">
                   ✎
@@ -142,7 +142,7 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           {editing && (
             <input
               ref={inputRef}
-              className="px-3.5 py-1.5 text-[0.85rem] rounded-full border-2 border-indigo-500 outline-none w-36 box-border font-poppins text-center min-h-[32px] bg-white/95 backdrop-blur-sm shadow-[0_0_0_4px_rgba(99,102,241,0.1)]"
+              className="px-3.5 py-1.5 text-[0.85rem] rounded-full border-2 border-indigo-500 outline-none w-36 min-w-0 box-border font-poppins text-center min-h-[32px] bg-white/95 backdrop-blur-sm shadow-[0_0_0_4px_rgba(99,102,241,0.1)]"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onBlur={commitEdit}

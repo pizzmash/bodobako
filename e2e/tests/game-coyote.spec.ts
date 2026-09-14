@@ -2,12 +2,12 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 import type { CoyotePlayerView } from '../../packages/shared/src/games/coyote/types';
 
 interface Seat { page: Page; context: BrowserContext; id: string; view: CoyotePlayerView | null }
-async function startGame(browser: Browser, count = 2) {
+async function startGame(browser: Browser, count = 2, name = (i: number) => `Player ${i + 1}`) {
   const seats: Seat[] = [];
   for (let i = 0; i < count; i++) {
     const context = await browser.newContext();
     const page = await context.newPage();
-    await page.addInitScript(name => localStorage.setItem('bodobako:playerName', name), `Player ${i + 1}`);
+    await page.addInitScript(name => localStorage.setItem('bodobako:playerName', name), name(i));
     const seat: Seat = { page, context, id: '', view: null };
     seats.push(seat);
     page.on('websocket', socket => socket.on('framereceived', event => {
@@ -27,7 +27,7 @@ async function startGame(browser: Browser, count = 2) {
     }
     seat.id = (await page.evaluate(() => localStorage.getItem('bodobako:playerId')))!;
   }
-  await expect(seats[0].page.getByText(`Player ${count}`, { exact: true })).toBeVisible();
+  await expect(seats[0].page.getByText(name(count - 1), { exact: true })).toBeVisible();
   await seats[0].page.getByRole('button', { name: 'ゲーム開始', exact: true }).click();
   for (const seat of seats) await expect(seat.page.getByRole('main', { name: 'コヨーテの対戦' })).toBeVisible();
   return seats;
@@ -91,7 +91,7 @@ test('コヨーテ: 2端末で公開・再接続・優勝・再戦', async ({ br
 
 for (const count of [6, 10]) test(`コヨーテ: ${count}人のレスポンシブ配置と使用済み一覧`, async ({ browser }, info) => {
   test.setTimeout(90000);
-  const seats = await startGame(browser, count);
+  const seats = await startGame(browser, count, i => `プレイヤーの名前${i + 1}`);
   try {
     await synced(seats, 0);
     const turn = seats.find(seat => seat.id === seats[0].view!.playerIds[seats[0].view!.currentPlayerIndex])!;
