@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRoom } from "../context/RoomContext";
 import { ROOM_CODE_LENGTH } from "../lib/constants";
-import { GameIdenticon } from "./Lobby/GameIdenticon";
+import { GameIcon } from "./Lobby/GameIcon";
 import { useLobbyInvites } from "./Lobby/hooks/useLobbyInvites";
 import { NameEntryModal } from "./NameEntryModal";
 
@@ -197,7 +197,7 @@ export function Lobby() {
                 </button>
               )}
               <div className="flex items-center gap-3.5">
-                <GameIdenticon gameId={g.id} />
+                <GameIcon gameId={g.id} />
                 <div className="flex flex-col gap-0.5">
                   <div className="text-xl font-semibold font-poppins text-indigo-600 tracking-tight">
                     {g.name}
