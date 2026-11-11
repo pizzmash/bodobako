@@ -1,3 +1,5 @@
+import { bluffitDefinition } from "./bluffit/index.js";
+import type { BluffitMove, BluffitState } from "./bluffit/types.js";
 import { coyoteDefinition } from "./coyote/index.js";
 import type { CoyoteState, CoyoteMove } from "./coyote/types.js";
 import type { GameDefinition } from "../types/game.js";
@@ -21,10 +23,11 @@ import { sonicRestaurantGame } from "./sonic-restaurant/index.js";
 import type { SonicRestaurantMove, SonicRestaurantState } from "./sonic-restaurant/types.js";
 
 /** 登録済みゲームIDのリテラル型 */
-export type GameId = "coyote" | "aiuebattle" | "ciao-ciao" | "citychase" | "sonic-restaurant" | "blokus" | "blokus-trigon" | "nana" | "nyamens" | "hyper-robot";
+export type GameId = "bluffit" | "coyote" | "aiuebattle" | "ciao-ciao" | "citychase" | "sonic-restaurant" | "blokus" | "blokus-trigon" | "nana" | "nyamens" | "hyper-robot";
 
 /** ゲームID → 具体的な GameDefinition 型のマッピング */
 export interface GameDefinitionMap {
+  bluffit: GameDefinition<BluffitState, BluffitMove>;
   coyote: GameDefinition<CoyoteState, CoyoteMove>;
   "aiuebattle": GameDefinition<AiueBattleState, AiueBattleMove>;
   "ciao-ciao": GameDefinition<CiaoCiaoState, CiaoCiaoMove>;
@@ -49,6 +52,7 @@ registry.set(blokusTrigonDefinition.id, blokusTrigonDefinition);
 registry.set(nanaDefinition.id, nanaDefinition);
 registry.set(nyaMensDefinition.id, nyaMensDefinition);
 registry.set(hyperRobotDefinition.id, hyperRobotDefinition);
+registry.set(bluffitDefinition.id, bluffitDefinition);
 
 /**
  * 既知のゲームID（リテラル型）に対してはゲーム固有の型付き定義を返す。

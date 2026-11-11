@@ -75,3 +75,5 @@ export type { Player, RoomInfo } from "./types/room.js";
 
 
 export * from "./games/coyote/index.js";
+
+export type { BluffitMove, BluffitView } from "./games/bluffit/types.js";

@@ -33,6 +33,8 @@ const CoyotePlayerSlot = lazy(() => import("../games/coyote/CoyotePlayerSlot").t
 const AiueBattleBoard = lazy(() =>
   import("../games/aiuebattle/AiueBattleBoard").then((m) => ({ default: m.AiueBattleBoard }))
 );
+const BluffitBoard = lazy(() => import("../games/bluffit/BluffitBoard"));
+const BluffitPlayerSlot = lazy(() => import("../games/bluffit/BluffitPlayerSlot"));
 const CitychaseBoard = lazy(() =>
   import("../games/citychase/CitychaseBoard").then((m) => ({ default: m.CitychaseBoard }))
 );
@@ -157,6 +159,7 @@ const sidebarExtrasMap: Partial<Record<GameId, SidebarExtras>> = {
 /** ゲームID → PlayerSlot コンポーネントのマップ */
 const playerSlotMap: Partial<Record<GameId, ComponentType<PlayerSlotProps>>> = {
   coyote: CoyotePlayerSlot,
+  bluffit: BluffitPlayerSlot,
   nana: NanaPlayerSlot as ComponentType<PlayerSlotProps>,
   blokus: BlokusPlayerSlot as ComponentType<PlayerSlotProps>,
   "sonic-restaurant": SonicRestaurantPlayerSlot as ComponentType<PlayerSlotProps>,
@@ -215,6 +218,9 @@ export function GameView() {
   switch (room.gameId) {
     case "coyote":
       board = <CoyoteBoard />;
+      break;
+    case "bluffit":
+      board = <BluffitBoard />;
       break;
     case "aiuebattle":
       board = <AiueBattleBoard />;
