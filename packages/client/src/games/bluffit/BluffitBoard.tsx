@@ -4,6 +4,7 @@ import type { BluffitMove } from "@bodobako/shared";
 import { useRoom } from "../../context/RoomContext";
 import { GameResultCard } from "../../components/GameResultCard";
 import { NumberCard } from "./NumberCard";
+import { DuelTheater } from "./DuelTheater";
 
 export default function BluffitBoard() {
   const ctx = useRoom();
@@ -39,6 +40,7 @@ export default function BluffitBoard() {
 
   return (
     <main className="bf-table">
+      <DuelTheater key={ctx.gameStartCount} duels={s.duels} playerId={playerId} name={name} />
       <div className="bf-wrap">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="bf-logo">

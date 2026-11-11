@@ -49,8 +49,20 @@ test("ブラフィットをPCとスマホで開始し、再接続・一騎打ち
     const first = (await host.locator(".bf-market button").first().isEnabled()) ? host : guest;
     const second = first === host ? guest : host;
     await first.locator(".bf-market button").first().click();
-    if (round === 1) await second.locator(".bf-seats button:enabled").click();
-    else await second.locator(".bf-market button").first().click();
+    if (round === 1) {
+      await second.locator(".bf-seats button:enabled").click();
+      for (const p of pages) {
+        const duel = p.getByRole("dialog", { name: "一騎打ち" });
+        await expect(duel.locator(".bf-hidden-face")).toHaveCount(1);
+        await expect(duel.getByText(/奪取！/)).toHaveCount(0);
+        if (p === guest)
+          await info.attach("mobile-duel", { body: await p.screenshot(), contentType: "image/png" });
+        await duel.getByRole("button", { name: "相手の伏せ札をめくる" }).click();
+        await expect(duel.getByText(/同じ指し値のため/)).toBeVisible();
+        await expect(duel.locator(".bf-victor")).toHaveCount(1);
+        await duel.getByRole("button", { name: "テーブルへ" }).click();
+      }
+    } else await second.locator(".bf-market button").first().click();
   }
   for (const p of pages) await expect(p.getByRole("heading", { name: "最終得点" })).toBeVisible();
   await guest.getByLabel("再戦を希望する").click();
@@ -58,4 +70,51 @@ test("ブラフィットをPCとスマホで開始し、再接続・一騎打ち
   await host.getByRole("button", { name: "このメンバーで再戦" }).click();
   for (const p of pages)
     await expect(p.getByRole("button", { name: /指し値 .* を選ぶ/ })).toHaveCount(10);
+});
+test("一騎打ちを見守る第三者には両方の指し値が伏せられる", async ({ browser }) => {
+  const pages = await Promise.all([0, 1, 2].map(() => browser.newPage()));
+  const [host] = pages;
+  for (const [i, page] of pages.entries()) {
+    await page.goto("/");
+    await page.getByRole("textbox", { name: "プレイヤー名入力" }).fill(`席${i + 1}`);
+    await page.getByRole("button", { name: "ゲームを始める" }).click();
+    if (i === 0) {
+      await host.getByRole("searchbox", { name: "ゲーム検索" }).fill("ブラフィット");
+      await host.getByLabel("ブラフィットのルームを作成").click();
+    } else {
+      await page.getByRole("textbox", { name: "ルームコード入力" }).fill(host.url().slice(-4));
+      await page.getByRole("button", { name: "ルームに参加" }).click();
+    }
+    await expect(page).toHaveURL(/\/room\/[A-Z0-9]{4}/);
+  }
+  await host.getByRole("button", { name: "ゲーム開始" }).click();
+  for (const page of pages) {
+    await page.getByRole("button", { name: "指し値 5 を選ぶ", exact: true }).click();
+    await page.getByRole("button", { name: "5 を伏せる" }).click();
+  }
+  const first = await Promise.any(
+    pages.map(async (page) => {
+      await page.locator(".bf-market button:enabled").first().waitFor();
+      return page;
+    }),
+  );
+  await first.locator(".bf-market button").first().click();
+  const second = await Promise.any(
+    pages
+      .filter((p) => p !== first)
+      .map(async (page) => {
+        await page.locator(".bf-seats button:enabled").waitFor();
+        return page;
+      }),
+  );
+  await second.locator(".bf-seats button:enabled").click();
+  const observer = pages.find((p) => p !== first && p !== second)!;
+  const dialog = observer.getByRole("dialog", { name: "一騎打ち" });
+  await expect(dialog.getByText(/奪取！/)).toBeVisible();
+  await expect(dialog.locator(".bf-hidden-face")).toHaveCount(2);
+  await expect(dialog.locator(".bf-card")).toHaveCount(0);
+  await expect(dialog.getByText(/同じ指し値/)).toHaveCount(0);
+  await dialog.getByRole("button", { name: "テーブルへ" }).click();
+  await observer.locator(".bf-market button:enabled").first().click();
+  await expect(observer.getByRole("heading", { name: "ラウンド 2" })).toBeVisible();
 });

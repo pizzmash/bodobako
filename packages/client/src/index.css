@@ -942,6 +942,36 @@
   .bf-submit { min-height:44px; padding:8px 24px; border-radius:50px; background:#214c40; color:white; font-weight:700; }
   .bf-submit:disabled { background:#dcded2; color:#505c55; }
   .bf-score { display:flex; justify-content:space-between; border-bottom:1px solid #749083; padding:10px; }
+  .bf-duel { width:min(450px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); padding:0; margin:auto; border:1px solid #b5b77a; border-radius:24px; color:#f6f4df; background:radial-gradient(ellipse at 50% 42%,#34574b,#132d27 72%); box-shadow:0 28px 90px #05100cc0; }
+  .bf-duel::backdrop { background:#081510df; backdrop-filter:blur(9px); }
+  .bf-duel[open] { visibility:visible; }
+  .bf-duel-inner { padding:clamp(18px,5vw,32px); text-align:center; }
+  .bf-skip { padding:6px 8px; text-decoration:underline; text-underline-offset:3px; }
+  .bf-stake,.bf-verdict strong,.bf-duel-action { display:flex; align-items:center; justify-content:center; gap:8px; }
+  .bf-stake { margin-top:14px; color:#e7cf82; font-size:13px; font-weight:700; }
+  .bf-duel h2 { font-size:clamp(32px,6vw,45px); font-weight:900; letter-spacing:.08em; }
+  .bf-match { display:grid; grid-template-columns:1fr 1fr; gap:36px; position:relative; margin:16px 0; }
+  .bf-contender { min-width:0; display:grid; justify-items:center; align-content:start; gap:3px; }
+  .bf-contender small { color:#bfd4c5; font-size:12px; }
+  .bf-contender strong { width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bf-duel-card { width:min(100%,108px); aspect-ratio:.72; margin-top:9px; perspective:600px; border-radius:10%; }
+  .bf-hidden-face { display:grid; width:100%; height:100%; place-items:center; border:5px solid #efece0; border-radius:9%; color:#d2ceaf; background-color:#202521; background-image:repeating-linear-gradient(45deg,transparent 0 11px,#ffffff17 11px 12px),repeating-linear-gradient(-45deg,transparent 0 11px,#ffffff17 11px 12px); box-shadow:0 4px 8px #0005; }
+  .bf-vs { position:absolute; top:60%; left:50%; transform:translate(-50%,-50%) rotate(-8deg); font:bold italic 22px Georgia,serif; color:#d4c484; }
+  .bf-victor { outline:3px solid #f4d77f; outline-offset:4px; box-shadow:0 0 22px #f5d78050; }
+  .bf-verdict { min-height:64px; display:grid; align-content:center; gap:3px; }
+  .bf-verdict strong { color:#ffe59a; font-size:20px; overflow-wrap:anywhere; }
+  .bf-verdict p { font-size:13px; color:#e0e6d6; }
+  .bf-duel-action { width:100%; border-radius:16px; background:#f3db8e; padding:12px; font-weight:750; color:#25382c; }
+  .bf-duel button:focus-visible { outline:3px solid white; outline-offset:3px; }
+  @media(prefers-reduced-motion:no-preference) {
+    .bf-duel[open] .bf-match { animation:bf-deal .3s ease-out; }
+    .bf-turned { position:relative; }
+    .bf-turned .bf-card { animation:bf-reveal .23s .23s ease-out backwards; }
+    .bf-flipping-back { display:grid; position:absolute; inset:0; animation:bf-fold .23s ease-in forwards; }
+    @keyframes bf-fold { to { transform:rotateY(90deg); } }
+    @keyframes bf-reveal { from { transform:rotateY(-90deg); filter:brightness(.55); } to { transform:rotateY(0deg); filter:brightness(1); } }
+  }
+  @media(prefers-reduced-motion:reduce) { .bf-flipping-back { display:none; } }
   @media(min-width:640px) and (max-height:820px) {
     .bf-table { padding:14px 24px; }
     .bf-logo { font-size:40px; }
