@@ -1,5 +1,6 @@
 import type { CoyotePlayerView } from "@bodobako/shared";
 import type {
+    BluffitView,
     AiueBattleState,
     BlokusState,
     BlokusTrigonState,
@@ -29,6 +30,7 @@ import { useAuth } from "./AuthContext";
  */
 export type GameStateEntry =
   | { gameId: "coyote"; state: CoyotePlayerView }
+  | { gameId: "bluffit"; state: BluffitView }
   | { gameId: "aiuebattle"; state: AiueBattleState }
   | { gameId: "citychase"; state: CitychasePlayerView }
   | { gameId: "sonic-restaurant"; state: SonicRestaurantState }

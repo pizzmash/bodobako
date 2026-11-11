@@ -894,3 +894,65 @@
   .cy-crowded .cy-bid-center { margin-top:14px; }
   .cy-crowded .cy-current-bid { font-size:56px; }
 }
+
+@layer components {
+  .bf-table { background: radial-gradient(ellipse at 80% 10%, #304642 0, transparent 46%), #152825; color: #f9f5e8; min-height: calc(100dvh - 76px); padding: clamp(14px,3vw,40px); }
+  .bf-wrap { max-width: 980px; margin: auto; }
+  .bf-logo { font: italic 1000 clamp(34px,5vw,62px)/1 Arial,sans-serif; letter-spacing: -.08em; color: #fffcef; text-shadow: 2px 3px #10211d; }
+  .bf-logo span { color: #dfed77; }
+  .bf-rules, .bf-history { border: 1px solid #95a99a65; border-radius: 14px; padding: 10px 15px; font-size: 13px; }
+  .bf-rules[open] { width: 100%; }
+  .bf-rules summary,.bf-history summary { display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; }
+  .bf-rules p,.bf-history p { margin-top: 8px; line-height:1.7; }
+  .bf-arena { margin-top:20px; padding:clamp(16px,3vw,32px); border-radius:24px; border:1px solid #819b86; background:radial-gradient(ellipse at center,#356253,#234438 80%); box-shadow:inset 0 0 0 5px #213d32,0 10px 22px #091d1733; }
+  .bf-phase { font-size:12px; font-weight:750; color:#e3efae; }
+  .bf-progress { display:flex; gap:4px; margin:12px 0; }
+  .bf-progress i { height:3px; flex:1; background:#ffffff25; border-radius:2px; }
+  .bf-progress .bf-lit { background:#d9e887; }
+  .bf-recap { margin-top:12px; color:#d6e6da; font-size:12px; }
+  .bf-recap summary { cursor:pointer; width:fit-content; }
+  .bf-recap ul { display:flex; flex-wrap:wrap; column-gap:18px; padding-top:8px; }
+  .bf-prompt { text-align:center; margin:22px 0 0; font-weight:700; font-size:clamp(15px,2vw,21px); }
+  .bf-market,.bf-rack,.bf-seats { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:clamp(6px,1.2vw,14px); }
+  .bf-market { padding:24px 0; }
+  .bf-market button { width:clamp(68px,9vw,110px); }
+  .bf-card { display:grid; place-items:center; position:relative; overflow:hidden; width:100%; aspect-ratio:0.72; border:clamp(3px,.4vw,5px) solid #fffaf1; border-radius:9%; color:white; container-type:inline-size; background-image:radial-gradient(ellipse,#ffffff28,transparent 74%); box-shadow:0 2px #c6c6b6,0 5px 10px #071d1c45; font-family:Arial,sans-serif; font-weight:1000; }
+  .bf-pattern { position:absolute; inset:-35%; display:grid; grid-template-columns:repeat(6,1fr); transform:rotate(39deg); opacity:.13; }
+  .bf-pattern i { font-size:16cqw; border:1px solid white; font-style:normal; display:grid; place-items:center; }
+  .bf-card b { position:relative; font-size:77cqw; letter-spacing:-.09em; padding-right:.07em; line-height:1; text-shadow:1px 2px #0003,2px 4px #0002; }
+  .bf-corner { position:absolute; font-size:17cqw; line-height:1; text-shadow:1px 1px #0004; }
+  .bf-corner-0,.bf-corner-1 { top:3%; } .bf-corner-2,.bf-corner-3 { bottom:3%; transform:rotate(180deg); }
+  .bf-corner-0,.bf-corner-2 { left:5%; } .bf-corner-1,.bf-corner-3 { right:5%; }
+  .bf-market button,.bf-rack button { border-radius:9%; transition:transform .16s ease; }
+  .bf-market button:enabled:hover,.bf-rack button:enabled:hover,.bf-rack .bf-picked { transform:translateY(-5px); }
+  .bf-table button:focus-visible,.bf-rack .bf-picked { outline:3px solid #fae157; outline-offset:3px; }
+  .bf-seats { align-items:stretch; }
+  .bf-seats button { flex:1 1 105px; min-width:0; display:grid; gap:4px; text-align:left; padding:9px 12px; font-size:12px; border-radius:12px; background:#132f28; border:1px solid #688575; }
+  .bf-seats strong { overflow-wrap:anywhere; } .bf-seats span,.bf-secret { display:flex; align-items:center; gap:6px; }
+  .bf-seats button:has(.bf-back) { position:relative; padding-right:34px; }
+  .bf-back { position:absolute; right:9px; top:50%; width:19px; height:27px; margin-top:-13px; border:2px solid #fffaf1; border-radius:3px; transform:rotate(6deg); background-color:#222724; background-image:repeating-linear-gradient(45deg,transparent 0 5px,#ffffff25 5px 6px),repeating-linear-gradient(-45deg,transparent 0 5px,#ffffff25 5px 6px); }
+  @media(prefers-reduced-motion:no-preference) {
+    .bf-back,.bf-market .bf-card { animation:bf-deal .24s ease-out both; }
+    @keyframes bf-deal { from { opacity:.3; translate:0 -6px; rotate:-3deg; } to { opacity:1; translate:0 0; rotate:0deg; } }
+  }
+  .bf-seats button:enabled { background:#f6d66c; color:#252b19; } .bf-seats .bf-active { border-color:#e5f293; }
+  .bf-hand { background:#f8f4e9; color:#243a33; margin:16px 0; padding:clamp(14px,2.5vw,28px); border-radius:20px; box-shadow:0 4px 14px #10241e55; }
+  .bf-rack { margin:18px 0; gap:8px; } .bf-rack button { width:clamp(46px,6vw,76px); }
+  .bf-submit,.bf-secret { margin:auto; display:flex; justify-content:center; align-items:center; gap:8px; }
+  .bf-submit { min-height:44px; padding:8px 24px; border-radius:50px; background:#214c40; color:white; font-weight:700; }
+  .bf-submit:disabled { background:#dcded2; color:#505c55; }
+  .bf-score { display:flex; justify-content:space-between; border-bottom:1px solid #749083; padding:10px; }
+  @media(min-width:640px) and (max-height:820px) {
+    .bf-table { padding:14px 24px; }
+    .bf-logo { font-size:40px; }
+    .bf-arena { margin-top:12px; padding:18px 24px; }
+    .bf-prompt { margin-top:12px; }
+    .bf-market { padding:14px 0; }
+    .bf-market button { max-width:84px; }
+    .bf-hand { padding:16px 22px; margin:12px 0; }
+    .bf-rack { margin:12px 0; }
+    .bf-rack button { max-width:64px; }
+  }
+  @media(max-width:640px) { .bf-rack { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); } .bf-rack button { width:100%; max-width:70px; } .bf-market button { width:clamp(60px,17vw,94px); } }
+  @media(prefers-reduced-motion:reduce) { .bf-market button,.bf-rack button { transition:none; } }
+}
