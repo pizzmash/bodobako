@@ -1,4 +1,5 @@
 export type BluffitMove =
+  | { type: "reveal"; round: number }
   | { type: "bid" | "take"; value: number; round: number }
   | { type: "challenge"; target: string; round: number };
 
@@ -20,6 +21,7 @@ interface Table {
   turn: number;
   market: number[];
   claims: Record<string, number>;
+  pendingDuel: Pick<Duel, "round" | "attacker" | "defender" | "prize"> | null;
   lastAwards: { round: number; prizes: Record<string, number> } | null;
 }
 

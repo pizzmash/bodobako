@@ -4,65 +4,76 @@ import type { BluffitView } from "@bodobako/shared";
 import { NumberCard } from "./NumberCard";
 
 type Duel = BluffitView["duels"][number];
+type Pending = NonNullable<BluffitView["pendingDuel"]>;
 
 export function DuelTheater({
   duels,
+  pending,
+  ownBid,
+  onReveal,
   playerId,
   name,
 }: {
   duels: Duel[];
+  pending: Pending | null;
+  ownBid: number | null;
+  onReveal: () => void;
   playerId: string;
   name: (id: string) => string;
 }) {
-  // Joining or reconnecting starts at the live table. New duels play in order.
-  const [cursor, setCursor] = useState(duels.length);
-  const duel = duels[cursor];
+  // A new challenge takes precedence even if the previous result is still on screen.
+  const [dismissed, setDismissed] = useState(duels.length);
+  const resolved = !pending && duels.length > dismissed ? duels.at(-1) : undefined;
+  const duel = pending ?? resolved;
   if (!duel) return null;
   return (
     <Showdown
-      key={cursor}
+      key={pending ? duels.length : duels.length - 1}
       duel={duel}
+      resolved={resolved}
+      ownBid={ownBid}
+      onReveal={onReveal}
       playerId={playerId}
       name={name}
-      onDone={() => setCursor(cursor + 1)}
+      onDone={() => setDismissed(duels.length)}
     />
   );
 }
 
 function Showdown({
   duel,
+  resolved,
+  ownBid,
+  onReveal,
   playerId,
   name,
   onDone,
 }: {
-  duel: Duel;
+  duel: Pending;
+  resolved?: Duel;
+  ownBid: number | null;
+  onReveal: () => void;
   playerId: string;
   name: (id: string) => string;
   onDone: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [phase, setPhase] = useState<"facedown" | "turning" | "result">("facedown");
+  const [result, setResult] = useState(false);
+  const revealed = !!resolved;
   const participant = playerId === duel.attacker || playerId === duel.defender;
-  const tied = participant && duel.attack !== undefined && duel.attack === duel.defense;
-  const stolen = duel.winner === duel.attacker;
-  const result = phase === "result";
+  const tied = participant && resolved?.attack !== undefined && resolved.attack === resolved.defense;
+  const stolen = resolved?.winner === duel.attacker;
   useEffect(() => {
     const element = dialog.current;
     element?.showModal();
     return () => element?.close();
   }, []);
   useEffect(() => {
-    if (!participant && phase === "facedown") {
-      const timer = window.setTimeout(() => setPhase("result"), 1400);
-      return () => window.clearTimeout(timer);
-    }
-    if (phase === "turning") {
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const timer = window.setTimeout(() => setPhase("result"), reduced ? 0 : 460);
-      return () => window.clearTimeout(timer);
-    }
-  }, [participant, phase]);
-  const reveal = () => setPhase(participant ? "turning" : "result");
+    if (!revealed) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => setResult(true), reduced || !participant ? 0 : 460);
+    return () => window.clearTimeout(timer);
+  }, [revealed, participant]);
   return (
     <dialog
       ref={dialog}
@@ -70,15 +81,17 @@ function Showdown({
       aria-labelledby="bf-duel-title"
       onCancel={(e) => {
         e.preventDefault();
-        onDone();
+        if (resolved) onDone();
       }}
     >
       <div className="bf-duel-inner">
         <div className="flex items-center justify-between gap-3 text-xs">
           <span>第{duel.round}ラウンド</span>
-          <button className="bf-skip" onClick={onDone}>
-            盤面に戻る
-          </button>
+          {resolved && (
+            <button className="bf-skip" onClick={onDone}>
+              盤面に戻る
+            </button>
+          )}
         </div>
         <p className="bf-stake">
           <Swords size={15} /> {duel.prize}点の得点札をめぐる
@@ -87,9 +100,15 @@ function Showdown({
         <div className="bf-match">
           {[duel.attacker, duel.defender].map((id, i) => {
             const own = playerId === id;
-            const value = i === 0 ? duel.attack : duel.defense;
-            const shown = participant && (own || phase !== "facedown") && value !== undefined;
-            const canTurn = participant && !own && phase === "facedown";
+            const value = resolved
+              ? i === 0
+                ? resolved.attack
+                : resolved.defense
+              : own
+                ? ownBid
+                : null;
+            const shown = value != null;
+            const canTurn = playerId === duel.attacker && !own && !resolved;
             const face = shown ? (
               <NumberCard value={value} />
             ) : (
@@ -105,16 +124,16 @@ function Showdown({
                   {own && "（自分）"}
                 </strong>
                 {canTurn ? (
-                  <button className="bf-duel-card" aria-label="相手の伏せ札をめくる" onClick={reveal}>
+                  <button className="bf-duel-card" aria-label="相手の伏せ札をめくる" onClick={onReveal}>
                     {face}
                   </button>
                 ) : (
                   <div
-                    className={`bf-duel-card ${!own && shown ? "bf-turned" : ""} ${result && duel.winner === id ? "bf-victor" : ""}`}
+                    className={`bf-duel-card ${!own && shown ? "bf-turned" : ""} ${result && resolved?.winner === id ? "bf-victor" : ""}`}
                     aria-label={shown ? `指し値 ${value}` : "伏せ札"}
                   >
                     {face}
-                    {!own && phase === "turning" && (
+                    {!own && shown && !result && (
                       <span className="bf-hidden-face bf-flipping-back" aria-hidden="true">
                         <LockKeyhole size={24} />
                       </span>
@@ -129,10 +148,10 @@ function Showdown({
           </span>
         </div>
         <div className="bf-verdict" aria-live="polite">
-          {result ? (
+          {result && resolved ? (
             <>
               <strong>
-                <Trophy size={18} /> {name(duel.winner)} が{stolen ? "奪取" : "防衛"}！
+                <Trophy size={18} /> {name(resolved.winner)} が{stolen ? "奪取" : "防衛"}！
               </strong>
               <p>
                 {tied ? "同じ指し値のため、挑戦側の勝ち。" : ""}
@@ -141,24 +160,28 @@ function Showdown({
             </>
           ) : (
             <p>
-              {participant ? "相手は、いくつで勝負に出た？" : "ふたりが伏せた指し値を見比べています…"}
+              {playerId === duel.attacker
+                ? "相手は、いくつで勝負に出た？"
+                : `${name(duel.attacker)} が伏せ札をめくるのを待っています…`}
             </p>
           )}
         </div>
-        <button
-          className="bf-duel-action"
-          autoFocus
-          onClick={result ? onDone : reveal}
-          disabled={phase === "turning"}
-        >
-          {result ? (
-            "テーブルへ"
-          ) : (
-            <>
-              <Eye size={17} /> {participant ? "相手の指し値を見る" : "勝負を見届ける"}
-            </>
-          )}
-        </button>
+        {(result || playerId === duel.attacker) && (
+          <button
+            className="bf-duel-action"
+            autoFocus
+            onClick={result ? onDone : onReveal}
+            disabled={!!resolved && !result}
+          >
+            {result ? (
+              "テーブルへ"
+            ) : (
+              <>
+                <Eye size={17} /> 相手の指し値を見る
+              </>
+            )}
+          </button>
+        )}
       </div>
     </dialog>
   );

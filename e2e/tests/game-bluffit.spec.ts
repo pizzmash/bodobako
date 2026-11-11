@@ -57,7 +57,12 @@ test("ブラフィットをPCとスマホで開始し、再接続・一騎打ち
         await expect(duel.getByText(/奪取！/)).toHaveCount(0);
         if (p === guest)
           await info.attach("mobile-duel", { body: await p.screenshot(), contentType: "image/png" });
-        await duel.getByRole("button", { name: "相手の伏せ札をめくる" }).click();
+      }
+      await expect(first.getByRole("button", { name: "相手の伏せ札をめくる" })).toHaveCount(0);
+      await second.reload();
+      await second.getByRole("button", { name: "相手の伏せ札をめくる" }).click();
+      for (const p of pages) {
+        const duel = p.getByRole("dialog", { name: "一騎打ち" });
         await expect(duel.getByText(/同じ指し値のため/)).toBeVisible();
         await expect(duel.locator(".bf-victor")).toHaveCount(1);
         await duel.getByRole("button", { name: "テーブルへ" }).click();
@@ -110,11 +115,22 @@ test("一騎打ちを見守る第三者には両方の指し値が伏せられ�
   await second.locator(".bf-seats button:enabled").click();
   const observer = pages.find((p) => p !== first && p !== second)!;
   const dialog = observer.getByRole("dialog", { name: "一騎打ち" });
+  await expect(dialog.getByText(/めくるのを待っています/)).toBeVisible();
+  await expect(dialog.getByRole("button")).toHaveCount(0);
+  await second.getByRole("button", { name: "相手の伏せ札をめくる" }).click();
   await expect(dialog.getByText(/奪取！/)).toBeVisible();
   await expect(dialog.locator(".bf-hidden-face")).toHaveCount(2);
   await expect(dialog.locator(".bf-card")).toHaveCount(0);
   await expect(dialog.getByText(/同じ指し値/)).toHaveCount(0);
   await dialog.getByRole("button", { name: "テーブルへ" }).click();
-  await observer.locator(".bf-market button:enabled").first().click();
+  await observer.locator(".bf-seats button:enabled").click();
+  // The first two players still have the previous result open.
+  for (const page of [first, second]) {
+    await expect(page.getByRole("dialog").getByText(/めくるのを待っています/)).toBeVisible();
+  }
+  await observer.getByRole("button", { name: "相手の伏せ札をめくる" }).click();
+  await expect(first.getByRole("dialog").getByText(/奪取！/)).toBeVisible();
+  await expect(first.getByRole("dialog").locator(".bf-hidden-face")).toHaveCount(2);
+  await observer.getByRole("button", { name: "テーブルへ" }).click();
   await expect(observer.getByRole("heading", { name: "ラウンド 2" })).toBeVisible();
 });

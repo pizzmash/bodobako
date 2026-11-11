@@ -27,6 +27,7 @@ export function createInitialState(playerIds: string[]): BluffitState {
     phase: "bid",
     turn: 0,
     claims: {},
+    pendingDuel: null,
     bids: {},
     duels: [],
     lastAwards: null,
@@ -35,6 +36,7 @@ export function createInitialState(playerIds: string[]): BluffitState {
 
 export function validateMove(s: BluffitState, m: BluffitMove, id: string) {
   if (s.round !== m.round || !s.order.includes(id)) return false;
+  if (s.pendingDuel) return m.type === "reveal" && s.pendingDuel.attacker === id && s.phase === "claim";
   if (m.type === "bid") {
     const source = s.round === 11 ? s.piles[id] : s.hands[id];
     return s.phase === "bid" && s.bids[id] === undefined && source.includes(m.value);
@@ -75,6 +77,10 @@ function settle(s: BluffitState) {
 
 export function applyMove(state: BluffitState, m: BluffitMove, id: string): BluffitState {
   const s = structuredClone(state);
+  if (m.type === "challenge") {
+    s.pendingDuel = { round: s.round, attacker: id, defender: m.target, prize: s.claims[m.target] };
+    return s;
+  }
   if (m.type === "bid") {
     s.bids[id] = m.value;
     if (s.round < 11) s.hands[id].splice(s.hands[id].indexOf(m.value), 1);
@@ -84,14 +90,15 @@ export function applyMove(state: BluffitState, m: BluffitMove, id: string): Bluf
   if (m.type === "take") {
     s.market.splice(s.market.indexOf(m.value), 1);
     s.claims[id] = m.value;
-  } else if (m.type === "challenge") {
-    const attack = s.bids[id],
-      defense = s.bids[m.target],
-      prize = s.claims[m.target];
-    const winner = attack >= defense ? id : m.target;
-    delete s.claims[m.target];
-    s.claims[winner] = prize;
-    s.duels.push({ round: s.round, attacker: id, defender: m.target, attack, defense, winner, prize });
+  } else if (m.type === "reveal" && s.pendingDuel) {
+    const duel = s.pendingDuel;
+    const attack = s.bids[duel.attacker],
+      defense = s.bids[duel.defender];
+    const winner = attack >= defense ? duel.attacker : duel.defender;
+    delete s.claims[duel.defender];
+    s.claims[winner] = duel.prize;
+    s.duels.push({ ...duel, attack, defense, winner });
+    s.pendingDuel = null;
   }
   if (++s.turn === s.order.length) settle(s);
   return s;
@@ -107,6 +114,7 @@ export function getPlayerView(s: BluffitState, id: string): BluffitView {
     turn,
     market,
     claims,
+    pendingDuel: s.pendingDuel ?? null,
     lastAwards: s.lastAwards,
     hand: round === 11 ? (s.piles[id] ?? []) : (s.hands[id] ?? []),
     pile: s.piles[id] ?? [],

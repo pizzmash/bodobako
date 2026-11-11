@@ -15,7 +15,7 @@ export default function BluffitBoard() {
   const name = (id: string) =>
     (ctx.resultPlayers ?? room.players).find((p) => p.id === id)?.name ?? "プレイヤー";
   const mayBid = s.phase === "bid" && s.bid === null && s.order.includes(playerId);
-  const mayClaim = s.phase === "claim" && s.order[s.turn] === playerId;
+  const mayClaim = s.phase === "claim" && !s.pendingDuel && s.order[s.turn] === playerId;
   const chosen =
     selection?.round === s.round && selection.game === ctx.gameStartCount ? selection.value : null;
   const send = (move: BluffitMove) => {
@@ -40,7 +40,15 @@ export default function BluffitBoard() {
 
   return (
     <main className="bf-table">
-      <DuelTheater key={ctx.gameStartCount} duels={s.duels} playerId={playerId} name={name} />
+      <DuelTheater
+        key={ctx.gameStartCount}
+        duels={s.duels}
+        pending={gameResult ? null : s.pendingDuel}
+        ownBid={s.bid}
+        playerId={playerId}
+        name={name}
+        onReveal={() => send({ type: "reveal", round: s.round })}
+      />
       <div className="bf-wrap">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="bf-logo">

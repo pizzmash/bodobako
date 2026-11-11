@@ -37,10 +37,23 @@ it("resolves equal bids for the challenger and permits challenging the new owner
   expect(validateMove(s, { type: "take", value: 9, round: 1 }, "b")).toBe(false);
   play("a", { type: "take", value: 9, round: 1 });
   play("b", { type: "challenge", target: "a", round: 1 });
+  expect(s.claims).toEqual({ a: 9 });
+  expect(s.duels).toEqual([]);
+  expect(getPlayerView(s, "b").pendingDuel).toEqual({
+    attacker: "b",
+    defender: "a",
+    round: 1,
+    prize: 9,
+  });
+  for (const id of ["a", "c"]) expect(validateMove(s, { type: "reveal", round: 1 }, id)).toBe(false);
+  expect(validateMove(s, { type: "take", value: 7, round: 1 }, "b")).toBe(false);
+  play("b", { type: "reveal", round: 1 });
+  expect(validateMove(s, { type: "reveal", round: 1 }, "b")).toBe(false);
   expect(s.claims).toEqual({ b: 9 });
   expect(getPlayerView(s, "c").duels[0]).not.toHaveProperty("attack");
   expect(getPlayerView(s, "a").duels[0].defense).toBe(5);
   play("c", { type: "challenge", target: "b", round: 1 });
+  play("c", { type: "reveal", round: 1 });
   expect(s.order[0]).toBe("b");
   expect(s.piles).toEqual({ a: [], b: [9], c: [] });
   expect([...s.market].sort()).toEqual([2, 5, 5]);
